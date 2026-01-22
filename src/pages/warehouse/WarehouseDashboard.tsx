@@ -1,0 +1,66 @@
+import * as React from 'react'
+import { Route, Routes, useNavigate } from 'react-router-dom'
+import { Bell, ClipboardList, History, LayoutDashboard, LogOut, PackageCheck, Truck } from 'lucide-react'
+import { Sidebar } from '../../components/Sidebar'
+import { NotificationPanel } from '../../components/NotificationPanel'
+import { WarehouseHomePage } from './WarehouseHomePage'
+import { WarehouseIncomingPage } from './WarehouseIncomingPage'
+import { WarehouseOutgoingPage } from './WarehouseOutgoingPage'
+import { WarehouseHistoryPage } from './WarehouseHistoryPage'
+import { WarehouseProfilePage } from './WarehouseProfilePage'
+import { WarehouseShipmentDetailPage } from './WarehouseShipmentDetailPage'
+
+export function WarehouseDashboard() {
+  const navigate = useNavigate()
+  const [showNotifications, setShowNotifications] = React.useState(false)
+
+  React.useEffect(() => {
+    if (showNotifications) {
+      navigate('/warehouse/notifications')
+      setShowNotifications(false)
+    }
+  }, [showNotifications, navigate])
+
+  return (
+    <div className="flex h-dvh flex-col bg-slate-50">
+      <div className="flex flex-1 w-full overflow-hidden">
+        <Sidebar
+          title="Warehouse"
+          role="warehouse"
+          onOpenNotifications={() => setShowNotifications(true)}
+          items={[
+            { to: '/warehouse', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" /> },
+            { to: '/warehouse/incoming', label: 'Incoming Shipments', icon: <PackageCheck className="h-4 w-4" /> },
+            { to: '/warehouse/outgoing', label: 'Outgoing Shipments', icon: <Truck className="h-4 w-4" /> },
+            { to: '/warehouse/history', label: 'History', icon: <History className="h-4 w-4" /> },
+            { to: '/warehouse/notifications', label: 'Notifications', icon: <Bell className="h-4 w-4" /> },
+            { to: '/warehouse/profile', label: 'Profile', icon: <ClipboardList className="h-4 w-4" /> },
+          ]}
+          exitItem={{ to: '/', label: 'Exit', icon: <LogOut className="h-4 w-4" /> }}
+        />
+
+        <main className="flex flex-1 flex-col overflow-hidden">
+          <div className="flex-1 overflow-auto px-4 py-6">
+            <Routes>
+              <Route path="/" element={<WarehouseHomePage />} />
+              <Route path="/incoming" element={<WarehouseIncomingPage />} />
+              <Route path="/outgoing" element={<WarehouseOutgoingPage />} />
+              <Route path="/history" element={<WarehouseHistoryPage />} />
+              <Route path="/shipment/:id" element={<WarehouseShipmentDetailPage />} />
+              <Route
+                path="/notifications"
+                element={
+                  <div className="pt-4">
+                    <NotificationPanel role="warehouse" />
+                  </div>
+                }
+              />
+              <Route path="/profile" element={<WarehouseProfilePage />} />
+            </Routes>
+          </div>
+        </main>
+      </div>
+    </div>
+  )
+}
+
