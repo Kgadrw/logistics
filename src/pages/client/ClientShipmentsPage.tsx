@@ -87,8 +87,8 @@ export function ClientShipmentsPage() {
           <CardBody>
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-xs font-semibold text-slate-600">Total Shipments</div>
-                <div className="mt-1 text-2xl font-semibold text-slate-900">{stats.total}</div>
+            <div className="text-xs font-semibold text-slate-600">Total Shipments</div>
+            <div className="mt-1 text-2xl font-semibold text-slate-900">{stats.total}</div>
               </div>
               <Package className="h-8 w-8 text-blue-500 opacity-20" />
             </div>
@@ -98,8 +98,8 @@ export function ClientShipmentsPage() {
           <CardBody>
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-xs font-semibold text-slate-600">Active Shipments</div>
-                <div className="mt-1 text-2xl font-semibold text-slate-900">{stats.active}</div>
+            <div className="text-xs font-semibold text-slate-600">Active Shipments</div>
+            <div className="mt-1 text-2xl font-semibold text-slate-900">{stats.active}</div>
               </div>
               <Clock className="h-8 w-8 text-orange-500 opacity-20" />
             </div>
@@ -109,8 +109,8 @@ export function ClientShipmentsPage() {
           <CardBody>
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-xs font-semibold text-slate-600">Delivered</div>
-                <div className="mt-1 text-2xl font-semibold text-slate-900">{stats.delivered}</div>
+            <div className="text-xs font-semibold text-slate-600">Delivered</div>
+            <div className="mt-1 text-2xl font-semibold text-slate-900">{stats.delivered}</div>
               </div>
               <CheckCircle2 className="h-8 w-8 text-green-500 opacity-20" />
             </div>
@@ -188,7 +188,7 @@ export function ClientShipmentsPage() {
               </CardBody>
             </Card>
           ) : (
-            <div className="grid gap-3">
+          <div className="grid gap-3">
               {filteredShipments.map(s => (
               <button
                 key={s.id}
@@ -240,8 +240,8 @@ export function ClientShipmentsPage() {
                   <ShipmentTimeline status={s.status} darkMode={selected?.id === s.id} />
                 </div>
               </button>
-              ))}
-            </div>
+            ))}
+          </div>
           )}
         </div>
 

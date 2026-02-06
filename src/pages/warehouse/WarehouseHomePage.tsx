@@ -36,7 +36,7 @@ export function WarehouseHomePage() {
     }
     fetchDashboard()
   }, [user?.id])
-
+  
   const stats = React.useMemo(() => {
     if (dashboardStats) {
       return {
@@ -87,8 +87,8 @@ export function WarehouseHomePage() {
       <div className="mb-6">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
-            <div className="text-sm font-semibold text-slate-900">Warehouse Dashboard</div>
-            <div className="mt-1 text-sm text-slate-600">Operational overview — focus on speed and accuracy.</div>
+        <div className="text-sm font-semibold text-slate-900">Warehouse Dashboard</div>
+        <div className="mt-1 text-sm text-slate-600">Operational overview — focus on speed and accuracy.</div>
           </div>
           {stats.pending > 0 && (
             <Button
