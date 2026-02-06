@@ -1,8 +1,10 @@
 import * as React from 'react'
-import { ArrowLeft, ArrowRight, Check, Image as ImageIcon, Package, Upload, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, Image as ImageIcon, Package, Upload, X, Building2 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { Input, Textarea } from '../../components/ui/Input'
 import { Modal } from '../../components/ui/Modal'
+import { Select } from '../../components/ui/Select'
+import { clientAPI, uploadAPI } from '../../lib/api'
 import { cn } from '../../lib/cn'
 import type { Shipment } from '../../lib/types'
 
@@ -36,7 +38,7 @@ export function CreateShipmentModal({
 }: {
   open: boolean
   onClose: () => void
-  onSubmit: (data: { products: ProductDraft[]; notes?: string }) => void
+  onSubmit: (data: { products: ProductDraft[]; notes?: string; warehouseId?: string; warehouseName?: string }) => void
   shipment?: Shipment
 }) {
   const [currentStep, setCurrentStep] = React.useState<Step>(1)
@@ -53,6 +55,31 @@ export function CreateShipmentModal({
   ])
   const [notes, setNotes] = React.useState('')
   const [currentProductIndex, setCurrentProductIndex] = React.useState(0)
+  const [warehouses, setWarehouses] = React.useState<any[]>([])
+  const [selectedWarehouseId, setSelectedWarehouseId] = React.useState<string>('')
+  const [loadingWarehouses, setLoadingWarehouses] = React.useState(false)
+
+  // Fetch warehouses when modal opens
+  React.useEffect(() => {
+    if (open) {
+      const fetchWarehouses = async () => {
+        try {
+          setLoadingWarehouses(true)
+          const data = await clientAPI.getWarehouses()
+          setWarehouses(data)
+          // Set default warehouse if available and not already set
+          if (data.length > 0 && !selectedWarehouseId) {
+            setSelectedWarehouseId(data[0].id)
+          }
+        } catch (err) {
+          console.error('Failed to fetch warehouses:', err)
+        } finally {
+          setLoadingWarehouses(false)
+        }
+      }
+      fetchWarehouses()
+    }
+  }, [open])
 
   // Initialize form with shipment data when editing
   React.useEffect(() => {
@@ -92,6 +119,15 @@ export function CreateShipmentModal({
         setNotes(shipment.notes || '')
         setCurrentProductIndex(0)
         setCurrentStep(1)
+        // Set warehouse from shipment if available
+        if (shipment.warehouseId) {
+          setSelectedWarehouseId(shipment.warehouseId)
+        } else if (shipment.warehouseName && warehouses.length > 0) {
+          const warehouse = warehouses.find((w: any) => w.name === shipment.warehouseName)
+          if (warehouse) {
+            setSelectedWarehouseId(warehouse.id)
+          }
+        }
       } else {
         // Create mode - reset to defaults
         setProducts([
@@ -108,13 +144,19 @@ export function CreateShipmentModal({
         setNotes('')
         setCurrentProductIndex(0)
         setCurrentStep(1)
+        // Reset warehouse selection to first available
+        if (warehouses.length > 0) {
+          setSelectedWarehouseId(warehouses[0].id)
+        }
       }
     }
-  }, [open, shipment])
+  }, [open, shipment, warehouses])
 
   const currentProduct = products[currentProductIndex] || products[0]
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, productIndex: number) => {
+  const [uploadingImages, setUploadingImages] = React.useState<Record<number, boolean>>({})
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, productIndex: number) => {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -123,14 +165,21 @@ export function CreateShipmentModal({
       return
     }
 
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      const base64 = reader.result as string
+    try {
+      setUploadingImages(prev => ({ ...prev, [productIndex]: true }))
+      
+      // Upload to Cloudinary
+      const imageUrl = await uploadAPI.uploadImage(file, 'uzalogistics/products')
+      
       setProducts(ps =>
-        ps.map((p, i) => (i === productIndex ? { ...p, imageUrl: base64 } : p)),
+        ps.map((p, i) => (i === productIndex ? { ...p, imageUrl } : p)),
       )
+    } catch (error: any) {
+      console.error('Failed to upload image:', error)
+      alert(error.message || 'Failed to upload image. Please try again.')
+    } finally {
+      setUploadingImages(prev => ({ ...prev, [productIndex]: false }))
     }
-    reader.readAsDataURL(file)
   }
 
   const removeImage = (productIndex: number) => {
@@ -185,6 +234,7 @@ export function CreateShipmentModal({
   }
 
   const canProceedStep1 =
+    selectedWarehouseId &&
     currentProduct?.name.trim().length > 0 &&
     currentProduct?.quantity > 0 &&
     (currentProduct?.category !== 'Other' || (currentProduct?.customCategory && currentProduct.customCategory.trim().length > 0))
@@ -193,15 +243,17 @@ export function CreateShipmentModal({
     currentProduct?.packagingType &&
     (currentProduct?.lengthCm || currentProduct?.widthCm || currentProduct?.heightCm || true)
   const canProceedStep3 = true // Step 3 is optional
-  const canSubmit = products.every(
-    p =>
-      p.name.trim().length > 0 &&
-      p.quantity > 0 &&
-      p.weightKg > 0 &&
-      p.packagingType &&
-      p.category &&
-      (p.category !== 'Other' || (p.customCategory && p.customCategory.trim().length > 0)),
-  )
+  const canSubmit = 
+    selectedWarehouseId &&
+    products.every(
+      p =>
+        p.name.trim().length > 0 &&
+        p.quantity > 0 &&
+        p.weightKg > 0 &&
+        p.packagingType &&
+        p.category &&
+        (p.category !== 'Other' || (p.customCategory && p.customCategory.trim().length > 0)),
+    )
 
   const resetForm = () => {
     setCurrentStep(1)
@@ -218,6 +270,9 @@ export function CreateShipmentModal({
     ])
     setCurrentProductIndex(0)
     setNotes('')
+    if (warehouses.length > 0) {
+      setSelectedWarehouseId(warehouses[0].id)
+    }
   }
 
   const handleClose = () => {
@@ -227,7 +282,13 @@ export function CreateShipmentModal({
 
   const handleSubmit = () => {
     if (!canSubmit) return
-    onSubmit({ products, notes: notes.trim() || undefined })
+    const selectedWarehouse = warehouses.find((w: any) => w.id === selectedWarehouseId)
+    onSubmit({
+      products,
+      notes: notes.trim() || undefined,
+      warehouseId: selectedWarehouseId,
+      warehouseName: selectedWarehouse?.name || '',
+    })
     resetForm()
     onClose()
   }
@@ -322,6 +383,33 @@ export function CreateShipmentModal({
         {/* Step 1: Basic Information */}
         {currentStep === 1 && (
           <div className="space-y-4">
+            <div>
+              <div className="text-xs font-semibold text-slate-600 mb-1">Select Warehouse *</div>
+              <div className="relative">
+                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Select
+                  value={selectedWarehouseId}
+                  onChange={(e) => setSelectedWarehouseId(e.target.value)}
+                  className="pl-10"
+                  disabled={loadingWarehouses || warehouses.length === 0}
+                >
+                  {loadingWarehouses ? (
+                    <option value="">Loading warehouses...</option>
+                  ) : warehouses.length === 0 ? (
+                    <option value="">No warehouses available</option>
+                  ) : (
+                    warehouses.map((warehouse: any) => (
+                      <option key={warehouse.id} value={warehouse.id}>
+                        {warehouse.name} {warehouse.location ? `- ${warehouse.location}` : ''}
+                      </option>
+                    ))
+                  )}
+                </Select>
+              </div>
+              {warehouses.length === 0 && !loadingWarehouses && (
+                <div className="mt-1 text-xs text-slate-500">No active warehouses found. Please contact admin.</div>
+              )}
+            </div>
             <div>
               <div className="text-xs font-semibold text-slate-600 mb-1">Product Name *</div>
               <Input
@@ -469,8 +557,12 @@ export function CreateShipmentModal({
         {currentStep === 3 && (
           <div className="space-y-4">
             <div>
-              <div className="text-xs font-semibold text-slate-600 mb-2">Product Image</div>
-              {currentProduct?.imageUrl ? (
+              <div className="text-xs font-semibold text-slate-600 mb-2">Product Image (Optional)</div>
+              {uploadingImages[currentProductIndex] ? (
+                <div className="flex items-center justify-center h-48 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50">
+                  <div className="text-sm text-slate-600">Uploading image...</div>
+                </div>
+              ) : currentProduct?.imageUrl ? (
                 <div className="relative">
                   <img
                     src={currentProduct.imageUrl}
@@ -494,7 +586,7 @@ export function CreateShipmentModal({
                   />
                   <Upload className="h-8 w-8 text-slate-400 mb-2" />
                   <div className="text-sm font-medium text-slate-600">Click to upload image</div>
-                  <div className="text-xs text-slate-500 mt-1">Max 5MB, JPG/PNG</div>
+                  <div className="text-xs text-slate-500 mt-1">Max 5MB, JPG/PNG/GIF/WEBP</div>
                 </label>
               )}
             </div>
@@ -631,6 +723,15 @@ export function CreateShipmentModal({
               </div>
             )}
 
+            {selectedWarehouseId && (
+              <div>
+                <div className="text-xs font-semibold text-slate-600 mb-1">Selected Warehouse</div>
+                <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-900 flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  {warehouses.find((w: any) => w.id === selectedWarehouseId)?.name || 'Unknown Warehouse'}
+                </div>
+              </div>
+            )}
             {notes && (
               <div>
                 <div className="text-xs font-semibold text-slate-600 mb-1">Notes for Warehouse</div>

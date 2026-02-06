@@ -3,31 +3,124 @@ import { Check, Mail, Phone, Pencil, Shield, User, X } from 'lucide-react'
 import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
+import { adminAPI } from '../../lib/api'
+import { useAuth } from '../../lib/authContext'
 
 export function AdminProfilePage() {
+  const { user } = useAuth()
   const [formData, setFormData] = React.useState({
-    name: 'Admin User',
-    email: 'admin@uzalogistics.com',
-    phone: '+1 (555) 000-0000',
+    name: '',
+    email: '',
+    phone: '',
     role: 'System Administrator',
   })
   const [editingField, setEditingField] = React.useState<string | null>(null)
   const [tempValues, setTempValues] = React.useState<Record<string, string>>({})
+  const [loading, setLoading] = React.useState(true)
+  const [saving, setSaving] = React.useState<string | null>(null)
+  const [error, setError] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) {
+        setLoading(false)
+        return
+      }
+
+      try {
+        setLoading(true)
+        setError(null)
+        const profile = await adminAPI.getProfile()
+        
+        setFormData({
+          name: profile.name || user?.name || 'Admin User',
+          email: profile.email || user?.email || '',
+          phone: profile.phone || '',
+          role: 'System Administrator',
+        })
+      } catch (err: any) {
+        if (err.is404 || err.status === 404 || err.message?.includes('404') || err.message?.includes('not found')) {
+          setError(null)
+          setFormData({
+            name: user?.name || 'Admin User',
+            email: user?.email || '',
+            phone: '',
+            role: 'System Administrator',
+          })
+        } else {
+          setError(err.message || 'Failed to load profile')
+          console.error('Failed to fetch profile:', err)
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProfile()
+  }, [user])
 
   const handleEdit = (field: string, currentValue: string) => {
     setEditingField(field)
     setTempValues({ ...tempValues, [field]: currentValue })
+    setError(null)
   }
 
-  const handleSave = (field: string) => {
-    setFormData(d => ({ ...d, [field]: tempValues[field] }))
-    setEditingField(null)
-    // In a real app, save to backend here
+  const handleSave = async (field: string) => {
+    if (!user?.id) {
+      setError('You must be logged in to update your profile')
+      return
+    }
+
+    try {
+      setSaving(field)
+      setError(null)
+
+      const updateData: any = {}
+      const valueToSave = tempValues[field]?.trim() || ''
+      updateData[field] = valueToSave
+
+      const result = await adminAPI.updateProfile(updateData)
+      
+      if (result?.user) {
+        setFormData({
+          name: result.user.name || formData.name,
+          email: result.user.email || formData.email,
+          phone: result.user.phone || formData.phone,
+          role: 'System Administrator',
+        })
+      } else {
+        setFormData(d => ({ ...d, [field]: valueToSave }))
+      }
+      
+      setEditingField(null)
+      setTempValues({})
+    } catch (err: any) {
+      setError(err.message || 'Failed to save profile')
+      console.error('Failed to save profile:', err)
+    } finally {
+      setSaving(null)
+    }
   }
 
   const handleCancel = () => {
     setEditingField(null)
     setTempValues({})
+    setError(null)
+  }
+
+  if (loading) {
+    return (
+      <div className="pt-4">
+        <div className="mb-4">
+          <div className="text-sm font-semibold text-slate-900">Admin Profile</div>
+        </div>
+        <Card>
+          <CardBody>
+            <div className="text-sm text-slate-600 text-center py-8">Loading profile...</div>
+          </CardBody>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -35,6 +128,12 @@ export function AdminProfilePage() {
       <div className="mb-4">
         <div className="text-sm font-semibold text-slate-900">Admin Profile</div>
       </div>
+
+      {error && (
+        <div className="mb-4 rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-800">
+          {error}
+        </div>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-12">
         <Card className="lg:col-span-12">
@@ -68,6 +167,7 @@ export function AdminProfilePage() {
                         variant="ghost"
                         onClick={() => handleSave('name')}
                         className="h-8 w-8 p-0"
+                        disabled={saving === 'name'}
                       >
                         <Check className="h-4 w-4 text-green-600" />
                       </Button>
@@ -87,6 +187,8 @@ export function AdminProfilePage() {
                       <button
                         onClick={() => handleEdit('name', formData.name)}
                         className="p-1 hover:bg-slate-100 rounded transition-colors"
+                        disabled={!user}
+                        title={!user ? 'Please log in to edit' : 'Edit name'}
                       >
                         <Pencil className="h-3.5 w-3.5 text-slate-500" />
                       </button>
@@ -117,6 +219,7 @@ export function AdminProfilePage() {
                         variant="ghost"
                         onClick={() => handleSave('email')}
                         className="h-8 w-8 p-0"
+                        disabled={saving === 'email'}
                       >
                         <Check className="h-4 w-4 text-green-600" />
                       </Button>
@@ -136,6 +239,8 @@ export function AdminProfilePage() {
                       <button
                         onClick={() => handleEdit('email', formData.email)}
                         className="p-1 hover:bg-slate-100 rounded transition-colors"
+                        disabled={!user}
+                        title={!user ? 'Please log in to edit' : 'Edit email'}
                       >
                         <Pencil className="h-3.5 w-3.5 text-slate-500" />
                       </button>
@@ -158,6 +263,7 @@ export function AdminProfilePage() {
                         variant="ghost"
                         onClick={() => handleSave('phone')}
                         className="h-8 w-8 p-0"
+                        disabled={saving === 'phone'}
                       >
                         <Check className="h-4 w-4 text-green-600" />
                       </Button>
@@ -177,6 +283,8 @@ export function AdminProfilePage() {
                       <button
                         onClick={() => handleEdit('phone', formData.phone)}
                         className="p-1 hover:bg-slate-100 rounded transition-colors"
+                        disabled={!user}
+                        title={!user ? 'Please log in to edit' : 'Edit phone'}
                       >
                         <Pencil className="h-3.5 w-3.5 text-slate-500" />
                       </button>

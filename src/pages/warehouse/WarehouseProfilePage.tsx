@@ -3,34 +3,156 @@ import { Building2, Check, Mail, MapPin, Pencil, Phone, User, X } from 'lucide-r
 import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
+import { warehouseAPI } from '../../lib/api'
+import { useAuth } from '../../lib/authContext'
 
 export function WarehouseProfilePage() {
+  const { user } = useAuth()
   const [formData, setFormData] = React.useState({
-    warehouseName: 'Warehouse A',
-    managerName: 'Sarah Johnson',
-    email: 'sarah.johnson@warehousea.com',
-    phone: '+1 (555) 987-6543',
-    address: '456 Industrial Blvd, Los Angeles, CA 90001',
-    capacity: '50,000 sq ft',
-    operatingHours: 'Mon-Fri: 6:00 AM - 10:00 PM',
+    warehouseName: '',
+    managerName: '',
+    email: '',
+    phone: '',
+    address: '',
+    location: '',
+    capacity: '',
+    contact: '',
   })
   const [editingField, setEditingField] = React.useState<string | null>(null)
   const [tempValues, setTempValues] = React.useState<Record<string, string>>({})
+  const [loading, setLoading] = React.useState(true)
+  const [saving, setSaving] = React.useState<string | null>(null)
+  const [error, setError] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) {
+        setLoading(false)
+        return
+      }
+
+      try {
+        setLoading(true)
+        setError(null)
+        const profile = await warehouseAPI.getProfile(user.id)
+        
+        // Map all backend fields to frontend form data
+        setFormData({
+          warehouseName: profile.name || profile.warehouseName || '',
+          managerName: profile.manager || profile.managerName || '',
+          email: profile.email || user?.email || '',
+          phone: profile.contact || profile.phone || '',
+          address: profile.location || profile.address || '',
+          location: profile.location || '',
+          capacity: profile.capacity || '',
+          contact: profile.contact || '',
+        })
+      } catch (err: any) {
+        if (err.is404 || err.status === 404 || err.message?.includes('404') || err.message?.includes('not found')) {
+          setError(null)
+          setFormData({
+            warehouseName: '',
+            managerName: '',
+            email: user?.email || '',
+            phone: '',
+            address: '',
+            location: '',
+            capacity: '',
+            contact: '',
+          })
+        } else {
+          setError(err.message || 'Failed to load profile')
+          console.error('Failed to fetch profile:', err)
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProfile()
+  }, [user])
 
   const handleEdit = (field: string, currentValue: string) => {
     setEditingField(field)
     setTempValues({ ...tempValues, [field]: currentValue })
+    setError(null)
   }
 
-  const handleSave = (field: string) => {
-    setFormData(d => ({ ...d, [field]: tempValues[field] }))
-    setEditingField(null)
-    // In a real app, save to backend here
+  const handleSave = async (field: string) => {
+    if (!user?.id) {
+      setError('You must be logged in to update your profile')
+      return
+    }
+
+    try {
+      setSaving(field)
+      setError(null)
+
+      // Map frontend field names to backend field names
+      const fieldMapping: Record<string, string> = {
+        warehouseName: 'name',
+        managerName: 'manager',
+        email: 'email',
+        phone: 'contact',
+        address: 'location',
+        location: 'location',
+        capacity: 'capacity',
+        contact: 'contact',
+      }
+
+      const backendField = fieldMapping[field] || field
+      const updateData: any = {}
+      const valueToSave = tempValues[field]?.trim() || ''
+      
+      updateData[backendField] = valueToSave
+
+      const result = await warehouseAPI.updateProfile(updateData, user?.id)
+      
+      if (result?.user) {
+        // Update form data with all fields from backend response
+        setFormData({
+          warehouseName: result.user.name || result.user.warehouseName || '',
+          managerName: result.user.manager || result.user.managerName || '',
+          email: result.user.email || user.email || '',
+          phone: result.user.contact || result.user.phone || '',
+          address: result.user.location || result.user.address || '',
+          location: result.user.location || '',
+          capacity: result.user.capacity || '',
+          contact: result.user.contact || '',
+        })
+      } else {
+        setFormData(d => ({ ...d, [field]: valueToSave }))
+      }
+      
+      setEditingField(null)
+      setTempValues({})
+    } catch (err: any) {
+      setError(err.message || 'Failed to save profile')
+      console.error('Failed to save profile:', err)
+    } finally {
+      setSaving(null)
+    }
   }
 
   const handleCancel = () => {
     setEditingField(null)
     setTempValues({})
+    setError(null)
+  }
+
+  if (loading) {
+    return (
+      <div className="pt-4">
+        <div className="mb-4">
+          <div className="text-sm font-semibold text-slate-900">Warehouse Profile</div>
+        </div>
+        <Card>
+          <CardBody>
+            <div className="text-sm text-slate-600 text-center py-8">Loading profile...</div>
+          </CardBody>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -38,6 +160,12 @@ export function WarehouseProfilePage() {
       <div className="mb-4">
         <div className="text-sm font-semibold text-slate-900">Warehouse Profile</div>
       </div>
+
+      {error && (
+        <div className="mb-4 rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-800">
+          {error}
+        </div>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-12">
         <Card className="lg:col-span-12">
@@ -71,6 +199,7 @@ export function WarehouseProfilePage() {
                         variant="ghost"
                         onClick={() => handleSave('warehouseName')}
                         className="h-8 w-8 p-0"
+                        disabled={saving === 'warehouseName'}
                       >
                         <Check className="h-4 w-4 text-green-600" />
                       </Button>
@@ -90,6 +219,8 @@ export function WarehouseProfilePage() {
                       <button
                         onClick={() => handleEdit('warehouseName', formData.warehouseName)}
                         className="p-1 hover:bg-slate-100 rounded transition-colors"
+                        disabled={!user}
+                        title={!user ? 'Please log in to edit' : 'Edit warehouse name'}
                       >
                         <Pencil className="h-3.5 w-3.5 text-slate-500" />
                       </button>
@@ -111,6 +242,7 @@ export function WarehouseProfilePage() {
                         variant="ghost"
                         onClick={() => handleSave('managerName')}
                         className="h-8 w-8 p-0"
+                        disabled={saving === 'managerName'}
                       >
                         <Check className="h-4 w-4 text-green-600" />
                       </Button>
@@ -130,6 +262,8 @@ export function WarehouseProfilePage() {
                       <button
                         onClick={() => handleEdit('managerName', formData.managerName)}
                         className="p-1 hover:bg-slate-100 rounded transition-colors"
+                        disabled={!user}
+                        title={!user ? 'Please log in to edit' : 'Edit manager name'}
                       >
                         <Pencil className="h-3.5 w-3.5 text-slate-500" />
                       </button>
@@ -152,6 +286,7 @@ export function WarehouseProfilePage() {
                         variant="ghost"
                         onClick={() => handleSave('email')}
                         className="h-8 w-8 p-0"
+                        disabled={saving === 'email'}
                       >
                         <Check className="h-4 w-4 text-green-600" />
                       </Button>
@@ -171,6 +306,8 @@ export function WarehouseProfilePage() {
                       <button
                         onClick={() => handleEdit('email', formData.email)}
                         className="p-1 hover:bg-slate-100 rounded transition-colors"
+                        disabled={!user}
+                        title={!user ? 'Please log in to edit' : 'Edit email'}
                       >
                         <Pencil className="h-3.5 w-3.5 text-slate-500" />
                       </button>
@@ -193,6 +330,7 @@ export function WarehouseProfilePage() {
                         variant="ghost"
                         onClick={() => handleSave('phone')}
                         className="h-8 w-8 p-0"
+                        disabled={saving === 'phone'}
                       >
                         <Check className="h-4 w-4 text-green-600" />
                       </Button>
@@ -212,6 +350,8 @@ export function WarehouseProfilePage() {
                       <button
                         onClick={() => handleEdit('phone', formData.phone)}
                         className="p-1 hover:bg-slate-100 rounded transition-colors"
+                        disabled={!user}
+                        title={!user ? 'Please log in to edit' : 'Edit phone'}
                       >
                         <Pencil className="h-3.5 w-3.5 text-slate-500" />
                       </button>
@@ -220,19 +360,25 @@ export function WarehouseProfilePage() {
                 </div>
 
                 <div className="sm:col-span-2">
-                  <div className="text-xs font-semibold text-slate-600 mb-1">Address</div>
+                  <div className="text-xs font-semibold text-slate-600 mb-1">Location/Address</div>
                   {editingField === 'address' ? (
                     <div className="flex items-center gap-2">
                       <Input
-                        value={tempValues.address || formData.address}
-                        onChange={e => setTempValues({ ...tempValues, address: e.target.value })}
+                        value={tempValues.address || formData.address || formData.location}
+                        onChange={e => setTempValues({ ...tempValues, address: e.target.value, location: e.target.value })}
                         className="flex-1"
                       />
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => handleSave('address')}
+                        onClick={() => {
+                          handleSave('location')
+                          if (tempValues.address) {
+                            setTempValues({ ...tempValues, location: tempValues.address })
+                          }
+                        }}
                         className="h-8 w-8 p-0"
+                        disabled={saving === 'address' || saving === 'location'}
                       >
                         <Check className="h-4 w-4 text-green-600" />
                       </Button>
@@ -248,10 +394,12 @@ export function WarehouseProfilePage() {
                   ) : (
                     <div className="flex items-center gap-2 text-sm text-slate-900">
                       <MapPin className="h-4 w-4 text-slate-500" />
-                      <span>{formData.address}</span>
+                      <span>{formData.location || formData.address || 'Not set'}</span>
                       <button
-                        onClick={() => handleEdit('address', formData.address)}
+                        onClick={() => handleEdit('address', formData.location || formData.address)}
                         className="p-1 hover:bg-slate-100 rounded transition-colors"
+                        disabled={!user}
+                        title={!user ? 'Please log in to edit' : 'Edit location/address'}
                       >
                         <Pencil className="h-3.5 w-3.5 text-slate-500" />
                       </button>
@@ -273,6 +421,7 @@ export function WarehouseProfilePage() {
                         variant="ghost"
                         onClick={() => handleSave('capacity')}
                         className="h-8 w-8 p-0"
+                        disabled={saving === 'capacity'}
                       >
                         <Check className="h-4 w-4 text-green-600" />
                       </Button>
@@ -291,6 +440,8 @@ export function WarehouseProfilePage() {
                       <button
                         onClick={() => handleEdit('capacity', formData.capacity)}
                         className="p-1 hover:bg-slate-100 rounded transition-colors"
+                        disabled={!user}
+                        title={!user ? 'Please log in to edit' : 'Edit capacity'}
                       >
                         <Pencil className="h-3.5 w-3.5 text-slate-500" />
                       </button>
@@ -299,19 +450,20 @@ export function WarehouseProfilePage() {
                 </div>
 
                 <div>
-                  <div className="text-xs font-semibold text-slate-600 mb-1">Operating Hours</div>
-                  {editingField === 'operatingHours' ? (
+                  <div className="text-xs font-semibold text-slate-600 mb-1">Location</div>
+                  {editingField === 'location' ? (
                     <div className="flex items-center gap-2">
                       <Input
-                        value={tempValues.operatingHours || formData.operatingHours}
-                        onChange={e => setTempValues({ ...tempValues, operatingHours: e.target.value })}
+                        value={tempValues.location || formData.location}
+                        onChange={e => setTempValues({ ...tempValues, location: e.target.value })}
                         className="flex-1"
                       />
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => handleSave('operatingHours')}
+                        onClick={() => handleSave('location')}
                         className="h-8 w-8 p-0"
+                        disabled={saving === 'location'}
                       >
                         <Check className="h-4 w-4 text-green-600" />
                       </Button>
@@ -326,10 +478,56 @@ export function WarehouseProfilePage() {
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 text-sm text-slate-900">
-                      <span>{formData.operatingHours}</span>
+                      <MapPin className="h-4 w-4 text-slate-500" />
+                      <span>{formData.location || formData.address || 'Not set'}</span>
                       <button
-                        onClick={() => handleEdit('operatingHours', formData.operatingHours)}
+                        onClick={() => handleEdit('location', formData.location || formData.address)}
                         className="p-1 hover:bg-slate-100 rounded transition-colors"
+                        disabled={!user}
+                        title={!user ? 'Please log in to edit' : 'Edit location'}
+                      >
+                        <Pencil className="h-3.5 w-3.5 text-slate-500" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <div className="text-xs font-semibold text-slate-600 mb-1">Contact</div>
+                  {editingField === 'contact' ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={tempValues.contact || formData.contact}
+                        onChange={e => setTempValues({ ...tempValues, contact: e.target.value })}
+                        className="flex-1"
+                      />
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleSave('contact')}
+                        className="h-8 w-8 p-0"
+                        disabled={saving === 'contact'}
+                      >
+                        <Check className="h-4 w-4 text-green-600" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleCancel}
+                        className="h-8 w-8 p-0"
+                      >
+                        <X className="h-4 w-4 text-red-600" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-sm text-slate-900">
+                      <Phone className="h-4 w-4 text-slate-500" />
+                      <span>{formData.contact || formData.phone || 'Not set'}</span>
+                      <button
+                        onClick={() => handleEdit('contact', formData.contact || formData.phone)}
+                        className="p-1 hover:bg-slate-100 rounded transition-colors"
+                        disabled={!user}
+                        title={!user ? 'Please log in to edit' : 'Edit contact'}
                       >
                         <Pencil className="h-3.5 w-3.5 text-slate-500" />
                       </button>

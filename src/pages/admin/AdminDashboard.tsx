@@ -2,7 +2,10 @@ import * as React from 'react'
 import { Route, Routes, useNavigate } from 'react-router-dom'
 import { Bell, Building2, Coins, LayoutDashboard, LogOut, MapPinned, Settings, Shield, Truck, Users } from 'lucide-react'
 import { Sidebar } from '../../components/Sidebar'
+import { MobileMenuButton } from '../../components/MobileMenuButton'
 import { NotificationPanel } from '../../components/NotificationPanel'
+import { LogoutConfirmationModal } from '../../components/LogoutConfirmationModal'
+import { useAuth } from '../../lib/authContext'
 import { AdminOverviewPage } from './AdminOverviewPage'
 import { AdminShipmentsPage } from './AdminShipmentsPage'
 import { AdminPricingPage } from './AdminPricingPage'
@@ -13,7 +16,9 @@ import { AdminShipmentDetailPage } from './AdminShipmentDetailPage'
 
 export function AdminDashboard() {
   const navigate = useNavigate()
+  const { logout } = useAuth()
   const [showNotifications, setShowNotifications] = React.useState(false)
+  const [showLogoutModal, setShowLogoutModal] = React.useState(false)
 
   React.useEffect(() => {
     if (showNotifications) {
@@ -22,9 +27,15 @@ export function AdminDashboard() {
     }
   }, [showNotifications, navigate])
 
+  const handleLogout = () => {
+    logout()
+    navigate('/')
+  }
+
   return (
     <div className="flex h-dvh flex-col bg-slate-50">
-      <div className="flex flex-1 w-full overflow-hidden">
+      <MobileMenuButton />
+      <div className="flex flex-1 w-full overflow-hidden relative">
         <Sidebar
           title="Admin"
           role="admin"
@@ -39,10 +50,11 @@ export function AdminDashboard() {
             { to: '/admin/notifications', label: 'Notifications', icon: <Bell className="h-4 w-4" /> },
           ]}
           exitItem={{ to: '/', label: 'Exit', icon: <LogOut className="h-4 w-4" /> }}
+          onLogout={() => setShowLogoutModal(true)}
         />
 
         <main className="flex flex-1 flex-col overflow-hidden">
-          <div className="flex-1 overflow-auto px-4 py-6">
+          <div className="flex-1 overflow-auto px-4 py-6 pt-16 sm:pt-6">
             <Routes>
               <Route path="/" element={<AdminOverviewPage />} />
               <Route path="/shipments" element={<AdminShipmentsPage />} />
@@ -78,6 +90,11 @@ export function AdminDashboard() {
           </div>
         </main>
       </div>
+      <LogoutConfirmationModal
+        open={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={handleLogout}
+      />
     </div>
   )
 }

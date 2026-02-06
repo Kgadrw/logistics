@@ -7,23 +7,60 @@ import { Input } from '../../components/ui/Input'
 import { Modal } from '../../components/ui/Modal'
 import { Select } from '../../components/ui/Select'
 import { Table, TBody, TD, TH, THead, TR } from '../../components/ui/Table'
-import { useStore } from '../../lib/store'
+import { useWarehouseAPI } from '../../lib/useAPI'
+import { warehouseAPI } from '../../lib/api'
+import { useAuth } from '../../lib/authContext'
 import type { TransportMethod } from '../../lib/types'
 
 const methods: TransportMethod[] = ['Truck', 'Air', 'Bike', 'Ship']
 
 export function WarehouseOutgoingPage() {
   const navigate = useNavigate()
-  const { shipments, warehouseDispatch } = useStore()
-  const outgoing = React.useMemo(() => shipments.filter(s => s.status === 'Received'), [shipments])
+  const { user } = useAuth()
+  const { outgoing, refresh, loading: loadingShipments } = useWarehouseAPI(user?.id)
 
   const [open, setOpen] = React.useState(false)
   const [shipmentId, setShipmentId] = React.useState<string | null>(null)
   const [method, setMethod] = React.useState<TransportMethod>('Truck')
   const [transportId, setTransportId] = React.useState('TRK-')
   const [departureDateIso, setDepartureDateIso] = React.useState<string>(() => new Date().toISOString().slice(0, 10))
+  const [loading, setLoading] = React.useState(false)
+  const [markingInTransit, setMarkingInTransit] = React.useState<string | null>(null)
 
   const selected = outgoing.find(s => s.id === shipmentId) ?? null
+
+  const handleDispatch = async () => {
+    if (!shipmentId) return
+    try {
+      setLoading(true)
+      await warehouseAPI.dispatchShipment(shipmentId, {
+        method,
+        transportId: transportId.trim() || 'N/A',
+        departureDateIso: new Date(departureDateIso).toISOString(),
+      })
+      await refresh()
+      setOpen(false)
+      setTransportId('TRK-')
+    } catch (err: any) {
+      console.error('Failed to dispatch shipment:', err)
+      alert(err.message || 'Failed to dispatch shipment')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleMarkInTransit = async (id: string) => {
+    try {
+      setMarkingInTransit(id)
+      await warehouseAPI.markInTransit(id)
+      await refresh()
+    } catch (err: any) {
+      console.error('Failed to mark as in transit:', err)
+      alert(err.message || 'Failed to mark as in transit')
+    } finally {
+      setMarkingInTransit(null)
+    }
+  }
 
   return (
     <div className="pt-4">
@@ -34,11 +71,13 @@ export function WarehouseOutgoingPage() {
 
       <Card className="overflow-hidden">
         <CardHeader>
-          <CardTitle>Ready to dispatch</CardTitle>
-          <div className="text-xs text-slate-500">{outgoing.length} received</div>
+          <CardTitle>Outgoing Shipments</CardTitle>
+          <div className="text-xs text-slate-500">
+            {loadingShipments ? 'Loading...' : `${outgoing.length} ${outgoing.length === 1 ? 'shipment' : 'shipments'}`}
+          </div>
         </CardHeader>
         <CardBody className="p-0">
-          <div className="overflow-auto">
+          <div className="overflow-x-auto">
             <Table>
               <THead>
                 <TR>
@@ -60,36 +99,59 @@ export function WarehouseOutgoingPage() {
                       navigate(`/warehouse/shipment/${s.id}`)
                     }}
                   >
-                    <TD className="whitespace-nowrap font-semibold text-slate-900">{s.clientName}</TD>
+                    <TD className="whitespace-nowrap font-semibold text-slate-900">{s.clientName || s.client?.name || 'Unknown'}</TD>
                     <TD className="whitespace-nowrap">{s.id}</TD>
                     <TD className="min-w-64 text-slate-700">
-                      {s.products.slice(0, 2).map(p => p.name).join(', ')}
-                      {s.products.length > 2 ? ` +${s.products.length - 2} more` : ''}
+                      {s.products?.slice(0, 2).map(p => p.name).join(', ') || 'No products'}
+                      {s.products && s.products.length > 2 ? ` +${s.products.length - 2} more` : ''}
                     </TD>
                     <TD>
                       <Badge tone={statusTone(s.status)}>{s.status}</Badge>
                     </TD>
                     <TD className="text-right">
-                      <Button
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setShipmentId(s.id)
-                          setOpen(true)
-                        }}
-                      >
-                        Dispatch
-                      </Button>
+                      <div className="flex items-center gap-2 justify-end">
+                        {s.status === 'Left Warehouse' ? (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleMarkInTransit(s.id)
+                            }}
+                            disabled={markingInTransit === s.id}
+                          >
+                            {markingInTransit === s.id ? 'Marking...' : 'Mark In Transit'}
+                          </Button>
+                        ) : s.status === 'Received' ? (
+                          <Button
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setShipmentId(s.id)
+                              setOpen(true)
+                            }}
+                          >
+                            Dispatch
+                          </Button>
+                        ) : null}
+                      </div>
                     </TD>
                   </TR>
                 ))}
-                {outgoing.length === 0 ? (
+                {outgoing.length === 0 && !loadingShipments ? (
                   <TR>
                     <TD colSpan={5} className="px-4 py-8 text-center text-sm text-slate-600">
-                      No shipments ready for dispatch.
+                      {loadingShipments ? 'Loading shipments...' : 'No outgoing shipments at this time.'}
                     </TD>
                   </TR>
                 ) : null}
+                {loadingShipments && (
+                  <TR>
+                    <TD colSpan={5} className="px-4 py-8 text-center text-sm text-slate-600">
+                      Loading shipments...
+                    </TD>
+                  </TR>
+                )}
               </TBody>
             </Table>
           </div>
@@ -105,16 +167,8 @@ export function WarehouseOutgoingPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-sm text-slate-600">Client will be notified automatically.</div>
             <Button
-              onClick={() => {
-                if (!shipmentId) return
-                warehouseDispatch(shipmentId, {
-                  method,
-                  transportId: transportId.trim() || 'N/A',
-                  departureDateIso: new Date(departureDateIso).toISOString(),
-                })
-                setOpen(false)
-              }}
-              disabled={!shipmentId}
+              onClick={handleDispatch}
+              disabled={!shipmentId || loading}
             >
               Confirm dispatch
             </Button>

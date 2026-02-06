@@ -1,15 +1,17 @@
+import * as React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Badge, statusTone } from '../../components/ui/Badge'
 import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
 import { Table, TBody, TD, TH, THead, TR } from '../../components/ui/Table'
-import { useStore } from '../../lib/store'
+import { useWarehouseAPI } from '../../lib/useAPI'
+import { useAuth } from '../../lib/authContext'
 import { formatDateTime } from '../../lib/format'
 import { cn } from '../../lib/cn'
 
 export function WarehouseHistoryPage() {
   const navigate = useNavigate()
-  const { shipments } = useStore()
-  const history = shipments.filter(s => s.status === 'Delivered' || s.status === 'In Transit' || s.status === 'Left Warehouse')
+  const { user } = useAuth()
+  const { history, loading } = useWarehouseAPI(user?.id)
 
   return (
     <div className="pt-4">
@@ -21,10 +23,10 @@ export function WarehouseHistoryPage() {
       <Card className="overflow-hidden">
         <CardHeader>
           <CardTitle>Shipment history</CardTitle>
-          <div className="text-xs text-slate-500">{history.length} records</div>
+          <div className="text-xs text-slate-500">{loading ? 'Loading...' : `${history.length} records`}</div>
         </CardHeader>
         <CardBody className="p-0">
-          <div className="overflow-auto">
+          <div className="overflow-x-auto">
             <Table>
               <THead>
                 <TR>
@@ -43,14 +45,14 @@ export function WarehouseHistoryPage() {
                     onClick={() => navigate(`/warehouse/shipment/${s.id}`)}
                   >
                     <TD className="whitespace-nowrap font-semibold text-slate-900">{s.id}</TD>
-                    <TD className="whitespace-nowrap">{s.clientName}</TD>
+                    <TD className="whitespace-nowrap">{s.clientName || s.client?.name || 'Unknown'}</TD>
                     <TD>
                       <Badge tone={statusTone(s.status)}>{s.status}</Badge>
                     </TD>
                     <TD className="whitespace-nowrap text-slate-700">
                       {s.dispatch ? `${s.dispatch.method} • ${s.dispatch.transportId}` : '—'}
                     </TD>
-                    <TD className="whitespace-nowrap text-slate-600">{formatDateTime(s.updatedAtIso)}</TD>
+                    <TD className="whitespace-nowrap text-slate-600">{formatDateTime(s.updatedAtIso || s.createdAtIso)}</TD>
                   </TR>
                 ))}
                 {history.length === 0 ? (

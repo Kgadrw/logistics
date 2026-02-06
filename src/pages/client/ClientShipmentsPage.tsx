@@ -1,17 +1,24 @@
 import * as React from 'react'
-import { Edit, PackagePlus, Send, Truck } from 'lucide-react'
+import { Edit, PackagePlus, Send, Truck, Search, Filter, Package, TrendingUp, CheckCircle2, Clock } from 'lucide-react'
 import { Badge, statusTone } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
+import { Input } from '../../components/ui/Input'
 import { ShipmentTimeline } from '../../components/Timeline'
 import { NotificationPanel } from '../../components/NotificationPanel'
+import { ImageViewer } from '../../components/ImageViewer'
 import { formatMoneyUsd } from '../../lib/format'
-import { useStore } from '../../lib/store'
+import { useClientAPI } from '../../lib/useAPI'
+import { useAuth } from '../../lib/authContext'
+import { clientAPI } from '../../lib/api'
 import { CreateShipmentModal } from './CreateShipmentModal'
+import { cn } from '../../lib/cn'
 
 export function ClientShipmentsPage() {
-  const { shipments, createShipment, updateShipment, submitShipment } = useStore()
-  const clientShipments = React.useMemo(() => shipments.filter(s => s.clientName === 'Acme Retail'), [shipments])
+  const { user } = useAuth()
+  const { shipments, createShipment, updateShipment, submitShipment, loading, refresh } = useClientAPI(user?.id)
+  const clientShipments = React.useMemo(() => shipments, [shipments])
+  const [markingDelivered, setMarkingDelivered] = React.useState<string | null>(null)
 
   const [selectedId, setSelectedId] = React.useState<string | null>(clientShipments[0]?.id ?? null)
   const selected = clientShipments.find(s => s.id === selectedId) ?? clientShipments[0]
@@ -22,6 +29,9 @@ export function ClientShipmentsPage() {
 
   const [open, setOpen] = React.useState(false)
   const [editingShipment, setEditingShipment] = React.useState<string | null>(null)
+  const [viewingImage, setViewingImage] = React.useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = React.useState('')
+  const [statusFilter, setStatusFilter] = React.useState<string | null>(null)
 
   const stats = React.useMemo(() => {
     const total = clientShipments.length
@@ -29,6 +39,33 @@ export function ClientShipmentsPage() {
     const delivered = clientShipments.filter(s => s.status === 'Delivered').length
     const totalSpent = clientShipments.reduce((sum, s) => sum + (s.estimatedCostUsd || 0), 0)
     return { total, active, delivered, totalSpent }
+  }, [clientShipments])
+
+  // Filter shipments based on search and status
+  const filteredShipments = React.useMemo(() => {
+    let filtered = clientShipments
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(s => 
+        s.id.toLowerCase().includes(query) ||
+        s.warehouseName?.toLowerCase().includes(query) ||
+        s.products.some((p: any) => p.name.toLowerCase().includes(query))
+      )
+    }
+
+    // Apply status filter
+    if (statusFilter) {
+      filtered = filtered.filter(s => s.status === statusFilter)
+    }
+
+    return filtered
+  }, [clientShipments, searchQuery, statusFilter])
+
+  const statusOptions = React.useMemo(() => {
+    const statuses = new Set(clientShipments.map((s: any) => s.status))
+    return Array.from(statuses).sort()
   }, [clientShipments])
 
   return (
@@ -44,37 +81,115 @@ export function ClientShipmentsPage() {
         </Button>
       </div>
 
-      <div className="mb-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
+      {/* Quick Stats Cards */}
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="border-l-4 border-l-blue-500 hover:shadow-md transition-shadow">
           <CardBody>
-            <div className="text-xs font-semibold text-slate-600">Total Shipments</div>
-            <div className="mt-1 text-2xl font-semibold text-slate-900">{stats.total}</div>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs font-semibold text-slate-600">Total Shipments</div>
+                <div className="mt-1 text-2xl font-semibold text-slate-900">{stats.total}</div>
+              </div>
+              <Package className="h-8 w-8 text-blue-500 opacity-20" />
+            </div>
           </CardBody>
         </Card>
-        <Card>
+        <Card className="border-l-4 border-l-orange-500 hover:shadow-md transition-shadow">
           <CardBody>
-            <div className="text-xs font-semibold text-slate-600">Active Shipments</div>
-            <div className="mt-1 text-2xl font-semibold text-slate-900">{stats.active}</div>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs font-semibold text-slate-600">Active Shipments</div>
+                <div className="mt-1 text-2xl font-semibold text-slate-900">{stats.active}</div>
+              </div>
+              <Clock className="h-8 w-8 text-orange-500 opacity-20" />
+            </div>
           </CardBody>
         </Card>
-        <Card>
+        <Card className="border-l-4 border-l-green-500 hover:shadow-md transition-shadow">
           <CardBody>
-            <div className="text-xs font-semibold text-slate-600">Delivered</div>
-            <div className="mt-1 text-2xl font-semibold text-slate-900">{stats.delivered}</div>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs font-semibold text-slate-600">Delivered</div>
+                <div className="mt-1 text-2xl font-semibold text-slate-900">{stats.delivered}</div>
+              </div>
+              <CheckCircle2 className="h-8 w-8 text-green-500 opacity-20" />
+            </div>
           </CardBody>
         </Card>
-        <Card>
+        <Card className="border-l-4 border-l-purple-500 hover:shadow-md transition-shadow">
           <CardBody>
-            <div className="text-xs font-semibold text-brand-700">Total Spent</div>
-            <div className="mt-1 text-2xl font-semibold text-brand-900">${stats.totalSpent.toLocaleString()}</div>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs font-semibold text-purple-700">Total Spent</div>
+                <div className="mt-1 text-2xl font-semibold text-purple-900">${stats.totalSpent.toLocaleString()}</div>
+              </div>
+              <TrendingUp className="h-8 w-8 text-purple-500 opacity-20" />
+            </div>
           </CardBody>
         </Card>
       </div>
 
+      {/* Search and Filter Bar */}
+      <div className="mb-4 flex flex-col sm:flex-row gap-3">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Input
+            type="text"
+            placeholder="Search shipments by ID, warehouse, or product..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
+          <Button
+            variant={statusFilter === null ? 'default' : 'secondary'}
+            size="sm"
+            onClick={() => setStatusFilter(null)}
+            className="whitespace-nowrap"
+          >
+            <Filter className="h-4 w-4 mr-1" />
+            All
+          </Button>
+          {statusOptions.map(status => (
+            <Button
+              key={status}
+              variant={statusFilter === status ? 'default' : 'secondary'}
+              size="sm"
+              onClick={() => setStatusFilter(statusFilter === status ? null : status)}
+              className="whitespace-nowrap"
+            >
+              {status}
+            </Button>
+          ))}
+        </div>
+      </div>
+
       <div className="grid gap-4 lg:grid-cols-12">
-        <div className="lg:col-span-7">
-          <div className="grid gap-3">
-            {clientShipments.map(s => (
+        <div className="lg:col-span-7 order-2 lg:order-1">
+          {filteredShipments.length === 0 ? (
+            <Card>
+              <CardBody className="text-center py-12">
+                <Package className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                <div className="text-sm font-semibold text-slate-900 mb-1">
+                  {searchQuery || statusFilter ? 'No shipments match your filters' : 'No shipments yet'}
+                </div>
+                <div className="text-sm text-slate-600 mb-4">
+                  {searchQuery || statusFilter 
+                    ? 'Try adjusting your search or filter criteria'
+                    : 'Create your first shipment to get started'}
+                </div>
+                {!searchQuery && !statusFilter && (
+                  <Button onClick={() => setOpen(true)}>
+                    <PackagePlus className="h-4 w-4 mr-2" />
+                    Create New Shipment
+                  </Button>
+                )}
+              </CardBody>
+            </Card>
+          ) : (
+            <div className="grid gap-3">
+              {filteredShipments.map(s => (
               <button
                 key={s.id}
                 className={[
@@ -125,11 +240,12 @@ export function ClientShipmentsPage() {
                   <ShipmentTimeline status={s.status} darkMode={selected?.id === s.id} />
                 </div>
               </button>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className="lg:col-span-5">
+        <div className="lg:col-span-5 order-1 lg:order-2">
           <Card>
             <CardHeader>
               <CardTitle>Shipment details</CardTitle>
@@ -149,7 +265,8 @@ export function ClientShipmentsPage() {
                             <img
                               src={p.imageUrl}
                               alt={p.name}
-                              className="h-16 w-16 rounded-lg object-cover border border-slate-200 shrink-0"
+                              className="h-16 w-16 rounded-lg object-cover border border-slate-200 shrink-0 cursor-pointer hover:opacity-90 transition-opacity"
+                              onClick={() => setViewingImage(p.imageUrl)}
                             />
                           )}
                           <div className="flex-1 min-w-0">
@@ -196,17 +313,76 @@ export function ClientShipmentsPage() {
                     </div>
                   ) : null}
 
+                  {/* Warehouse Updates */}
+                  {(selected.warehouseRemarks || (selected.receivedProductImages && selected.receivedProductImages.length > 0)) && (
+                    <div className="rounded-xl bg-blue-50 p-4 ring-1 ring-blue-200 border border-blue-200">
+                      <div className="text-xs font-semibold text-blue-900 mb-2">Warehouse Updates</div>
+                      {selected.warehouseRemarks && (
+                        <div className="mb-3">
+                          <div className="text-xs font-semibold text-blue-700 mb-1">Message from Warehouse</div>
+                          <div className="text-sm text-blue-900">{selected.warehouseRemarks}</div>
+                        </div>
+                      )}
+                      {selected.receivedProductImages && selected.receivedProductImages.length > 0 && (
+                        <div>
+                          <div className="text-xs font-semibold text-blue-700 mb-2">Received Product Images</div>
+                          <div className="grid grid-cols-2 gap-2">
+                            {selected.receivedProductImages.map((imageUrl: string, index: number) => (
+                              <div 
+                                key={index} 
+                                className="relative bg-blue-50 rounded-lg border border-blue-300 p-1 flex items-center justify-center min-h-[100px] cursor-pointer hover:bg-blue-100 transition-colors"
+                                onClick={() => setViewingImage(imageUrl)}
+                              >
+                                <img
+                                  src={imageUrl}
+                                  alt={`Received product ${index + 1}`}
+                                  className="max-w-full max-h-[150px] rounded-lg object-contain"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {selected.status === 'Draft' ? (
                     <div className="flex gap-2">
                       <Button variant="secondary" onClick={() => setEditingShipment(selected.id)} className="flex-1">
                         <Edit className="h-4 w-4" />
                         Edit
                       </Button>
-                      <Button onClick={() => submitShipment(selected.id)} className="flex-1">
+                      <Button onClick={async () => {
+                        try {
+                          await submitShipment(selected.id)
+                        } catch (error) {
+                          console.error('Failed to submit shipment:', error)
+                        }
+                      }} className="flex-1">
                         <Send className="h-4 w-4" />
                         Submit
                       </Button>
                     </div>
+                  ) : selected.status === 'In Transit' ? (
+                    <Button
+                      onClick={async () => {
+                        if (!selected.id) return
+                        try {
+                          setMarkingDelivered(selected.id)
+                          await clientAPI.markDelivered(selected.id)
+                          await refresh()
+                        } catch (error) {
+                          console.error('Failed to mark as delivered:', error)
+                          alert('Failed to mark as delivered')
+                        } finally {
+                          setMarkingDelivered(null)
+                        }
+                      }}
+                      disabled={markingDelivered === selected.id}
+                      className="w-full"
+                    >
+                      {markingDelivered === selected.id ? 'Marking...' : 'Mark as Delivered'}
+                    </Button>
                   ) : (
                     <div className="text-sm text-slate-600">Tracking is active. You'll receive real-time updates here.</div>
                   )}
@@ -228,54 +404,67 @@ export function ClientShipmentsPage() {
           setEditingShipment(null)
         }}
         shipment={editingShipment ? shipments.find(s => s.id === editingShipment) : undefined}
-        onSubmit={(data) => {
-          if (editingShipment) {
-            // Update existing shipment
-            updateShipment(editingShipment, {
-              notes: data.notes,
-              products: data.products.map(p => ({
-                name: p.name.trim(),
-                quantity: p.quantity,
-                weightKg: p.weightKg,
-                category: p.category === 'Other' && p.customCategory ? p.customCategory.trim() : p.category,
-                imageUrl: p.imageUrl,
-                packagingType: p.packagingType,
-                cbm: p.cbm,
-                lengthCm: p.lengthCm,
-                widthCm: p.widthCm,
-                heightCm: p.heightCm,
-                isFragile: p.isFragile,
-                isHazardous: p.isHazardous,
-                specialInstructions: p.specialInstructions,
-              })),
-            })
-            setEditingShipment(null)
-          } else {
-            // Create new shipment
-            const created = createShipment({
-              clientName: 'Acme Retail',
-              warehouseName: 'Warehouse A',
-              notes: data.notes,
-              products: data.products.map(p => ({
-                name: p.name.trim(),
-                quantity: p.quantity,
-                weightKg: p.weightKg,
-                category: p.category === 'Other' && p.customCategory ? p.customCategory.trim() : p.category,
-                imageUrl: p.imageUrl,
-                packagingType: p.packagingType,
-                cbm: p.cbm,
-                lengthCm: p.lengthCm,
-                widthCm: p.widthCm,
-                heightCm: p.heightCm,
-                isFragile: p.isFragile,
-                isHazardous: p.isHazardous,
-                specialInstructions: p.specialInstructions,
-              })),
-            })
-            setSelectedId(created.id)
+        onSubmit={async (data) => {
+          try {
+            if (editingShipment) {
+              // Update existing shipment
+              await updateShipment(editingShipment, {
+                notes: data.notes,
+                products: data.products.map(p => ({
+                  name: p.name.trim(),
+                  quantity: p.quantity,
+                  weightKg: p.weightKg,
+                  category: p.category === 'Other' && p.customCategory ? p.customCategory.trim() : p.category,
+                  imageUrl: p.imageUrl,
+                  packagingType: p.packagingType,
+                  cbm: p.cbm,
+                  lengthCm: p.lengthCm,
+                  widthCm: p.widthCm,
+                  heightCm: p.heightCm,
+                  isFragile: p.isFragile,
+                  isHazardous: p.isHazardous,
+                  specialInstructions: p.specialInstructions,
+                })),
+              })
+              setEditingShipment(null)
+            } else {
+              // Create new shipment
+              const created = await createShipment({
+                clientName: user?.name || 'Client',
+                warehouseName: data.warehouseName || 'Warehouse A',
+                warehouseId: data.warehouseId || null,
+                clientId: user?.id || '',
+                notes: data.notes,
+                products: data.products.map(p => ({
+                  name: p.name.trim(),
+                  quantity: p.quantity,
+                  weightKg: p.weightKg,
+                  category: p.category === 'Other' && p.customCategory ? p.customCategory.trim() : p.category,
+                  imageUrl: p.imageUrl,
+                  packagingType: p.packagingType,
+                  cbm: p.cbm,
+                  lengthCm: p.lengthCm,
+                  widthCm: p.widthCm,
+                  heightCm: p.heightCm,
+                  isFragile: p.isFragile,
+                  isHazardous: p.isHazardous,
+                  specialInstructions: p.specialInstructions,
+                })),
+              })
+              if (created) setSelectedId(created.id)
+            }
+            setOpen(false)
+          } catch (error) {
+            console.error('Failed to save shipment:', error)
+            // Error handling could be improved with a toast notification
           }
-          setOpen(false)
         }}
+      />
+      
+      <ImageViewer 
+        imageUrl={viewingImage}
+        open={!!viewingImage}
+        onClose={() => setViewingImage(null)}
       />
     </div>
   )

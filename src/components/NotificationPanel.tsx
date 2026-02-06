@@ -5,7 +5,7 @@ import { Input } from './ui/Input'
 import { Search, X } from 'lucide-react'
 import { Button } from './ui/Button'
 import type { Role } from '../lib/types'
-import { useStore } from '../lib/store'
+import { useNotificationsAPI } from '../lib/useAPI'
 import { formatDateTime } from '../lib/format'
 import { cn } from '../lib/cn'
 
@@ -18,8 +18,7 @@ type FilterType = 'all' | 'unread' | 'read'
 
 export function NotificationPanel({ role, className }: { role: Role; className?: string }) {
   const navigate = useNavigate()
-  const { notifications, markNotificationsRead } = useStore()
-  const lastRoleRef = React.useRef<Role | null>(null)
+  const { notifications, loading, markRead } = useNotificationsAPI(role)
   const [searchQuery, setSearchQuery] = React.useState('')
   const [filterType, setFilterType] = React.useState<FilterType>('all')
 
@@ -37,8 +36,9 @@ export function NotificationPanel({ role, className }: { role: Role; className?:
   }
 
   const items = React.useMemo(() => {
-    return notifications.filter(n => n.roleTargets.includes(role))
-  }, [notifications, role])
+    // Notifications are already filtered by role from the API
+    return notifications || []
+  }, [notifications])
 
   const filteredItems = React.useMemo(() => {
     let filtered = items
@@ -56,9 +56,9 @@ export function NotificationPanel({ role, className }: { role: Role; className?:
 
     // Apply read/unread filter
     if (filterType === 'unread') {
-      filtered = filtered.filter(n => n.unreadBy[role])
+      filtered = filtered.filter(n => n.unreadBy?.[role])
     } else if (filterType === 'read') {
-      filtered = filtered.filter(n => !n.unreadBy[role])
+      filtered = filtered.filter(n => !n.unreadBy?.[role])
     }
 
     return filtered
@@ -73,14 +73,6 @@ export function NotificationPanel({ role, className }: { role: Role; className?:
     return Array.from(m.entries())
   }, [filteredItems])
 
-  React.useEffect(() => {
-    // Only mark as read if role changed or on initial mount
-    if (lastRoleRef.current !== role) {
-      markNotificationsRead(role)
-      lastRoleRef.current = role
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [role])
 
   const hasActiveFilters = searchQuery.trim().length > 0 || filterType !== 'all'
 
@@ -114,21 +106,21 @@ export function NotificationPanel({ role, className }: { role: Role; className?:
           </div>
           <div className="flex flex-wrap gap-2">
             <Button
-              variant={filterType === 'all' ? 'primary' : 'ghost'}
+              variant={filterType === 'all' ? 'primary' : 'secondary'}
               size="sm"
               onClick={() => setFilterType('all')}
             >
               All
             </Button>
             <Button
-              variant={filterType === 'unread' ? 'primary' : 'ghost'}
+              variant={filterType === 'unread' ? 'primary' : 'secondary'}
               size="sm"
               onClick={() => setFilterType('unread')}
             >
               Unread
             </Button>
             <Button
-              variant={filterType === 'read' ? 'primary' : 'ghost'}
+              variant={filterType === 'read' ? 'primary' : 'secondary'}
               size="sm"
               onClick={() => setFilterType('read')}
             >
@@ -142,7 +134,7 @@ export function NotificationPanel({ role, className }: { role: Role; className?:
                   setSearchQuery('')
                   setFilterType('all')
                 }}
-                className="ml-auto"
+                className="ml-auto text-white"
               >
                 <X className="h-3 w-3 mr-1" />
                 Clear
@@ -159,7 +151,9 @@ export function NotificationPanel({ role, className }: { role: Role; className?:
         )}
 
         {/* Notifications List */}
-        {items.length === 0 ? (
+        {loading ? (
+          <div className="text-sm text-slate-600 text-center py-8">Loading notifications...</div>
+        ) : items.length === 0 ? (
           <div className="text-sm text-slate-600">No notifications yet.</div>
         ) : filteredItems.length === 0 ? (
           <div className="text-sm text-slate-600 text-center py-8">
@@ -176,10 +170,19 @@ export function NotificationPanel({ role, className }: { role: Role; className?:
                       key={n.id}
                       className={cn(
                         'rounded-xl border border-slate-200 bg-white px-4 py-3',
-                        n.unreadBy[role] ? 'ring-2 ring-brand-100' : null,
+                        n.unreadBy?.[role] ? 'ring-2 ring-brand-100' : null,
                         n.shipmentId ? 'cursor-pointer hover:bg-slate-50 transition-colors' : null,
                       )}
-                      onClick={() => {
+                      onClick={async () => {
+                        // Mark notification as read when clicked
+                        if (n.unreadBy?.[role]) {
+                          try {
+                            await markRead([n.id])
+                          } catch (error) {
+                            console.error('Failed to mark notification as read:', error)
+                          }
+                        }
+                        
                         if (n.shipmentId) {
                           navigate(getShipmentDetailPath(n.shipmentId))
                         }
@@ -187,7 +190,12 @@ export function NotificationPanel({ role, className }: { role: Role; className?:
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1">
-                          <div className="text-sm font-semibold text-slate-900">{n.title}</div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-sm font-semibold text-slate-900">{n.title}</div>
+                            {n.unreadBy?.[role] && (
+                              <span className="inline-flex h-2 w-2 rounded-full bg-blue-600" title="Unread" />
+                            )}
+                          </div>
                           <div className="mt-1 text-sm text-slate-600">{n.message}</div>
                           {n.shipmentId && (
                             <div className="mt-1 text-xs text-slate-500">Shipment: {n.shipmentId}</div>

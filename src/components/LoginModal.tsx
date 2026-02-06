@@ -6,6 +6,7 @@ import { Button } from './ui/Button'
 import { cn } from '../lib/cn'
 import type { Role } from '../lib/types'
 import { Package, Warehouse, Shield, Lock, Mail, ArrowRight } from 'lucide-react'
+import { useAuth } from '../lib/authContext'
 
 type LoginModalProps = {
   open: boolean
@@ -57,6 +58,7 @@ const roleConfig = {
 
 export function LoginModal({ open, onClose, role }: LoginModalProps) {
   const navigate = useNavigate()
+  const { login } = useAuth()
   const [email, setEmail] = React.useState('')
   const [password, setPassword] = React.useState('')
   const [error, setError] = React.useState('')
@@ -72,12 +74,12 @@ export function LoginModal({ open, onClose, role }: LoginModalProps) {
     }
   }, [open])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setIsLoading(true)
 
-    // Simple validation for demo purposes
+    // Simple validation
     if (!email.trim()) {
       setError('Please enter your email address')
       setIsLoading(false)
@@ -90,13 +92,43 @@ export function LoginModal({ open, onClose, role }: LoginModalProps) {
       return
     }
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
-      // For demo, accept any credentials
+    try {
+      // Call backend API
+      const response = await fetch('https://new-logistics.onrender.com/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          role,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed')
+      }
+
+      // Save user data to auth context
+      if (data.user) {
+        login({
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.name,
+          role: data.user.role,
+        })
+      }
+
+      // Success - navigate to dashboard
       navigate(config.route)
       onClose()
-    }, 500)
+    } catch (err: any) {
+      setError(err.message || 'Failed to login. Please try again.')
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -109,7 +141,7 @@ export function LoginModal({ open, onClose, role }: LoginModalProps) {
       footer={
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-xs text-slate-500 hidden sm:block">
-            Demo mode: Any credentials work
+            Enter your credentials to login
           </div>
           <div className="flex gap-3 w-full sm:w-auto">
             <Button variant="ghost" onClick={onClose} disabled={isLoading} className="flex-1 sm:flex-none">
@@ -196,7 +228,7 @@ export function LoginModal({ open, onClose, role }: LoginModalProps) {
 
           <div className="pt-2 sm:hidden">
             <div className="text-xs text-slate-500 text-center">
-              Demo mode: Any credentials will work for testing purposes.
+              Enter your credentials to access your dashboard.
             </div>
           </div>
         </form>

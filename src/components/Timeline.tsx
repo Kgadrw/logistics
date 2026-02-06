@@ -9,8 +9,31 @@ function statusIndex(status: ShipmentStatus) {
   return steps.indexOf(status as (typeof steps)[number])
 }
 
-export function ShipmentTimeline({ status, darkMode }: { status: ShipmentStatus; darkMode?: boolean }) {
+type TimelineAction = {
+  label: string
+  onClick: () => void
+  disabled?: boolean
+  loading?: boolean
+}
+
+export function ShipmentTimeline({ 
+  status, 
+  darkMode,
+  onAction,
+  actionLabel,
+  actionDisabled,
+  actionLoading
+}: { 
+  status: ShipmentStatus
+  darkMode?: boolean
+  onAction?: () => void
+  actionLabel?: string
+  actionDisabled?: boolean
+  actionLoading?: boolean
+}) {
   const idx = statusIndex(status)
+  const nextStepIndex = idx + 1
+  const hasNextStep = nextStepIndex < steps.length
 
   return (
     <div className="w-full">
@@ -18,10 +41,11 @@ export function ShipmentTimeline({ status, darkMode }: { status: ShipmentStatus;
         {steps.map((s, i) => {
           const done = i <= idx
           const active = i === idx
+          const isNextStep = i === nextStepIndex && hasNextStep
           const Icon = s === 'In Transit' ? Truck : done ? CheckCircle2 : Circle
           return (
             <div key={s} className="flex flex-1 items-center">
-              <div className="flex flex-col items-center gap-1">
+              <div className="flex flex-col items-center gap-1 flex-1">
                 <div
                   className={cn(
                     'flex h-9 w-9 items-center justify-center rounded-full ring-1 transition-all duration-300 ease-in-out',
@@ -34,18 +58,34 @@ export function ShipmentTimeline({ status, darkMode }: { status: ShipmentStatus;
                         : 'bg-white text-slate-400 ring-slate-200',
                     active && !darkMode ? 'ring-2 ring-brand-200' : null,
                     active && darkMode ? 'ring-2 ring-white/50' : null,
+                    isNextStep && !darkMode ? 'ring-2 ring-blue-300 bg-blue-50' : null,
+                    isNextStep && darkMode ? 'ring-2 ring-blue-400/50 bg-blue-500/20' : null,
                   )}
                 >
                   <Icon className="h-5 w-5 transition-colors duration-300" />
                 </div>
                 <div
                   className={cn(
-                    'text-[11px] font-medium transition-colors duration-300',
+                    'text-[11px] font-medium transition-colors duration-300 text-center',
                     darkMode ? (done ? 'text-white' : 'text-white/60') : done ? 'text-slate-800' : 'text-slate-500',
                   )}
                 >
                   {s}
                 </div>
+                {isNextStep && onAction && (
+                  <button
+                    onClick={onAction}
+                    disabled={actionDisabled || actionLoading}
+                    className={cn(
+                      'mt-2 px-3 py-1.5 text-xs font-medium rounded-lg transition-all',
+                      'bg-blue-600 text-white hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed',
+                      'shadow-sm hover:shadow-md',
+                      actionLoading && 'opacity-70'
+                    )}
+                  >
+                    {actionLoading ? 'Processing...' : actionLabel || `Mark as ${s}`}
+                  </button>
+                )}
               </div>
               {i < steps.length - 1 ? (
                 <div

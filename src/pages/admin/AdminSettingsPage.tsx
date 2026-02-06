@@ -9,7 +9,7 @@ export function AdminSettingsPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-12">
-        <Card className="lg:col-span-7">
+        <Card className="lg:col-span-7 order-2 lg:order-1">
           <CardHeader>
             <CardTitle>System</CardTitle>
             <div className="text-xs text-slate-500">Defaults for this UI prototype</div>
@@ -32,7 +32,7 @@ export function AdminSettingsPage() {
           </CardBody>
         </Card>
 
-        <Card className="lg:col-span-5">
+        <Card className="lg:col-span-5 order-1 lg:order-2">
           <CardHeader>
             <CardTitle>Design system</CardTitle>
             <div className="text-xs text-slate-500">Clean logistics SaaS</div>

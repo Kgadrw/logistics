@@ -3,19 +3,49 @@ import { Button } from '../../components/ui/Button'
 import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
 import { Input } from '../../components/ui/Input'
 import { Select } from '../../components/ui/Select'
-import { useStore } from '../../lib/store'
+import { useAdminAPI } from '../../lib/useAPI'
+import { adminAPI } from '../../lib/api'
 import type { PricingRules, TransportMethod } from '../../lib/types'
 
 const methods: TransportMethod[] = ['Truck', 'Air', 'Bike', 'Ship']
 
 export function AdminPricingPage() {
-  const { pricing, adminUpdatePricing } = useStore()
-
-  const [draft, setDraft] = React.useState<PricingRules>(() => structuredClone(pricing))
+  const { pricing, refreshPricing } = useAdminAPI()
+  const [draft, setDraft] = React.useState<PricingRules | null>(null)
+  const [loading, setLoading] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
-    setDraft(structuredClone(pricing))
+    if (pricing) {
+      setDraft(structuredClone(pricing))
+    }
   }, [pricing])
+
+  const handleSave = async () => {
+    if (!draft) return
+    try {
+      setLoading(true)
+      setError(null)
+      await adminAPI.updatePricing(draft)
+      await refreshPricing()
+    } catch (err: any) {
+      setError(err.message || 'Failed to update pricing')
+      console.error('Failed to update pricing:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!draft) {
+    return (
+      <div className="pt-4">
+        <div className="mb-4">
+          <div className="text-sm font-semibold text-slate-900">Pricing Management</div>
+          <div className="mt-1 text-sm text-slate-600">Loading...</div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="pt-4">
@@ -24,8 +54,14 @@ export function AdminPricingPage() {
         <div className="mt-1 text-sm text-slate-600">Set global pricing rules. Changes are recorded in the audit log.</div>
       </div>
 
+      {error && (
+        <div className="mb-4 rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-800">
+          {error}
+        </div>
+      )}
+
       <div className="grid gap-4 lg:grid-cols-12">
-        <Card className="lg:col-span-7">
+        <Card className="lg:col-span-7 order-2 lg:order-1">
           <CardHeader>
             <CardTitle>Rules</CardTitle>
             <div className="text-xs text-slate-500">Price per kg, transport, and handling fees</div>
@@ -82,13 +118,12 @@ export function AdminPricingPage() {
             </div>
 
             <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-              <Button variant="secondary" onClick={() => setDraft(structuredClone(pricing))}>
+              <Button variant="secondary" onClick={() => pricing && setDraft(structuredClone(pricing))}>
                 Reset
               </Button>
               <Button
-                onClick={() => {
-                  adminUpdatePricing(draft, 'Admin')
-                }}
+                onClick={handleSave}
+                disabled={loading}
               >
                 Save pricing rules
               </Button>
@@ -96,7 +131,7 @@ export function AdminPricingPage() {
           </CardBody>
         </Card>
 
-        <Card className="lg:col-span-5">
+        <Card className="lg:col-span-5 order-1 lg:order-2">
           <CardHeader>
             <CardTitle>Policy notes</CardTitle>
             <div className="text-xs text-slate-500">How pricing is applied</div>
