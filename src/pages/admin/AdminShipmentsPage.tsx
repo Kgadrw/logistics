@@ -116,7 +116,7 @@ export function AdminShipmentsPage() {
                       <Badge tone={statusTone(s.status)}>{s.status}</Badge>
                     </TD>
                     <TD className="whitespace-nowrap text-right font-semibold text-slate-900">{formatMoneyUsd(s.estimatedCostUsd || 0)}</TD>
-                    <TD className="whitespace-nowrap text-slate-600">{formatDateTime(s.updatedAtIso || s.updatedAt || s.createdAtIso || s.createdAt)}</TD>
+                    <TD className="whitespace-nowrap text-slate-600">{formatDateTime(s.updatedAtIso || s.createdAtIso)}</TD>
                   </TR>
                 ))}
                 {filtered.length === 0 ? (

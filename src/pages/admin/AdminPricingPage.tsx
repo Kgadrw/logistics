@@ -75,7 +75,7 @@ export function AdminPricingPage() {
                   min={0}
                   step={0.5}
                   value={draft.pricePerKgUsd}
-                  onChange={e => setDraft(d => ({ ...d, pricePerKgUsd: Number(e.target.value) }))}
+                  onChange={e => setDraft(d => d ? { ...d, pricePerKgUsd: Number(e.target.value) } : null)}
                 />
               </div>
               <div>
@@ -85,7 +85,7 @@ export function AdminPricingPage() {
                   min={0}
                   step={1}
                   value={draft.warehouseHandlingFeeUsd}
-                  onChange={e => setDraft(d => ({ ...d, warehouseHandlingFeeUsd: Number(e.target.value) }))}
+                  onChange={e => setDraft(d => d ? { ...d, warehouseHandlingFeeUsd: Number(e.target.value) } : null)}
                 />
               </div>
             </div>
@@ -104,10 +104,10 @@ export function AdminPricingPage() {
                           step={5}
                           value={draft.transportPriceUsd[m]}
                           onChange={e =>
-                            setDraft(d => ({
+                            setDraft(d => d ? {
                               ...d,
                               transportPriceUsd: { ...d.transportPriceUsd, [m]: Number(e.target.value) },
-                            }))
+                            } : null)
                           }
                         />
                       </div>

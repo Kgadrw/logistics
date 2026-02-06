@@ -31,10 +31,12 @@ export type Shipment = {
   id: string // e.g. SH-1023
   clientName: string
   warehouseName: string
+  warehouseId?: string
   status: ShipmentStatus
   products: Product[]
   notes?: string
   warehouseRemarks?: string
+  receivedProductImages?: string[]
   createdAtIso: string
   updatedAtIso: string
   estimatedCostUsd: number
@@ -42,6 +44,15 @@ export type Shipment = {
     method: TransportMethod
     transportId: string
     departureDateIso: string
+  }
+  // Optional nested objects for API responses
+  client?: {
+    id: string
+    name: string
+  }
+  warehouse?: {
+    id: string
+    name: string
   }
 }
 

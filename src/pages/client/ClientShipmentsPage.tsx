@@ -143,7 +143,7 @@ export function ClientShipmentsPage() {
         </div>
         <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
           <Button
-            variant={statusFilter === null ? 'default' : 'secondary'}
+            variant={statusFilter === null ? 'primary' : 'secondary'}
             size="sm"
             onClick={() => setStatusFilter(null)}
             className="whitespace-nowrap"
@@ -154,7 +154,7 @@ export function ClientShipmentsPage() {
           {statusOptions.map(status => (
             <Button
               key={status}
-              variant={statusFilter === status ? 'default' : 'secondary'}
+              variant={statusFilter === status ? 'primary' : 'secondary'}
               size="sm"
               onClick={() => setStatusFilter(statusFilter === status ? null : status)}
               className="whitespace-nowrap"
@@ -266,7 +266,7 @@ export function ClientShipmentsPage() {
                               src={p.imageUrl}
                               alt={p.name}
                               className="h-16 w-16 rounded-lg object-cover border border-slate-200 shrink-0 cursor-pointer hover:opacity-90 transition-opacity"
-                              onClick={() => setViewingImage(p.imageUrl)}
+                              onClick={() => p.imageUrl && setViewingImage(p.imageUrl)}
                             />
                           )}
                           <div className="flex-1 min-w-0">
