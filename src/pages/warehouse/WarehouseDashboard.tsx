@@ -28,7 +28,7 @@ export function WarehouseDashboard() {
 
   const handleLogout = () => {
     logout()
-    navigate('/')
+    navigate('/warehouse/login')
   }
 
   return (
@@ -47,7 +47,7 @@ export function WarehouseDashboard() {
             { to: '/warehouse/notifications', label: 'Notifications', icon: <Bell className="h-4 w-4" /> },
             { to: '/warehouse/profile', label: 'Profile', icon: <ClipboardList className="h-4 w-4" /> },
           ]}
-          exitItem={{ to: '/', label: 'Exit', icon: <LogOut className="h-4 w-4" /> }}
+          exitItem={{ to: '/warehouse/login', label: 'Exit', icon: <LogOut className="h-4 w-4" /> }}
           onLogout={() => setShowLogoutModal(true)}
         />
 

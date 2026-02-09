@@ -26,7 +26,7 @@ export function ClientDashboard() {
 
   const handleLogout = () => {
     logout()
-    navigate('/')
+    navigate('/client/login')
   }
 
   return (
@@ -43,7 +43,7 @@ export function ClientDashboard() {
             { to: '/client/notifications', label: 'Notifications', icon: <Bell className="h-4 w-4" /> },
             { to: '/client/profile', label: 'Profile', icon: <User className="h-4 w-4" /> },
           ]}
-          exitItem={{ to: '/', label: 'Exit', icon: <LogOut className="h-4 w-4" /> }}
+          exitItem={{ to: '/client/login', label: 'Exit', icon: <LogOut className="h-4 w-4" /> }}
           onLogout={() => setShowLogoutModal(true)}
         />
 

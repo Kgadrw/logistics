@@ -10,9 +10,10 @@ type ModalProps = {
   children: React.ReactNode
   footer?: React.ReactNode
   className?: string
+  hideCloseButton?: boolean
 }
 
-export function Modal({ open, title, description, onClose, children, footer, className }: ModalProps) {
+export function Modal({ open, title, description, onClose, children, footer, className, hideCloseButton }: ModalProps) {
   React.useEffect(() => {
     if (!open) return
     const onKeyDown = (e: KeyboardEvent) => {
@@ -35,16 +36,18 @@ export function Modal({ open, title, description, onClose, children, footer, cla
                 <div className="text-sm font-semibold text-slate-900">{title}</div>
                 {description ? <div className="mt-1 text-sm text-slate-600">{description}</div> : null}
               </div>
-              <button
-                className="inline-flex h-9 w-9 items-center justify-center rounded-xl hover:bg-slate-100"
-                onClick={onClose}
-                aria-label="Close"
-              >
-                <X className="h-5 w-5 text-slate-600" />
-              </button>
+              {!hideCloseButton && (
+                <button
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl hover:bg-slate-100"
+                  onClick={onClose}
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5 text-slate-600" />
+                </button>
+              )}
             </div>
           )}
-          {!title && (
+          {!title && !hideCloseButton && (
             <button
               className="absolute right-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-xl hover:bg-slate-100 transition-colors"
               onClick={onClose}

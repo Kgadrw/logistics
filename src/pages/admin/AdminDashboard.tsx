@@ -29,7 +29,7 @@ export function AdminDashboard() {
 
   const handleLogout = () => {
     logout()
-    navigate('/')
+    navigate('/admin/login')
   }
 
   return (
@@ -49,7 +49,7 @@ export function AdminDashboard() {
             { to: '/admin/settings', label: 'Settings', icon: <Settings className="h-4 w-4" /> },
             { to: '/admin/notifications', label: 'Notifications', icon: <Bell className="h-4 w-4" /> },
           ]}
-          exitItem={{ to: '/', label: 'Exit', icon: <LogOut className="h-4 w-4" /> }}
+          exitItem={{ to: '/admin/login', label: 'Exit', icon: <LogOut className="h-4 w-4" /> }}
           onLogout={() => setShowLogoutModal(true)}
         />
 

@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Modal } from './ui/Modal'
 import { Input } from './ui/Input'
 import { Button } from './ui/Button'
-import { cn } from '../lib/cn'
-import { Package, Mail, Lock, User, Phone, MapPin, Building, ArrowRight } from 'lucide-react'
+import { Mail, Lock, User } from 'lucide-react'
 import { useAuth } from '../lib/authContext'
 
 type RegistrationModalProps = {
@@ -137,200 +136,117 @@ export function RegistrationModal({ open, onClose }: RegistrationModalProps) {
     <Modal
       open={open}
       onClose={onClose}
-      title=""
+      title="Create Account"
       description=""
-      className="max-w-md"
+      className="max-w-sm rounded-none"
+      hideCloseButton={true}
       footer={
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-xs text-slate-500 hidden sm:block">
-            Already have an account? <button onClick={onClose} className="text-blue-600 hover:underline">Login</button>
-          </div>
-          <div className="flex gap-3 w-full sm:w-auto">
-            <Button variant="ghost" onClick={onClose} disabled={isLoading} className="flex-1 sm:flex-none">
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSubmit} 
-              disabled={isLoading} 
-              type="submit" 
-              form="register-form"
-              className="flex-1 sm:flex-none"
+        <div className="space-y-3">
+          <Button 
+            onClick={handleSubmit} 
+            disabled={isLoading} 
+            type="submit" 
+            form="register-form"
+            className="w-full"
+          >
+            {isLoading ? 'Creating Account...' : 'Create Account'}
+          </Button>
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-sm text-slate-600 hover:text-slate-900 underline"
             >
-              {isLoading ? (
-                'Creating Account...'
-              ) : (
-                <>
-                  Create Account
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </Button>
+              Login
+            </button>
           </div>
         </div>
       }
     >
-      <div className="space-y-6">
-        {/* Header with Icon */}
-        <div className="text-center space-y-4 pb-2">
-          <div className="flex justify-center">
-            <div className={cn('rounded-2xl p-4 bg-blue-100 text-blue-600')}>
-              <Package className="h-5 w-5" />
-            </div>
+      <form id="register-form" onSubmit={handleSubmit} className="space-y-4">
+        {error && (
+          <div className="bg-red-50 border border-red-200 p-3">
+            <div className="text-sm text-red-800">{error}</div>
           </div>
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900">Create Account</h2>
-            <p className="text-sm font-semibold text-slate-500 mt-1">Client Portal</p>
-            <p className="text-sm text-slate-600 mt-2">Sign up to start managing your shipments</p>
+        )}
+
+        <div>
+          <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1.5">
+            Name
+          </label>
+          <div className="relative">
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              id="name"
+              type="text"
+              value={formData.name}
+              onChange={(e) => handleChange('name', e.target.value)}
+              placeholder="Name"
+              className="pl-10 h-11 rounded-none"
+              disabled={isLoading}
+              required
+              autoFocus
+            />
           </div>
         </div>
 
-        <form id="register-form" onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="rounded-xl bg-red-50 border border-red-200 p-3.5 animate-in fade-in slide-in-from-top-2">
-              <div className="text-sm font-medium text-red-800">{error}</div>
-            </div>
-          )}
-
-          <div className="space-y-1.5">
-            <label htmlFor="name" className="block text-sm font-semibold text-slate-700">
-              Full Name <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input
-                id="name"
-                type="text"
-                value={formData.name}
-                onChange={(e) => handleChange('name', e.target.value)}
-                placeholder="John Doe"
-                className="pl-10 h-11"
-                disabled={isLoading}
-                required
-                autoFocus
-              />
-            </div>
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1.5">
+            Email
+          </label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleChange('email', e.target.value)}
+              placeholder="Email"
+              className="pl-10 h-11 rounded-none"
+              disabled={isLoading}
+              required
+            />
           </div>
+        </div>
 
-          <div className="space-y-1.5">
-            <label htmlFor="email" className="block text-sm font-semibold text-slate-700">
-              Email Address <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleChange('email', e.target.value)}
-                placeholder="john@example.com"
-                className="pl-10 h-11"
-                disabled={isLoading}
-                required
-              />
-            </div>
+        <div>
+          <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1.5">
+            Password
+          </label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              id="password"
+              type="password"
+              value={formData.password}
+              onChange={(e) => handleChange('password', e.target.value)}
+              placeholder="Password"
+              className="pl-10 h-11 rounded-none"
+              disabled={isLoading}
+              required
+            />
           </div>
+        </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label htmlFor="password" className="block text-sm font-semibold text-slate-700">
-                Password <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => handleChange('password', e.target.value)}
-                  placeholder="Min. 6 characters"
-                  className="pl-10 h-11"
-                  disabled={isLoading}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label htmlFor="confirmPassword" className="block text-sm font-semibold text-slate-700">
-                Confirm Password <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={(e) => handleChange('confirmPassword', e.target.value)}
-                  placeholder="Confirm password"
-                  className="pl-10 h-11"
-                  disabled={isLoading}
-                  required
-                />
-              </div>
-            </div>
+        <div>
+          <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 mb-1.5">
+            Confirm Password
+          </label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              id="confirmPassword"
+              type="password"
+              value={formData.confirmPassword}
+              onChange={(e) => handleChange('confirmPassword', e.target.value)}
+              placeholder="Confirm Password"
+              className="pl-10 h-11 rounded-none"
+              disabled={isLoading}
+              required
+            />
           </div>
-
-          <div className="space-y-1.5">
-            <label htmlFor="phone" className="block text-sm font-semibold text-slate-700">
-              Phone Number
-            </label>
-            <div className="relative">
-              <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input
-                id="phone"
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => handleChange('phone', e.target.value)}
-                placeholder="+1234567890"
-                className="pl-10 h-11"
-                disabled={isLoading}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label htmlFor="address" className="block text-sm font-semibold text-slate-700">
-              Address
-            </label>
-            <div className="relative">
-              <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input
-                id="address"
-                type="text"
-                value={formData.address}
-                onChange={(e) => handleChange('address', e.target.value)}
-                placeholder="123 Main St, City, Country"
-                className="pl-10 h-11"
-                disabled={isLoading}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label htmlFor="company" className="block text-sm font-semibold text-slate-700">
-              Company Name
-            </label>
-            <div className="relative">
-              <Building className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input
-                id="company"
-                type="text"
-                value={formData.company}
-                onChange={(e) => handleChange('company', e.target.value)}
-                placeholder="ABC Corp"
-                className="pl-10 h-11"
-                disabled={isLoading}
-              />
-            </div>
-          </div>
-
-          <div className="pt-2 sm:hidden">
-            <div className="text-xs text-slate-500 text-center">
-              Already have an account? <button onClick={onClose} className="text-blue-600 hover:underline">Login</button>
-            </div>
-          </div>
-        </form>
-      </div>
+        </div>
+      </form>
     </Modal>
   )
 }
