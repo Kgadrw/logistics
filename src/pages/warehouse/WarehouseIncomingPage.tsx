@@ -32,6 +32,10 @@ export function WarehouseIncomingPage() {
   const [receivedImages, setReceivedImages] = React.useState<string[]>([])
   const [uploadingImages, setUploadingImages] = React.useState(false)
   const [viewingImage, setViewingImage] = React.useState<string | null>(null)
+  const [draftBL, setDraftBL] = React.useState('')
+  const [draftBLFile, setDraftBLFile] = React.useState<string | null>(null)
+  const [uploadingDraftBL, setUploadingDraftBL] = React.useState(false)
+  const [consumerNumber, setConsumerNumber] = React.useState('')
 
   // Filter shipment-related notifications for incoming shipments
   const incomingNotifications = React.useMemo(() => {
@@ -49,6 +53,9 @@ export function WarehouseIncomingPage() {
     if (selected?.id) {
       setRemarks(selected.warehouseRemarks ?? '')
       setReceivedImages(selected.receivedProductImages || [])
+      setDraftBL(selected.draftBL ?? '')
+      setDraftBLFile(selected.draftBL && selected.draftBL.startsWith('http') ? selected.draftBL : null)
+      setConsumerNumber(selected.consumerNumber ?? '')
     }
   }, [selected?.id])
 
@@ -77,16 +84,50 @@ export function WarehouseIncomingPage() {
     setReceivedImages(prev => prev.filter((_, i) => i !== index))
   }
 
+  const handleDraftBLUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size must be less than 10MB')
+      return
+    }
+
+    try {
+      setUploadingDraftBL(true)
+      const documentUrl = await uploadAPI.uploadDocument(file, 'uzalogistics/draft-bl')
+      setDraftBLFile(documentUrl)
+      setDraftBL(documentUrl)
+    } catch (error: any) {
+      console.error('Failed to upload draft BL:', error)
+      alert(error.message || 'Failed to upload draft BL. Please try again.')
+    } finally {
+      setUploadingDraftBL(false)
+    }
+  }
+
+  const removeDraftBL = () => {
+    setDraftBLFile(null)
+    setDraftBL('')
+  }
+
   const handleMarkReceived = async (id: string, remarksText?: string) => {
     try {
       setLoading(true)
-      await warehouseAPI.receiveShipment(id, receivedImages.length > 0 ? receivedImages : undefined)
+      await warehouseAPI.receiveShipment(id, {
+        receivedProductImages: receivedImages.length > 0 ? receivedImages : undefined,
+        draftBL: draftBL.trim() || undefined,
+        consumerNumber: consumerNumber.trim() || undefined,
+      })
       if (remarksText) {
         await warehouseAPI.addRemarks(id, remarksText)
       }
       await refresh()
       setRemarks('')
       setReceivedImages([])
+      setDraftBL('')
+      setDraftBLFile(null)
+      setConsumerNumber('')
     } catch (err: any) {
       console.error('Failed to mark shipment as received:', err)
       alert(err.message || 'Failed to mark shipment as received')
@@ -241,6 +282,56 @@ export function WarehouseIncomingPage() {
                 </div>
 
                 <div>
+                  <div className="text-xs font-semibold text-slate-600 mb-2">Draft BL (Bill of Lading)</div>
+                  {draftBLFile ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50">
+                        <a
+                          href={draftBLFile}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-600 hover:underline flex items-center gap-2"
+                        >
+                          <ImageIcon className="h-4 w-4" />
+                          View Draft BL Document
+                        </a>
+                        <button
+                          type="button"
+                          onClick={removeDraftBL}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center h-32 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,.gif,.webp"
+                        className="hidden"
+                        onChange={handleDraftBLUpload}
+                        disabled={uploadingDraftBL}
+                      />
+                      {uploadingDraftBL ? (
+                        <div className="text-sm text-slate-600">Uploading document...</div>
+                      ) : (
+                        <>
+                          <Upload className="h-6 w-6 text-slate-400 mb-2" />
+                          <div className="text-sm font-medium text-slate-600">Click to upload Draft BL</div>
+                          <div className="text-xs text-slate-500 mt-1">PDF, JPG, PNG (Max 10MB)</div>
+                        </>
+                      )}
+                    </label>
+                  )}
+                </div>
+
+                <div>
+                  <div className="text-xs font-semibold text-slate-600">Consumer Number</div>
+                  <Input value={consumerNumber} onChange={e => setConsumerNumber(e.target.value)} placeholder="Enter consumer number" />
+                </div>
+
+                <div>
                   <div className="text-xs font-semibold text-slate-600 mb-2">Received Product Images (Optional)</div>
                   <div className="space-y-2">
                       {receivedImages.map((imageUrl, index) => (
@@ -287,12 +378,15 @@ export function WarehouseIncomingPage() {
                   <Button variant="secondary" onClick={() => {
                     setRemarks('')
                     setReceivedImages([])
+                    setDraftBL('')
+                    setDraftBLFile(null)
+                    setConsumerNumber('')
                   }}>
                     Clear
                   </Button>
                   <Button 
                     onClick={() => handleMarkReceived(selected.id, remarks.trim() ? remarks.trim() : undefined)}
-                    disabled={loading || uploadingImages}
+                    disabled={loading || uploadingImages || uploadingDraftBL}
                   >
                     {loading ? 'Processing...' : 'Confirm Received'}
                   </Button>

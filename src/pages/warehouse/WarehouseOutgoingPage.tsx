@@ -24,6 +24,9 @@ export function WarehouseOutgoingPage() {
   const [method, setMethod] = React.useState<TransportMethod>('Truck')
   const [transportId, setTransportId] = React.useState('TRK-')
   const [departureDateIso, setDepartureDateIso] = React.useState<string>(() => new Date().toISOString().slice(0, 10))
+  const [packagingList, setPackagingList] = React.useState('')
+  const [packageNumber, setPackageNumber] = React.useState('')
+  const [consigneeNumber, setConsigneeNumber] = React.useState('')
   const [loading, setLoading] = React.useState(false)
   const [markingInTransit, setMarkingInTransit] = React.useState<string | null>(null)
 
@@ -37,10 +40,17 @@ export function WarehouseOutgoingPage() {
         method,
         transportId: transportId.trim() || 'N/A',
         departureDateIso: new Date(departureDateIso).toISOString(),
+        packagingList: packagingList.trim() || undefined,
+        packageNumber: packageNumber.trim() || undefined,
+        consigneeNumber: consigneeNumber.trim() || undefined,
+        shippingMark: 'UZA Solutions',
       })
       await refresh()
       setOpen(false)
       setTransportId('TRK-')
+      setPackagingList('')
+      setPackageNumber('')
+      setConsigneeNumber('')
     } catch (err: any) {
       console.error('Failed to dispatch shipment:', err)
       alert(err.message || 'Failed to dispatch shipment')
@@ -194,11 +204,27 @@ export function WarehouseOutgoingPage() {
             <div className="text-xs font-semibold text-slate-600">Departure date</div>
             <Input type="date" value={departureDateIso} onChange={e => setDepartureDateIso(e.target.value)} />
           </div>
+          <div className="sm:col-span-2">
+            <div className="text-xs font-semibold text-slate-600">Packaging List</div>
+            <Input value={packagingList} onChange={e => setPackagingList(e.target.value)} placeholder="Enter packaging list" />
+          </div>
+          <div>
+            <div className="text-xs font-semibold text-slate-600">Package Number</div>
+            <Input value={packageNumber} onChange={e => setPackageNumber(e.target.value)} placeholder="Enter package number" />
+          </div>
+          <div>
+            <div className="text-xs font-semibold text-slate-600">Consignee Number</div>
+            <Input value={consigneeNumber} onChange={e => setConsigneeNumber(e.target.value)} placeholder="Enter consignee number" />
+          </div>
+          <div className="sm:col-span-2">
+            <div className="text-xs font-semibold text-slate-600">Shipping Mark</div>
+            <Input value="UZA Solutions" disabled className="bg-slate-50" />
+          </div>
 
           <div className="sm:col-span-2 rounded-xl border border-slate-200 bg-white p-4">
             <div className="text-xs font-semibold text-slate-600">Auto notification message</div>
             <div className="mt-1 text-sm text-slate-600">
-              “Your shipment has left the warehouse via <span className="font-semibold">{method}</span>”.
+              "Your shipment has left the warehouse via <span className="font-semibold">{method}</span>".
             </div>
           </div>
         </div>

@@ -1,10 +1,10 @@
 import * as React from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Upload, X } from 'lucide-react'
+import { ArrowLeft, Upload, X, Image as ImageIcon } from 'lucide-react'
 import { Badge, statusTone } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
-import { Textarea } from '../../components/ui/Input'
+import { Input, Textarea } from '../../components/ui/Input'
 import { ShipmentTimeline } from '../../components/Timeline'
 import { ImageViewer } from '../../components/ImageViewer'
 import { warehouseAPI, uploadAPI } from '../../lib/api'
@@ -23,6 +23,10 @@ export function WarehouseShipmentDetailPage() {
   const [receivedImages, setReceivedImages] = React.useState<string[]>([])
   const [uploadingImages, setUploadingImages] = React.useState(false)
   const [viewingImage, setViewingImage] = React.useState<string | null>(null)
+  const [draftBL, setDraftBL] = React.useState('')
+  const [draftBLFile, setDraftBLFile] = React.useState<string | null>(null)
+  const [uploadingDraftBL, setUploadingDraftBL] = React.useState(false)
+  const [consumerNumber, setConsumerNumber] = React.useState('')
 
   React.useEffect(() => {
     const fetchShipment = async () => {
@@ -38,6 +42,9 @@ export function WarehouseShipmentDetailPage() {
         setShipment(data)
         setRemarks(data.warehouseRemarks || '')
         setReceivedImages(data.receivedProductImages || [])
+        setDraftBL(data.draftBL || '')
+        setDraftBLFile(data.draftBL && data.draftBL.startsWith('http') ? data.draftBL : null)
+        setConsumerNumber(data.consumerNumber || '')
       } catch (err: any) {
         setError(err.message || 'Failed to load shipment')
         console.error('Failed to fetch shipment:', err)
@@ -74,11 +81,42 @@ export function WarehouseShipmentDetailPage() {
     setReceivedImages(prev => prev.filter((_, i) => i !== index))
   }
 
+  const handleDraftBLUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size must be less than 10MB')
+      return
+    }
+
+    try {
+      setUploadingDraftBL(true)
+      const documentUrl = await uploadAPI.uploadDocument(file, 'uzalogistics/draft-bl')
+      setDraftBLFile(documentUrl)
+      setDraftBL(documentUrl)
+    } catch (error: any) {
+      console.error('Failed to upload draft BL:', error)
+      alert(error.message || 'Failed to upload draft BL. Please try again.')
+    } finally {
+      setUploadingDraftBL(false)
+    }
+  }
+
+  const removeDraftBL = () => {
+    setDraftBLFile(null)
+    setDraftBL('')
+  }
+
   const handleMarkReceived = async () => {
     if (!id) return
     try {
       setMarkingReceived(true)
-      await warehouseAPI.receiveShipment(id, receivedImages.length > 0 ? receivedImages : undefined)
+      await warehouseAPI.receiveShipment(id, {
+        receivedProductImages: receivedImages.length > 0 ? receivedImages : undefined,
+        draftBL: draftBL.trim() || undefined,
+        consumerNumber: consumerNumber.trim() || undefined,
+      })
       if (remarks.trim()) {
         await warehouseAPI.addRemarks(id, remarks.trim())
       }
@@ -87,6 +125,9 @@ export function WarehouseShipmentDetailPage() {
       setShipment(data)
       setRemarks(data.warehouseRemarks || '')
       setReceivedImages(data.receivedProductImages || [])
+      setDraftBL(data.draftBL || '')
+      setDraftBLFile(data.draftBL && data.draftBL.startsWith('http') ? data.draftBL : null)
+      setConsumerNumber(data.consumerNumber || '')
     } catch (err: any) {
       console.error('Failed to mark as received:', err)
       alert(err.message || 'Failed to mark as received')
@@ -350,6 +391,34 @@ export function WarehouseShipmentDetailPage() {
                       </div>
                     </div>
                   )}
+                  {shipment.draftBL && (
+                    <div>
+                      <div className="text-xs font-semibold text-slate-600 mb-1">Draft BL (Bill of Lading)</div>
+                      {shipment.draftBL.startsWith('http') ? (
+                        <a
+                          href={shipment.draftBL}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-600 hover:underline flex items-center gap-2 p-3 rounded-lg bg-slate-50 border border-slate-200"
+                        >
+                          <ImageIcon className="h-4 w-4" />
+                          View Draft BL Document
+                        </a>
+                      ) : (
+                        <div className="text-sm text-slate-700 p-3 rounded-lg bg-slate-50 border border-slate-200">
+                          {shipment.draftBL}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {shipment.consumerNumber && (
+                    <div>
+                      <div className="text-xs font-semibold text-slate-600 mb-1">Consumer Number</div>
+                      <div className="text-sm text-slate-700 p-3 rounded-lg bg-slate-50 border border-slate-200">
+                        {shipment.consumerNumber}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardBody>
             </Card>
@@ -370,6 +439,58 @@ export function WarehouseShipmentDetailPage() {
                       onChange={e => setRemarks(e.target.value)}
                       placeholder="Condition, packaging, discrepancies..."
                       rows={4}
+                    />
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold text-slate-600 mb-2">Draft BL (Bill of Lading)</div>
+                    {draftBLFile ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50">
+                          <a
+                            href={draftBLFile}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-600 hover:underline flex items-center gap-2"
+                          >
+                            <ImageIcon className="h-4 w-4" />
+                            View Draft BL Document
+                          </a>
+                          <button
+                            type="button"
+                            onClick={removeDraftBL}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center h-32 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png,.gif,.webp"
+                          className="hidden"
+                          onChange={handleDraftBLUpload}
+                          disabled={uploadingDraftBL}
+                        />
+                        {uploadingDraftBL ? (
+                          <div className="text-sm text-slate-600">Uploading document...</div>
+                        ) : (
+                          <>
+                            <Upload className="h-6 w-6 text-slate-400 mb-2" />
+                            <div className="text-sm font-medium text-slate-600">Click to upload Draft BL</div>
+                            <div className="text-xs text-slate-500 mt-1">PDF, JPG, PNG (Max 10MB)</div>
+                          </>
+                        )}
+                      </label>
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold text-slate-600 mb-2">Consumer Number</div>
+                    <Input
+                      value={consumerNumber}
+                      onChange={e => setConsumerNumber(e.target.value)}
+                      placeholder="Enter consumer number"
                     />
                   </div>
                   <div>
@@ -491,6 +612,30 @@ export function WarehouseShipmentDetailPage() {
                       {formatDateTime(shipment.dispatch.departureDateIso)}
                     </div>
                   </div>
+                  {shipment.dispatch.packagingList && (
+                    <div>
+                      <div className="text-xs font-semibold text-slate-600">Packaging List</div>
+                      <div className="mt-1 text-sm text-slate-700">{shipment.dispatch.packagingList}</div>
+                    </div>
+                  )}
+                  {shipment.dispatch.packageNumber && (
+                    <div>
+                      <div className="text-xs font-semibold text-slate-600">Package Number</div>
+                      <div className="mt-1 text-sm text-slate-700">{shipment.dispatch.packageNumber}</div>
+                    </div>
+                  )}
+                  {shipment.dispatch.consigneeNumber && (
+                    <div>
+                      <div className="text-xs font-semibold text-slate-600">Consignee Number</div>
+                      <div className="mt-1 text-sm text-slate-700">{shipment.dispatch.consigneeNumber}</div>
+                    </div>
+                  )}
+                  {shipment.dispatch.shippingMark && (
+                    <div>
+                      <div className="text-xs font-semibold text-slate-600">Shipping Mark</div>
+                      <div className="mt-1 text-sm text-slate-700">{shipment.dispatch.shippingMark}</div>
+                    </div>
+                  )}
                 </div>
               </CardBody>
             </Card>

@@ -44,7 +44,13 @@ export type Shipment = {
     method: TransportMethod
     transportId: string
     departureDateIso: string
+    packagingList?: string
+    packageNumber?: string
+    consigneeNumber?: string
+    shippingMark?: string
   }
+  draftBL?: string // Draft Bill of Lading
+  consumerNumber?: string // Consumer number for warehouse
   // Optional nested objects for API responses
   client?: {
     id: string

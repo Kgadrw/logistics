@@ -117,6 +117,27 @@ export const uploadAPI = {
     const data = await response.json()
     return data.imageUrl
   },
+  
+  uploadDocument: async (file: File, folder?: string): Promise<string> => {
+    const formData = new FormData()
+    formData.append('document', file)
+    if (folder) {
+      formData.append('folder', folder)
+    }
+    
+    const response = await fetch(`${UPLOAD_BASE_URL}/upload/document`, {
+      method: 'POST',
+      body: formData,
+    })
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Upload failed' }))
+      throw new Error(error.error || 'Failed to upload document')
+    }
+    
+    const data = await response.json()
+    return data.documentUrl
+  },
 }
 
 // Warehouse API
@@ -137,10 +158,10 @@ export const warehouseAPI = {
   getHistory: (warehouseId?: string) => 
     fetchAPI<any[]>(`/warehouse/history${warehouseId ? `?warehouseId=${warehouseId}` : ''}`),
   getShipment: (id: string) => fetchAPI<any>(`/warehouse/shipments/${id}`),
-  receiveShipment: (id: string, receivedProductImages?: string[]) =>
+  receiveShipment: (id: string, data?: { receivedProductImages?: string[]; draftBL?: string; consumerNumber?: string }) =>
     fetchAPI<any>(`/warehouse/shipments/${id}/receive`, {
       method: 'POST',
-      body: JSON.stringify({ receivedProductImages }),
+      body: JSON.stringify(data || {}),
     }),
   dispatchShipment: (id: string, data: any) =>
     fetchAPI<any>(`/warehouse/shipments/${id}/dispatch`, {
