@@ -195,6 +195,7 @@ export const warehouseAPI = {
     packageNumber?: string;
     consigneeNumber?: string;
     shippingMark?: string;
+    notes?: string;
   }) =>
     fetchAPI<any>(`/warehouse/shipments/${id}/details`, {
       method: 'PUT',

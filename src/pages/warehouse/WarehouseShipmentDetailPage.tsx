@@ -37,6 +37,7 @@ export function WarehouseShipmentDetailPage() {
   const [packageNumber, setPackageNumber] = React.useState('')
   const [consigneeNumber, setConsigneeNumber] = React.useState('')
   const [shippingMark, setShippingMark] = React.useState('UZA Solutions')
+  const [clientNotes, setClientNotes] = React.useState('')
 
   React.useEffect(() => {
     const fetchShipment = async () => {
@@ -212,6 +213,7 @@ export function WarehouseShipmentDetailPage() {
         packageNumber: packageNumber.trim() || undefined,
         consigneeNumber: consigneeNumber.trim() || undefined,
         shippingMark: shippingMark.trim() || undefined,
+        notes: clientNotes.trim() || undefined,
       })
       if (remarks.trim()) {
         await warehouseAPI.addRemarks(id, remarks.trim())
@@ -449,6 +451,7 @@ export function WarehouseShipmentDetailPage() {
                         setConsigneeNumber(data.dispatch?.consigneeNumber || '')
                         setShippingMark(data.dispatch?.shippingMark || 'UZA Solutions')
                         setRemarks(data.warehouseRemarks || '')
+                        setClientNotes(data.notes || '')
                       }}
                       disabled={savingDetails}
                     >
@@ -460,6 +463,23 @@ export function WarehouseShipmentDetailPage() {
             </CardHeader>
             <CardBody>
               <div className="space-y-6">
+                {/* Client Notes */}
+                <div>
+                  <div className="text-xs font-semibold text-slate-600 mb-2">Client Notes</div>
+                  {isEditing ? (
+                    <Textarea
+                      value={clientNotes}
+                      onChange={e => setClientNotes(e.target.value)}
+                      placeholder="Add or edit client notes..."
+                      rows={4}
+                    />
+                  ) : (
+                    <div className="text-sm text-slate-700 p-3 rounded-lg bg-slate-50 border border-slate-200 min-h-[80px]">
+                      {shipment.notes || <span className="text-slate-400 italic">No notes added</span>}
+                    </div>
+                  )}
+                </div>
+
                 {/* Draft BL */}
                 <div>
                   <div className="text-xs font-semibold text-slate-600 mb-2">Draft BL (Bill of Lading)</div>
