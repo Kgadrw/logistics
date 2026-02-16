@@ -7,6 +7,7 @@ import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
 import { Input, Textarea } from '../../components/ui/Input'
 import { ShipmentTimeline } from '../../components/Timeline'
 import { ImageViewer } from '../../components/ImageViewer'
+import { PDFViewer } from '../../components/PDFViewer'
 import { warehouseAPI, uploadAPI } from '../../lib/api'
 import { formatDateTime, formatMoneyUsd } from '../../lib/format'
 
@@ -26,6 +27,7 @@ export function WarehouseShipmentDetailPage() {
   const [draftBL, setDraftBL] = React.useState('')
   const [draftBLFile, setDraftBLFile] = React.useState<string | null>(null)
   const [uploadingDraftBL, setUploadingDraftBL] = React.useState(false)
+  const [viewingDraftBL, setViewingDraftBL] = React.useState<string | null>(null)
   const [consumerNumber, setConsumerNumber] = React.useState('')
 
   React.useEffect(() => {
@@ -395,15 +397,14 @@ export function WarehouseShipmentDetailPage() {
                     <div>
                       <div className="text-xs font-semibold text-slate-600 mb-1">Draft BL (Bill of Lading)</div>
                       {shipment.draftBL.startsWith('http') ? (
-                        <a
-                          href={shipment.draftBL}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-blue-600 hover:underline flex items-center gap-2 p-3 rounded-lg bg-slate-50 border border-slate-200"
+                        <button
+                          type="button"
+                          onClick={() => setViewingDraftBL(shipment.draftBL)}
+                          className="text-sm text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-2 p-3 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors w-full text-left"
                         >
                           <ImageIcon className="h-4 w-4" />
                           View Draft BL Document
-                        </a>
+                        </button>
                       ) : (
                         <div className="text-sm text-slate-700 p-3 rounded-lg bg-slate-50 border border-slate-200">
                           {shipment.draftBL}
@@ -446,15 +447,14 @@ export function WarehouseShipmentDetailPage() {
                     {draftBLFile ? (
                       <div className="space-y-2">
                         <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50">
-                          <a
-                            href={draftBLFile}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-blue-600 hover:underline flex items-center gap-2"
+                          <button
+                            type="button"
+                            onClick={() => setViewingDraftBL(draftBLFile)}
+                            className="text-sm text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-2"
                           >
                             <ImageIcon className="h-4 w-4" />
                             View Draft BL Document
-                          </a>
+                          </button>
                           <button
                             type="button"
                             onClick={removeDraftBL}
@@ -685,6 +685,13 @@ export function WarehouseShipmentDetailPage() {
         imageUrl={viewingImage}
         open={!!viewingImage}
         onClose={() => setViewingImage(null)}
+      />
+      
+      <PDFViewer 
+        pdfUrl={viewingDraftBL}
+        open={!!viewingDraftBL}
+        onClose={() => setViewingDraftBL(null)}
+        title="Draft BL (Bill of Lading)"
       />
     </div>
   )

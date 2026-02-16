@@ -6,6 +6,7 @@ import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
 import { Input, Textarea } from '../../components/ui/Input'
 import { Table, TBody, TD, TH, THead, TR } from '../../components/ui/Table'
 import { ImageViewer } from '../../components/ImageViewer'
+import { PDFViewer } from '../../components/PDFViewer'
 import { useWarehouseAPI, useNotificationsAPI } from '../../lib/useAPI'
 import { warehouseAPI, uploadAPI } from '../../lib/api'
 import { useAuth } from '../../lib/authContext'
@@ -35,6 +36,7 @@ export function WarehouseIncomingPage() {
   const [draftBL, setDraftBL] = React.useState('')
   const [draftBLFile, setDraftBLFile] = React.useState<string | null>(null)
   const [uploadingDraftBL, setUploadingDraftBL] = React.useState(false)
+  const [viewingDraftBL, setViewingDraftBL] = React.useState<string | null>(null)
   const [consumerNumber, setConsumerNumber] = React.useState('')
 
   // Filter shipment-related notifications for incoming shipments
@@ -286,15 +288,14 @@ export function WarehouseIncomingPage() {
                   {draftBLFile ? (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50">
-                        <a
-                          href={draftBLFile}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-blue-600 hover:underline flex items-center gap-2"
+                        <button
+                          type="button"
+                          onClick={() => setViewingDraftBL(draftBLFile)}
+                          className="text-sm text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-2"
                         >
                           <ImageIcon className="h-4 w-4" />
                           View Draft BL Document
-                        </a>
+                        </button>
                         <button
                           type="button"
                           onClick={removeDraftBL}
@@ -470,6 +471,13 @@ export function WarehouseIncomingPage() {
         imageUrl={viewingImage}
         open={!!viewingImage}
         onClose={() => setViewingImage(null)}
+      />
+      
+      <PDFViewer 
+        pdfUrl={viewingDraftBL}
+        open={!!viewingDraftBL}
+        onClose={() => setViewingDraftBL(null)}
+        title="Draft BL (Bill of Lading)"
       />
     </div>
   )
