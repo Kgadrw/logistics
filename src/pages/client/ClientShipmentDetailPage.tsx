@@ -1,11 +1,12 @@
 import * as React from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Image as ImageIcon } from 'lucide-react'
 import { Badge, statusTone } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
 import { ShipmentTimeline } from '../../components/Timeline'
 import { ImageViewer } from '../../components/ImageViewer'
+import { PDFViewer } from '../../components/PDFViewer'
 import { clientAPI } from '../../lib/api'
 import { formatDateTime, formatMoneyUsd } from '../../lib/format'
 
@@ -17,6 +18,7 @@ export function ClientShipmentDetailPage() {
   const [error, setError] = React.useState<string | null>(null)
   const [markingDelivered, setMarkingDelivered] = React.useState(false)
   const [viewingImage, setViewingImage] = React.useState<string | null>(null)
+  const [viewingDraftBL, setViewingDraftBL] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     const fetchShipment = async () => {
@@ -335,6 +337,63 @@ export function ClientShipmentDetailPage() {
                       {formatDateTime(shipment.dispatch.departureDateIso)}
                     </div>
                   </div>
+                  {shipment.dispatch.packagingList && (
+                    <div>
+                      <div className="text-xs font-semibold text-slate-600">Packaging List</div>
+                      <div className="mt-1 text-sm text-slate-700">{shipment.dispatch.packagingList}</div>
+                    </div>
+                  )}
+                  {shipment.dispatch.packageNumber && (
+                    <div>
+                      <div className="text-xs font-semibold text-slate-600">Package Number</div>
+                      <div className="mt-1 text-sm text-slate-700">{shipment.dispatch.packageNumber}</div>
+                    </div>
+                  )}
+                  {shipment.dispatch.consigneeNumber && (
+                    <div>
+                      <div className="text-xs font-semibold text-slate-600">Consignee Number</div>
+                      <div className="mt-1 text-sm text-slate-700">{shipment.dispatch.consigneeNumber}</div>
+                    </div>
+                  )}
+                  {shipment.dispatch.shippingMark && (
+                    <div>
+                      <div className="text-xs font-semibold text-slate-600">Shipping Mark</div>
+                      <div className="mt-1 text-sm text-slate-700">{shipment.dispatch.shippingMark}</div>
+                    </div>
+                  )}
+                </div>
+              </CardBody>
+            </Card>
+          )}
+
+          {/* Documents */}
+          {shipment.draftBL && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Documents</CardTitle>
+              </CardHeader>
+              <CardBody>
+                <div className="space-y-4">
+                  {shipment.draftBL.startsWith('http') ? (
+                    <button
+                      type="button"
+                      onClick={() => setViewingDraftBL(shipment.draftBL)}
+                      className="w-full flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
+                    >
+                      <div className="flex items-center gap-2">
+                        <ImageIcon className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm font-medium text-slate-900">Draft BL (Bill of Lading)</span>
+                      </div>
+                      <span className="text-xs text-slate-500">View</span>
+                    </button>
+                  ) : (
+                    <div>
+                      <div className="text-xs font-semibold text-slate-600 mb-1">Draft BL (Bill of Lading)</div>
+                      <div className="text-sm text-slate-700 p-3 rounded-lg bg-slate-50 border border-slate-200">
+                        {shipment.draftBL}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardBody>
             </Card>
@@ -384,6 +443,13 @@ export function ClientShipmentDetailPage() {
         imageUrl={viewingImage}
         open={!!viewingImage}
         onClose={() => setViewingImage(null)}
+      />
+      
+      <PDFViewer 
+        pdfUrl={viewingDraftBL}
+        open={!!viewingDraftBL}
+        onClose={() => setViewingDraftBL(null)}
+        title="Draft BL (Bill of Lading)"
       />
     </div>
   )

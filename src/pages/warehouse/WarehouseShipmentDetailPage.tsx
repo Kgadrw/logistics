@@ -466,20 +466,20 @@ export function WarehouseShipmentDetailPage() {
                       </div>
                     ) : (
                       <label className="flex flex-col items-center justify-center h-32 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
-                        <input
-                          type="file"
-                          accept=".pdf,.jpg,.jpeg,.png,.gif,.webp"
-                          className="hidden"
-                          onChange={handleDraftBLUpload}
-                          disabled={uploadingDraftBL}
-                        />
+                          <input
+                            type="file"
+                            accept=".pdf,application/pdf,.jpg,.jpeg,.png,.gif,.webp,image/jpeg,image/png,image/gif,image/webp"
+                            className="hidden"
+                            onChange={handleDraftBLUpload}
+                            disabled={uploadingDraftBL}
+                          />
                         {uploadingDraftBL ? (
                           <div className="text-sm text-slate-600">Uploading document...</div>
                         ) : (
                           <>
                             <Upload className="h-6 w-6 text-slate-400 mb-2" />
                             <div className="text-sm font-medium text-slate-600">Click to upload Draft BL</div>
-                            <div className="text-xs text-slate-500 mt-1">PDF, JPG, PNG (Max 10MB)</div>
+                            <div className="text-xs text-slate-500 mt-1">PDF, JPG, PNG, GIF, WEBP (Max 10MB)</div>
                           </>
                         )}
                       </label>
