@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Upload, X, Image as ImageIcon } from 'lucide-react'
+import { ArrowLeft, Upload, X, Image as ImageIcon, Edit, Save, RotateCcw, AlertTriangle } from 'lucide-react'
 import { Badge, statusTone } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
@@ -29,6 +29,14 @@ export function WarehouseShipmentDetailPage() {
   const [uploadingDraftBL, setUploadingDraftBL] = React.useState(false)
   const [viewingDraftBL, setViewingDraftBL] = React.useState<string | null>(null)
   const [consumerNumber, setConsumerNumber] = React.useState('')
+  const [isEditing, setIsEditing] = React.useState(false)
+  const [reversingStatus, setReversingStatus] = React.useState(false)
+  const [savingDetails, setSavingDetails] = React.useState(false)
+  const [showReverseConfirm, setShowReverseConfirm] = React.useState<string | null>(null)
+  const [packagingList, setPackagingList] = React.useState('')
+  const [packageNumber, setPackageNumber] = React.useState('')
+  const [consigneeNumber, setConsigneeNumber] = React.useState('')
+  const [shippingMark, setShippingMark] = React.useState('UZA Solutions')
 
   React.useEffect(() => {
     const fetchShipment = async () => {
@@ -47,6 +55,10 @@ export function WarehouseShipmentDetailPage() {
         setDraftBL(data.draftBL || '')
         setDraftBLFile(data.draftBL && data.draftBL.startsWith('http') ? data.draftBL : null)
         setConsumerNumber(data.consumerNumber || '')
+        setPackagingList(data.dispatch?.packagingList || '')
+        setPackageNumber(data.dispatch?.packageNumber || '')
+        setConsigneeNumber(data.dispatch?.consigneeNumber || '')
+        setShippingMark(data.dispatch?.shippingMark || 'UZA Solutions')
       } catch (err: any) {
         setError(err.message || 'Failed to load shipment')
         console.error('Failed to fetch shipment:', err)
@@ -170,6 +182,62 @@ export function WarehouseShipmentDetailPage() {
     }
   }
 
+  const handleReverseStatus = async (newStatus: string) => {
+    if (!id) return
+    try {
+      setReversingStatus(true)
+      await warehouseAPI.updateShipmentStatus(id, newStatus)
+      // Refresh shipment data
+      const data = await warehouseAPI.getShipment(id)
+      setShipment(data)
+      setShowReverseConfirm(null)
+      alert(`Status reversed to ${newStatus} successfully`)
+    } catch (err: any) {
+      console.error('Failed to reverse status:', err)
+      alert(err.message || 'Failed to reverse status')
+    } finally {
+      setReversingStatus(false)
+    }
+  }
+
+  const handleSaveDetails = async () => {
+    if (!id) return
+    try {
+      setSavingDetails(true)
+      await warehouseAPI.updateShipmentDetails(id, {
+        receivedProductImages: receivedImages.length > 0 ? receivedImages : undefined,
+        draftBL: draftBL.trim() || undefined,
+        consumerNumber: consumerNumber.trim() || undefined,
+        packagingList: packagingList.trim() || undefined,
+        packageNumber: packageNumber.trim() || undefined,
+        consigneeNumber: consigneeNumber.trim() || undefined,
+        shippingMark: shippingMark.trim() || undefined,
+      })
+      if (remarks.trim()) {
+        await warehouseAPI.addRemarks(id, remarks.trim())
+      }
+      // Refresh shipment data
+      const data = await warehouseAPI.getShipment(id)
+      setShipment(data)
+      setIsEditing(false)
+      alert('Shipment details updated successfully')
+    } catch (err: any) {
+      console.error('Failed to save details:', err)
+      alert(err.message || 'Failed to save details')
+    } finally {
+      setSavingDetails(false)
+    }
+  }
+
+  const getPreviousStatus = (currentStatus: string): string | null => {
+    const statusMap: Record<string, string> = {
+      'Received': 'Submitted',
+      'Left Warehouse': 'Received',
+      'In Transit': 'Left Warehouse',
+    }
+    return statusMap[currentStatus] || null
+  }
+
   if (loading) {
     return (
       <div className="pt-4">
@@ -271,6 +339,356 @@ export function WarehouseShipmentDetailPage() {
               {(shipment.status === 'In Transit' || shipment.status === 'Delivered' || shipment.status === 'Draft') && (
                 <ShipmentTimeline status={shipment.status} />
               )}
+            </CardBody>
+          </Card>
+
+          {/* Status Reversal */}
+          {getPreviousStatus(shipment.status) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <RotateCcw className="h-5 w-5 text-orange-600" />
+                  Reverse Status
+                </CardTitle>
+              </CardHeader>
+              <CardBody>
+                <div className="space-y-4">
+                  <div className="p-4 rounded-lg bg-orange-50 border border-orange-200">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5 shrink-0" />
+                      <div className="flex-1">
+                        <div className="text-sm font-semibold text-orange-900 mb-1">Warning</div>
+                        <div className="text-xs text-orange-800">
+                          Reversing status will change the shipment from <strong>{shipment.status}</strong> back to <strong>{getPreviousStatus(shipment.status)}</strong>. 
+                          This action will clear dispatch information if reversing from "Left Warehouse" or "In Transit".
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {showReverseConfirm === shipment.status ? (
+                    <div className="space-y-3">
+                      <div className="text-sm text-slate-700">
+                        Are you sure you want to reverse the status from <strong>{shipment.status}</strong> to <strong>{getPreviousStatus(shipment.status)}</strong>?
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => handleReverseStatus(getPreviousStatus(shipment.status)!)}
+                          disabled={reversingStatus}
+                        >
+                          {reversingStatus ? 'Reversing...' : 'Confirm Reverse'}
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => setShowReverseConfirm(null)}
+                          disabled={reversingStatus}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setShowReverseConfirm(shipment.status)}
+                      disabled={reversingStatus}
+                    >
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                      Reverse to {getPreviousStatus(shipment.status)}
+                    </Button>
+                  )}
+                </div>
+              </CardBody>
+            </Card>
+          )}
+
+          {/* Edit Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Edit className="h-5 w-5 text-blue-600" />
+                  Shipment Details
+                </span>
+                {!isEditing ? (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleSaveDetails}
+                      disabled={savingDetails}
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {savingDetails ? 'Saving...' : 'Save'}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        setIsEditing(false)
+                        // Reset to original values
+                        const data = shipment
+                        setReceivedImages(data.receivedProductImages || [])
+                        setDraftBL(data.draftBL || '')
+                        setDraftBLFile(data.draftBL && data.draftBL.startsWith('http') ? data.draftBL : null)
+                        setConsumerNumber(data.consumerNumber || '')
+                        setPackagingList(data.dispatch?.packagingList || '')
+                        setPackageNumber(data.dispatch?.packageNumber || '')
+                        setConsigneeNumber(data.dispatch?.consigneeNumber || '')
+                        setShippingMark(data.dispatch?.shippingMark || 'UZA Solutions')
+                        setRemarks(data.warehouseRemarks || '')
+                      }}
+                      disabled={savingDetails}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardBody>
+              <div className="space-y-6">
+                {/* Draft BL */}
+                <div>
+                  <div className="text-xs font-semibold text-slate-600 mb-2">Draft BL (Bill of Lading)</div>
+                  {isEditing ? (
+                    <>
+                      {draftBLFile ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50">
+                            <button
+                              type="button"
+                              onClick={() => setViewingDraftBL(draftBLFile)}
+                              className="text-sm text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-2"
+                            >
+                              <ImageIcon className="h-4 w-4" />
+                              View Draft BL Document
+                            </button>
+                            <button
+                              type="button"
+                              onClick={removeDraftBL}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <label className="flex flex-col items-center justify-center h-32 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
+                          <input
+                            type="file"
+                            accept=".pdf,application/pdf"
+                            className="hidden"
+                            onChange={handleDraftBLUpload}
+                            disabled={uploadingDraftBL}
+                          />
+                          {uploadingDraftBL ? (
+                            <div className="text-sm text-slate-600">Uploading document...</div>
+                          ) : (
+                            <>
+                              <Upload className="h-6 w-6 text-slate-400 mb-2" />
+                              <div className="text-sm font-medium text-slate-600">Click to upload Draft BL</div>
+                              <div className="text-xs text-slate-500 mt-1">PDF (Max 10MB)</div>
+                            </>
+                          )}
+                        </label>
+                      )}
+                    </>
+                  ) : (
+                    shipment.draftBL ? (
+                      shipment.draftBL.startsWith('http') ? (
+                        <button
+                          type="button"
+                          onClick={() => setViewingDraftBL(shipment.draftBL)}
+                          className="text-sm text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-2 p-3 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors w-full text-left"
+                        >
+                          <ImageIcon className="h-4 w-4" />
+                          View Draft BL Document
+                        </button>
+                      ) : (
+                        <div className="text-sm text-slate-700 p-3 rounded-lg bg-slate-50 border border-slate-200">
+                          {shipment.draftBL}
+                        </div>
+                      )
+                    ) : (
+                      <div className="text-sm text-slate-500 italic">No Draft BL uploaded</div>
+                    )
+                  )}
+                </div>
+
+                {/* Consumer Number */}
+                <div>
+                  <div className="text-xs font-semibold text-slate-600 mb-2">Consumer Number</div>
+                  {isEditing ? (
+                    <Input
+                      value={consumerNumber}
+                      onChange={e => setConsumerNumber(e.target.value)}
+                      placeholder="Enter consumer number"
+                    />
+                  ) : (
+                    <div className="text-sm text-slate-700 p-3 rounded-lg bg-slate-50 border border-slate-200">
+                      {shipment.consumerNumber || <span className="text-slate-400 italic">Not set</span>}
+                    </div>
+                  )}
+                </div>
+
+                {/* Warehouse Remarks */}
+                <div>
+                  <div className="text-xs font-semibold text-slate-600 mb-2">Warehouse Remarks</div>
+                  {isEditing ? (
+                    <Textarea
+                      value={remarks}
+                      onChange={e => setRemarks(e.target.value)}
+                      placeholder="Condition, packaging, discrepancies..."
+                      rows={4}
+                    />
+                  ) : (
+                    <div className="text-sm text-slate-700 p-3 rounded-lg bg-slate-50 border border-slate-200">
+                      {shipment.warehouseRemarks || <span className="text-slate-400 italic">No remarks</span>}
+                    </div>
+                  )}
+                </div>
+
+                {/* Received Product Images */}
+                <div>
+                  <div className="text-xs font-semibold text-slate-600 mb-2">Received Product Images</div>
+                  {isEditing ? (
+                    <div className="space-y-2">
+                      {receivedImages.map((imageUrl, index) => (
+                        <div key={index} className="relative bg-slate-50 rounded-lg border border-slate-200 p-2 flex items-center justify-center min-h-[150px]">
+                          <img
+                            src={imageUrl}
+                            alt={`Received product ${index + 1}`}
+                            className="max-w-full max-h-[200px] rounded-lg object-contain cursor-pointer"
+                            onClick={() => setViewingImage(imageUrl)}
+                          />
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              removeImage(index)
+                            }}
+                            className="absolute top-2 right-2 rounded-full bg-red-500 p-1.5 text-white hover:bg-red-600 transition-colors shadow-md z-10"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                      {uploadingImages ? (
+                        <div className="flex items-center justify-center h-32 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50">
+                          <div className="text-sm text-slate-600">Uploading image...</div>
+                        </div>
+                      ) : (
+                        <label className="flex flex-col items-center justify-center h-32 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleImageUpload}
+                          />
+                          <Upload className="h-6 w-6 text-slate-400 mb-2" />
+                          <div className="text-sm font-medium text-slate-600">Click to upload received product image</div>
+                          <div className="text-xs text-slate-500 mt-1">Max 5MB, JPG/PNG/GIF/WEBP</div>
+                        </label>
+                      )}
+                    </div>
+                  ) : (
+                    shipment.receivedProductImages && shipment.receivedProductImages.length > 0 ? (
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        {shipment.receivedProductImages.map((imageUrl: string, index: number) => (
+                          <div 
+                            key={index} 
+                            className="relative bg-slate-50 rounded-lg border border-slate-200 p-2 flex items-center justify-center min-h-[200px] cursor-pointer hover:bg-slate-100 transition-colors"
+                            onClick={() => setViewingImage(imageUrl)}
+                          >
+                            <img
+                              src={imageUrl}
+                              alt={`Received product ${index + 1}`}
+                              className="max-w-full max-h-[400px] rounded-lg object-contain"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-slate-500 italic">No images uploaded</div>
+                    )
+                  )}
+                </div>
+
+                {/* Dispatch Details (if exists) */}
+                {shipment.dispatch && (
+                  <>
+                    <div>
+                      <div className="text-xs font-semibold text-slate-600 mb-2">Packaging List</div>
+                      {isEditing ? (
+                        <Input
+                          value={packagingList}
+                          onChange={e => setPackagingList(e.target.value)}
+                          placeholder="Enter packaging list"
+                        />
+                      ) : (
+                        <div className="text-sm text-slate-700 p-3 rounded-lg bg-slate-50 border border-slate-200">
+                          {shipment.dispatch.packagingList || <span className="text-slate-400 italic">Not set</span>}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-slate-600 mb-2">Package Number</div>
+                      {isEditing ? (
+                        <Input
+                          value={packageNumber}
+                          onChange={e => setPackageNumber(e.target.value)}
+                          placeholder="Enter package number"
+                        />
+                      ) : (
+                        <div className="text-sm text-slate-700 p-3 rounded-lg bg-slate-50 border border-slate-200">
+                          {shipment.dispatch.packageNumber || <span className="text-slate-400 italic">Not set</span>}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-slate-600 mb-2">Consignee Number</div>
+                      {isEditing ? (
+                        <Input
+                          value={consigneeNumber}
+                          onChange={e => setConsigneeNumber(e.target.value)}
+                          placeholder="Enter consignee number"
+                        />
+                      ) : (
+                        <div className="text-sm text-slate-700 p-3 rounded-lg bg-slate-50 border border-slate-200">
+                          {shipment.dispatch.consigneeNumber || <span className="text-slate-400 italic">Not set</span>}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-slate-600 mb-2">Shipping Mark</div>
+                      {isEditing ? (
+                        <Input
+                          value={shippingMark}
+                          onChange={e => setShippingMark(e.target.value)}
+                          placeholder="Enter shipping mark"
+                        />
+                      ) : (
+                        <div className="text-sm text-slate-700 p-3 rounded-lg bg-slate-50 border border-slate-200">
+                          {shipment.dispatch.shippingMark || 'UZA Solutions'}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
             </CardBody>
           </Card>
 
@@ -425,123 +843,6 @@ export function WarehouseShipmentDetailPage() {
             </Card>
           )}
 
-          {/* Warehouse Actions */}
-          {shipment.status === 'Submitted' && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Confirm Received</CardTitle>
-              </CardHeader>
-              <CardBody>
-                <div className="space-y-4">
-                  <div>
-                    <div className="text-xs font-semibold text-slate-600 mb-2">Warehouse Remarks (Optional)</div>
-                    <Textarea
-                      value={remarks}
-                      onChange={e => setRemarks(e.target.value)}
-                      placeholder="Condition, packaging, discrepancies..."
-                      rows={4}
-                    />
-                  </div>
-                  <div>
-                    <div className="text-xs font-semibold text-slate-600 mb-2">Draft BL (Bill of Lading)</div>
-                    {draftBLFile ? (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50">
-                          <button
-                            type="button"
-                            onClick={() => setViewingDraftBL(draftBLFile)}
-                            className="text-sm text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-2"
-                          >
-                            <ImageIcon className="h-4 w-4" />
-                            View Draft BL Document
-                          </button>
-                          <button
-                            type="button"
-                            onClick={removeDraftBL}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <label className="flex flex-col items-center justify-center h-32 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
-                          <input
-                            type="file"
-                            accept=".pdf,application/pdf,.jpg,.jpeg,.png,.gif,.webp,image/jpeg,image/png,image/gif,image/webp"
-                            className="hidden"
-                            onChange={handleDraftBLUpload}
-                            disabled={uploadingDraftBL}
-                          />
-                        {uploadingDraftBL ? (
-                          <div className="text-sm text-slate-600">Uploading document...</div>
-                        ) : (
-                          <>
-                            <Upload className="h-6 w-6 text-slate-400 mb-2" />
-                            <div className="text-sm font-medium text-slate-600">Click to upload Draft BL</div>
-                            <div className="text-xs text-slate-500 mt-1">PDF, JPG, PNG, GIF, WEBP (Max 10MB)</div>
-                          </>
-                        )}
-                      </label>
-                    )}
-                  </div>
-                  <div>
-                    <div className="text-xs font-semibold text-slate-600 mb-2">Consumer Number</div>
-                    <Input
-                      value={consumerNumber}
-                      onChange={e => setConsumerNumber(e.target.value)}
-                      placeholder="Enter consumer number"
-                    />
-                  </div>
-                  <div>
-                    <div className="text-xs font-semibold text-slate-600 mb-2">Received Product Images (Optional)</div>
-                    <div className="space-y-2">
-                      {receivedImages.map((imageUrl, index) => (
-                        <div key={index} className="relative bg-slate-50 rounded-lg border border-slate-200 p-2 flex items-center justify-center min-h-[150px]">
-                          <img
-                            src={imageUrl}
-                            alt={`Received product ${index + 1}`}
-                            className="max-w-full max-h-[200px] rounded-lg object-contain cursor-pointer"
-                            onClick={() => setViewingImage(imageUrl)}
-                          />
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              removeImage(index)
-                            }}
-                            className="absolute top-2 right-2 rounded-full bg-red-500 p-1.5 text-white hover:bg-red-600 transition-colors shadow-md z-10"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ))}
-                      {uploadingImages ? (
-                        <div className="flex items-center justify-center h-32 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50">
-                          <div className="text-sm text-slate-600">Uploading image...</div>
-                        </div>
-                      ) : (
-                        <label className="flex flex-col items-center justify-center h-32 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={handleImageUpload}
-                          />
-                          <Upload className="h-6 w-6 text-slate-400 mb-2" />
-                          <div className="text-sm font-medium text-slate-600">Click to upload received product image</div>
-                          <div className="text-xs text-slate-500 mt-1">Max 5MB, JPG/PNG/GIF/WEBP</div>
-                        </label>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-xs text-slate-500 text-center">
-                    Use the button in the timeline above to confirm receipt
-                  </div>
-                </div>
-              </CardBody>
-            </Card>
-          )}
 
         </div>
 

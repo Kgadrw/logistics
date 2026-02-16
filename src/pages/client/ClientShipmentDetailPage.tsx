@@ -1,9 +1,10 @@
 import * as React from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Image as ImageIcon } from 'lucide-react'
+import { ArrowLeft, Image as ImageIcon, Edit, Save } from 'lucide-react'
 import { Badge, statusTone } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
+import { Textarea } from '../../components/ui/Input'
 import { ShipmentTimeline } from '../../components/Timeline'
 import { ImageViewer } from '../../components/ImageViewer'
 import { PDFViewer } from '../../components/PDFViewer'
@@ -19,6 +20,9 @@ export function ClientShipmentDetailPage() {
   const [markingDelivered, setMarkingDelivered] = React.useState(false)
   const [viewingImage, setViewingImage] = React.useState<string | null>(null)
   const [viewingDraftBL, setViewingDraftBL] = React.useState<string | null>(null)
+  const [isEditing, setIsEditing] = React.useState(false)
+  const [notes, setNotes] = React.useState('')
+  const [savingNotes, setSavingNotes] = React.useState(false)
 
   React.useEffect(() => {
     const fetchShipment = async () => {
@@ -32,6 +36,7 @@ export function ClientShipmentDetailPage() {
         setError(null)
         const data = await clientAPI.getShipment(id)
         setShipment(data)
+        setNotes(data.notes || '')
       } catch (err: any) {
         setError(err.message || 'Failed to load shipment')
         console.error('Failed to fetch shipment:', err)
@@ -56,6 +61,25 @@ export function ClientShipmentDetailPage() {
       alert(err.message || 'Failed to mark as delivered')
     } finally {
       setMarkingDelivered(false)
+    }
+  }
+
+  const handleSaveNotes = async () => {
+    if (!id) return
+    try {
+      setSavingNotes(true)
+      await clientAPI.updateShipmentNotes(id, notes)
+      // Refresh shipment data
+      const data = await clientAPI.getShipment(id)
+      setShipment(data)
+      setNotes(data.notes || '')
+      setIsEditing(false)
+      alert('Notes updated successfully')
+    } catch (err: any) {
+      console.error('Failed to save notes:', err)
+      alert(err.message || 'Failed to save notes')
+    } finally {
+      setSavingNotes(false)
     }
   }
 
@@ -260,18 +284,60 @@ export function ClientShipmentDetailPage() {
           )}
 
           {/* Client Notes */}
-          {shipment.notes && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Notes</CardTitle>
-              </CardHeader>
-              <CardBody>
-                <div className="text-sm text-slate-700 p-3 rounded-lg bg-slate-50 border border-slate-200">
-                  {shipment.notes}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Your Notes</span>
+                {!isEditing ? (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleSaveNotes}
+                      disabled={savingNotes}
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {savingNotes ? 'Saving...' : 'Save'}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        setIsEditing(false)
+                        setNotes(shipment.notes || '')
+                      }}
+                      disabled={savingNotes}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardBody>
+              {isEditing ? (
+                <Textarea
+                  value={notes}
+                  onChange={e => setNotes(e.target.value)}
+                  placeholder="Add notes about this shipment..."
+                  rows={6}
+                />
+              ) : (
+                <div className="text-sm text-slate-700 p-3 rounded-lg bg-slate-50 border border-slate-200 min-h-[100px]">
+                  {shipment.notes || <span className="text-slate-400 italic">No notes added</span>}
                 </div>
-              </CardBody>
-            </Card>
-          )}
+              )}
+            </CardBody>
+          </Card>
         </div>
 
         {/* Sidebar */}

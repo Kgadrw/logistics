@@ -73,6 +73,11 @@ export const clientAPI = {
     fetchAPI<any>(`/client/shipments/${id}/mark-delivered`, {
       method: 'POST',
     }),
+  updateShipmentNotes: (id: string, notes: string) =>
+    fetchAPI<any>(`/client/shipments/${id}/notes`, {
+      method: 'PUT',
+      body: JSON.stringify({ notes }),
+    }),
 }
 
 // Upload API
@@ -181,6 +186,19 @@ export const warehouseAPI = {
     fetchAPI<any>(`/warehouse/shipments/${id}/remarks`, {
       method: 'PUT',
       body: JSON.stringify({ remarks }),
+    }),
+  updateShipmentDetails: (id: string, data: {
+    receivedProductImages?: string[];
+    draftBL?: string;
+    consumerNumber?: string;
+    packagingList?: string;
+    packageNumber?: string;
+    consigneeNumber?: string;
+    shippingMark?: string;
+  }) =>
+    fetchAPI<any>(`/warehouse/shipments/${id}/details`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
     }),
 }
 
