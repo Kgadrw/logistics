@@ -14,11 +14,14 @@ export function PDFViewer({
   title?: string
 }) {
   const [pdfError, setPdfError] = React.useState(false)
-  const iframeRef = React.useRef<HTMLIFrameElement>(null)
+  const [loading, setLoading] = React.useState(true)
+  const [blobUrl, setBlobUrl] = React.useState<string | null>(null)
+  const objectRef = React.useRef<HTMLObjectElement>(null)
 
   React.useEffect(() => {
     if (!open) {
       setPdfError(false)
+      setLoading(true)
       return
     }
     const onKeyDown = (e: KeyboardEvent) => {
@@ -28,15 +31,49 @@ export function PDFViewer({
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [open, onClose])
 
+  // Fetch PDF as blob to ensure proper content-type
   React.useEffect(() => {
+    if (!open || !pdfUrl) {
+      if (blobUrl) {
+        URL.revokeObjectURL(blobUrl)
+        setBlobUrl(null)
+      }
+      return
+    }
+
+    setLoading(true)
     setPdfError(false)
-  }, [pdfUrl])
+
+    // Fetch PDF as blob to ensure proper content-type handling
+    fetch(pdfUrl)
+      .then(response => {
+        if (!response.ok) throw new Error('Failed to fetch PDF')
+        return response.blob()
+      })
+      .then(blob => {
+        // Verify it's a PDF
+        if (blob.type === 'application/pdf' || pdfUrl.toLowerCase().endsWith('.pdf')) {
+          const url = URL.createObjectURL(blob)
+          setBlobUrl(url)
+          setLoading(false)
+        } else {
+          throw new Error('File is not a PDF')
+        }
+      })
+      .catch(error => {
+        console.error('Error loading PDF:', error)
+        setPdfError(true)
+        setLoading(false)
+      })
+
+    return () => {
+      if (blobUrl) {
+        URL.revokeObjectURL(blobUrl)
+      }
+    }
+  }, [open, pdfUrl])
 
   if (!open || !pdfUrl) return null
-
-  // Ensure PDF URL is properly formatted for viewing
-  // Cloudinary raw resources are already PDFs, so use as-is
-  const pdfViewerUrl = pdfUrl
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm" onClick={onClose}>
@@ -82,7 +119,12 @@ export function PDFViewer({
         
         {/* PDF Viewer */}
         <div className="flex-1 overflow-hidden bg-slate-100 relative">
-          {pdfError ? (
+          {loading ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-8 bg-slate-50">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+              <div className="text-sm text-slate-600">Loading PDF...</div>
+            </div>
+          ) : pdfError ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center p-8 bg-slate-50">
               <FileText className="h-16 w-16 text-slate-400 mb-4" />
               <div className="text-sm font-semibold text-slate-900 mb-2">Unable to display PDF in browser</div>
@@ -109,29 +151,18 @@ export function PDFViewer({
                 </a>
               </div>
             </div>
-          ) : (
+          ) : blobUrl ? (
             <iframe
-              ref={iframeRef}
-              src={`${pdfViewerUrl}#toolbar=1&navpanes=1&scrollbar=1`}
+              src={`${blobUrl}#toolbar=1&navpanes=1&scrollbar=1`}
               className="w-full h-full border-0"
               title="PDF Viewer"
               style={{ minHeight: '600px' }}
-              onError={() => setPdfError(true)}
-              onLoad={() => {
-                // Check if iframe loaded successfully
-                try {
-                  const iframe = iframeRef.current
-                  if (iframe && iframe.contentWindow) {
-                    // If we can access contentWindow, PDF likely loaded
-                    setPdfError(false)
-                  }
-                } catch (e) {
-                  // Cross-origin or other error - PDF might still be loading
-                  // Don't set error immediately
-                }
+              onError={() => {
+                // Fallback to object/embed if iframe fails
+                setPdfError(false)
               }}
             />
-          )}
+          ) : null}
         </div>
       </div>
     </div>
