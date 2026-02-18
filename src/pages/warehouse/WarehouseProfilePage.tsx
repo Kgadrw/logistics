@@ -572,7 +572,7 @@ export function WarehouseProfilePage() {
         </Card>
 
         {/* Pricing & Logistics */}
-        <Card>
+        <Card className="lg:col-span-12">
           <CardHeader>
             <CardTitle>Pricing & Logistics Methods</CardTitle>
             <div className="text-xs text-slate-500">Set your warehouse pricing and available transport methods</div>
