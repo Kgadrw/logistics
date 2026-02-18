@@ -215,25 +215,47 @@ export function WarehouseProfilePage() {
       const result = await warehouseAPI.updateProfile(updateData, user?.id)
       console.log('Update result:', result)
       
-      // Refresh profile data from server
-      const refreshedProfile = await warehouseAPI.getProfile(user?.id)
+      // Use the result from update if available, otherwise refresh
+      let updatedData = result?.user
       
-      if (refreshedProfile) {
-        setFormData({
-          warehouseName: refreshedProfile.name || refreshedProfile.warehouseName || '',
-          managerName: refreshedProfile.manager || refreshedProfile.managerName || '',
-          email: refreshedProfile.email || user?.email || '',
-          phone: refreshedProfile.contact || refreshedProfile.phone || '',
-          address: refreshedProfile.location || refreshedProfile.address || '',
-          location: refreshedProfile.location || '',
-          capacity: refreshedProfile.capacity || '',
-          contact: refreshedProfile.contact || '',
-          pricePerKgUsd: refreshedProfile.pricePerKgUsd || 0,
-          warehouseHandlingFeeUsd: refreshedProfile.warehouseHandlingFeeUsd || 0,
-          transportPriceAir: refreshedProfile.transportPriceUsd?.Air || 0,
-          transportPriceShip: refreshedProfile.transportPriceUsd?.Ship || 0,
-          logisticsMethods: refreshedProfile.logisticsMethods || [],
-        })
+      if (!updatedData) {
+        // Small delay to ensure backend has saved
+        await new Promise(resolve => setTimeout(resolve, 300))
+        
+        // Refresh profile data from server
+        updatedData = await warehouseAPI.getProfile(user?.id)
+        console.log('Refreshed profile:', updatedData)
+      }
+      
+      if (updatedData) {
+        const updatedFormData = {
+          warehouseName: updatedData.name || updatedData.warehouseName || formData.warehouseName,
+          managerName: updatedData.manager || updatedData.managerName || formData.managerName,
+          email: updatedData.email || user?.email || formData.email,
+          phone: updatedData.contact || updatedData.phone || formData.phone,
+          address: updatedData.location || updatedData.address || formData.address,
+          location: updatedData.location || formData.location,
+          capacity: updatedData.capacity || formData.capacity,
+          contact: updatedData.contact || formData.contact,
+          pricePerKgUsd: Number(updatedData.pricePerKgUsd) || 0,
+          warehouseHandlingFeeUsd: Number(updatedData.warehouseHandlingFeeUsd) || 0,
+          transportPriceAir: Number(updatedData.transportPriceUsd?.Air) || 0,
+          transportPriceShip: Number(updatedData.transportPriceUsd?.Ship) || 0,
+          logisticsMethods: Array.isArray(updatedData.logisticsMethods) ? updatedData.logisticsMethods : [],
+        }
+        console.log('Updated formData:', updatedFormData)
+        setFormData(updatedFormData)
+      } else {
+        // Fallback: update from temp values if refresh fails
+        console.warn('Could not refresh profile, using saved values')
+        setFormData(d => ({
+          ...d,
+          pricePerKgUsd: pricingTempValues.pricePerKgUsd,
+          warehouseHandlingFeeUsd: pricingTempValues.warehouseHandlingFeeUsd,
+          transportPriceAir: pricingTempValues.transportPriceAir,
+          transportPriceShip: pricingTempValues.transportPriceShip,
+          logisticsMethods: pricingTempValues.logisticsMethods,
+        }))
       }
       
       setEditingPricing(false)
