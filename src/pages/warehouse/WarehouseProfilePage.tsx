@@ -211,26 +211,29 @@ export function WarehouseProfilePage() {
         logisticsMethods: Array.isArray(pricingTempValues.logisticsMethods) ? pricingTempValues.logisticsMethods : [],
       }
 
+      console.log('Saving pricing data:', updateData)
       const result = await warehouseAPI.updateProfile(updateData, user?.id)
+      console.log('Update result:', result)
       
-      if (result?.user) {
-        setFormData(d => ({
-          ...d,
-          pricePerKgUsd: result.user.pricePerKgUsd || 0,
-          warehouseHandlingFeeUsd: result.user.warehouseHandlingFeeUsd || 0,
-          transportPriceAir: result.user.transportPriceUsd?.Air || 0,
-          transportPriceShip: result.user.transportPriceUsd?.Ship || 0,
-          logisticsMethods: result.user.logisticsMethods || [],
-        }))
-      } else {
-        setFormData(d => ({
-          ...d,
-          pricePerKgUsd: pricingTempValues.pricePerKgUsd,
-          warehouseHandlingFeeUsd: pricingTempValues.warehouseHandlingFeeUsd,
-          transportPriceAir: pricingTempValues.transportPriceAir,
-          transportPriceShip: pricingTempValues.transportPriceShip,
-          logisticsMethods: pricingTempValues.logisticsMethods,
-        }))
+      // Refresh profile data from server
+      const refreshedProfile = await warehouseAPI.getProfile(user?.id)
+      
+      if (refreshedProfile) {
+        setFormData({
+          warehouseName: refreshedProfile.name || refreshedProfile.warehouseName || '',
+          managerName: refreshedProfile.manager || refreshedProfile.managerName || '',
+          email: refreshedProfile.email || user?.email || '',
+          phone: refreshedProfile.contact || refreshedProfile.phone || '',
+          address: refreshedProfile.location || refreshedProfile.address || '',
+          location: refreshedProfile.location || '',
+          capacity: refreshedProfile.capacity || '',
+          contact: refreshedProfile.contact || '',
+          pricePerKgUsd: refreshedProfile.pricePerKgUsd || 0,
+          warehouseHandlingFeeUsd: refreshedProfile.warehouseHandlingFeeUsd || 0,
+          transportPriceAir: refreshedProfile.transportPriceUsd?.Air || 0,
+          transportPriceShip: refreshedProfile.transportPriceUsd?.Ship || 0,
+          logisticsMethods: refreshedProfile.logisticsMethods || [],
+        })
       }
       
       setEditingPricing(false)
@@ -241,6 +244,8 @@ export function WarehouseProfilePage() {
         transportPriceShip: 0,
         logisticsMethods: [],
       })
+      
+      alert('Pricing updated successfully')
     } catch (err: any) {
       setError(err.message || 'Failed to save pricing')
       console.error('Failed to save pricing:', err)
