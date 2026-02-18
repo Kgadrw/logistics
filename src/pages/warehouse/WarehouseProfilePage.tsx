@@ -578,102 +578,106 @@ export function WarehouseProfilePage() {
             <div className="text-xs text-slate-500">Set your warehouse pricing and available transport methods</div>
           </CardHeader>
           <CardBody>
-            <div className="space-y-4">
-              <div>
-                <div className="text-xs font-semibold text-slate-600 mb-1">Price per kg (USD)</div>
-                {editingField === 'pricePerKgUsd' ? (
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      min={0}
-                      step={0.5}
-                      value={tempValues.pricePerKgUsd ?? formData.pricePerKgUsd}
-                      onChange={e => setTempValues({ ...tempValues, pricePerKgUsd: e.target.value })}
-                      className="flex-1"
-                    />
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleSave('pricePerKgUsd')}
-                      className="h-8 w-8 p-0"
-                      disabled={saving === 'pricePerKgUsd'}
-                    >
-                      <Check className="h-4 w-4 text-green-600" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={handleCancel}
-                      className="h-8 w-8 p-0"
-                    >
-                      <X className="h-4 w-4 text-red-600" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 text-sm text-slate-900">
-                    <span>${formData.pricePerKgUsd.toFixed(2)}</span>
-                    <button
-                      onClick={() => handleEdit('pricePerKgUsd', formData.pricePerKgUsd.toString())}
-                      className="p-1 hover:bg-slate-100 rounded transition-colors"
-                      disabled={!user}
-                      title={!user ? 'Please log in to edit' : 'Edit price per kg'}
-                    >
-                      <Pencil className="h-3.5 w-3.5 text-slate-500" />
-                    </button>
-                  </div>
-                )}
+            <div className="space-y-3">
+              {/* Pricing Fields - Grid Layout */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <div className="text-xs font-semibold text-slate-600 mb-1">Price per kg (USD)</div>
+                  {editingField === 'pricePerKgUsd' ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min={0}
+                        step={0.5}
+                        value={tempValues.pricePerKgUsd ?? formData.pricePerKgUsd}
+                        onChange={e => setTempValues({ ...tempValues, pricePerKgUsd: e.target.value })}
+                        className="flex-1"
+                      />
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleSave('pricePerKgUsd')}
+                        className="h-8 w-8 p-0"
+                        disabled={saving === 'pricePerKgUsd'}
+                      >
+                        <Check className="h-4 w-4 text-green-600" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleCancel}
+                        className="h-8 w-8 p-0"
+                      >
+                        <X className="h-4 w-4 text-red-600" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-sm text-slate-900">
+                      <span>${formData.pricePerKgUsd.toFixed(2)}</span>
+                      <button
+                        onClick={() => handleEdit('pricePerKgUsd', formData.pricePerKgUsd.toString())}
+                        className="p-1 hover:bg-slate-100 rounded transition-colors"
+                        disabled={!user}
+                        title={!user ? 'Please log in to edit' : 'Edit price per kg'}
+                      >
+                        <Pencil className="h-3.5 w-3.5 text-slate-500" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <div className="text-xs font-semibold text-slate-600 mb-1">Handling Fee (USD)</div>
+                  {editingField === 'warehouseHandlingFeeUsd' ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min={0}
+                        step={1}
+                        value={tempValues.warehouseHandlingFeeUsd ?? formData.warehouseHandlingFeeUsd}
+                        onChange={e => setTempValues({ ...tempValues, warehouseHandlingFeeUsd: e.target.value })}
+                        className="flex-1"
+                      />
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleSave('warehouseHandlingFeeUsd')}
+                        className="h-8 w-8 p-0"
+                        disabled={saving === 'warehouseHandlingFeeUsd'}
+                      >
+                        <Check className="h-4 w-4 text-green-600" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleCancel}
+                        className="h-8 w-8 p-0"
+                      >
+                        <X className="h-4 w-4 text-red-600" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-sm text-slate-900">
+                      <span>${formData.warehouseHandlingFeeUsd.toFixed(2)}</span>
+                      <button
+                        onClick={() => handleEdit('warehouseHandlingFeeUsd', formData.warehouseHandlingFeeUsd.toString())}
+                        className="p-1 hover:bg-slate-100 rounded transition-colors"
+                        disabled={!user}
+                        title={!user ? 'Please log in to edit' : 'Edit handling fee'}
+                      >
+                        <Pencil className="h-3.5 w-3.5 text-slate-500" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div>
-                <div className="text-xs font-semibold text-slate-600 mb-1">Warehouse Handling Fee (USD)</div>
-                {editingField === 'warehouseHandlingFeeUsd' ? (
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      min={0}
-                      step={1}
-                      value={tempValues.warehouseHandlingFeeUsd ?? formData.warehouseHandlingFeeUsd}
-                      onChange={e => setTempValues({ ...tempValues, warehouseHandlingFeeUsd: e.target.value })}
-                      className="flex-1"
-                    />
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleSave('warehouseHandlingFeeUsd')}
-                      className="h-8 w-8 p-0"
-                      disabled={saving === 'warehouseHandlingFeeUsd'}
-                    >
-                      <Check className="h-4 w-4 text-green-600" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={handleCancel}
-                      className="h-8 w-8 p-0"
-                    >
-                      <X className="h-4 w-4 text-red-600" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 text-sm text-slate-900">
-                    <span>${formData.warehouseHandlingFeeUsd.toFixed(2)}</span>
-                    <button
-                      onClick={() => handleEdit('warehouseHandlingFeeUsd', formData.warehouseHandlingFeeUsd.toString())}
-                      className="p-1 hover:bg-slate-100 rounded transition-colors"
-                      disabled={!user}
-                      title={!user ? 'Please log in to edit' : 'Edit handling fee'}
-                    >
-                      <Pencil className="h-3.5 w-3.5 text-slate-500" />
-                    </button>
-                  </div>
-                )}
-              </div>
-
+              {/* Transport Pricing - Grid Layout */}
               <div>
                 <div className="text-xs font-semibold text-slate-600 mb-2">Transport Pricing (USD)</div>
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <div className="text-xs text-slate-500 mb-1">Air Transport</div>
+                    <div className="text-xs text-slate-500 mb-1">Air</div>
                     {editingField === 'transportPriceAir' ? (
                       <div className="flex items-center gap-2">
                         <Input
@@ -717,7 +721,7 @@ export function WarehouseProfilePage() {
                     )}
                   </div>
                   <div>
-                    <div className="text-xs text-slate-500 mb-1">Ship Transport</div>
+                    <div className="text-xs text-slate-500 mb-1">Ship</div>
                     {editingField === 'transportPriceShip' ? (
                       <div className="flex items-center gap-2">
                         <Input
@@ -763,41 +767,44 @@ export function WarehouseProfilePage() {
                 </div>
               </div>
 
+              {/* Logistics Methods - Compact Layout */}
               <div>
                 <div className="text-xs font-semibold text-slate-600 mb-2">Available Logistics Methods</div>
                 {editingField === 'logisticsMethods' ? (
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={Array.isArray(tempValues.logisticsMethods) ? tempValues.logisticsMethods.includes('Air') : formData.logisticsMethods.includes('Air')}
-                        onChange={e => {
-                          const current = Array.isArray(tempValues.logisticsMethods) ? tempValues.logisticsMethods : formData.logisticsMethods
-                          const updated = e.target.checked
-                            ? [...current.filter((m: string) => m !== 'Air'), 'Air']
-                            : current.filter((m: string) => m !== 'Air')
-                          setTempValues({ ...tempValues, logisticsMethods: updated })
-                        }}
-                        className="rounded border-slate-300"
-                      />
-                      <span className="text-sm text-slate-700">Air</span>
-                    </label>
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={Array.isArray(tempValues.logisticsMethods) ? tempValues.logisticsMethods.includes('Ship') : formData.logisticsMethods.includes('Ship')}
-                        onChange={e => {
-                          const current = Array.isArray(tempValues.logisticsMethods) ? tempValues.logisticsMethods : formData.logisticsMethods
-                          const updated = e.target.checked
-                            ? [...current.filter((m: string) => m !== 'Ship'), 'Ship']
-                            : current.filter((m: string) => m !== 'Ship')
-                          setTempValues({ ...tempValues, logisticsMethods: updated })
-                        }}
-                        className="rounded border-slate-300"
-                      />
-                      <span className="text-sm text-slate-700">Ship</span>
-                    </label>
-                    <div className="flex items-center gap-2 mt-3">
+                  <div>
+                    <div className="flex flex-wrap gap-4 mb-3">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={Array.isArray(tempValues.logisticsMethods) ? tempValues.logisticsMethods.includes('Air') : formData.logisticsMethods.includes('Air')}
+                          onChange={e => {
+                            const current = Array.isArray(tempValues.logisticsMethods) ? tempValues.logisticsMethods : formData.logisticsMethods
+                            const updated = e.target.checked
+                              ? [...current.filter((m: string) => m !== 'Air'), 'Air']
+                              : current.filter((m: string) => m !== 'Air')
+                            setTempValues({ ...tempValues, logisticsMethods: updated })
+                          }}
+                          className="rounded border-slate-300"
+                        />
+                        <span className="text-sm text-slate-700">Air</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={Array.isArray(tempValues.logisticsMethods) ? tempValues.logisticsMethods.includes('Ship') : formData.logisticsMethods.includes('Ship')}
+                          onChange={e => {
+                            const current = Array.isArray(tempValues.logisticsMethods) ? tempValues.logisticsMethods : formData.logisticsMethods
+                            const updated = e.target.checked
+                              ? [...current.filter((m: string) => m !== 'Ship'), 'Ship']
+                              : current.filter((m: string) => m !== 'Ship')
+                            setTempValues({ ...tempValues, logisticsMethods: updated })
+                          }}
+                          className="rounded border-slate-300"
+                        />
+                        <span className="text-sm text-slate-700">Ship</span>
+                      </label>
+                    </div>
+                    <div className="flex items-center gap-2">
                       <Button
                         size="sm"
                         variant="ghost"
