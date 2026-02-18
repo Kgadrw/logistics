@@ -5,9 +5,7 @@ import { Input } from '../../components/ui/Input'
 import { Select } from '../../components/ui/Select'
 import { useAdminAPI } from '../../lib/useAPI'
 import { adminAPI } from '../../lib/api'
-import type { PricingRules, TransportMethod } from '../../lib/types'
-
-const methods: TransportMethod[] = ['Truck', 'Air', 'Bike', 'Ship']
+import type { PricingRules } from '../../lib/types'
 
 export function AdminPricingPage() {
   const { pricing, refreshPricing } = useAdminAPI()
@@ -90,32 +88,6 @@ export function AdminPricingPage() {
               </div>
             </div>
 
-            <div className="mt-5">
-              <div className="text-xs font-semibold text-slate-600">Price per transport method (USD)</div>
-              <div className="mt-2 grid gap-3 sm:grid-cols-2">
-                {methods.map(m => (
-                  <div key={m} className="rounded-xl border border-slate-200 bg-white p-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="text-sm font-semibold text-slate-900">{m}</div>
-                      <div className="w-32">
-                        <Input
-                          type="number"
-                          min={0}
-                          step={5}
-                          value={draft.transportPriceUsd[m]}
-                          onChange={e =>
-                            setDraft(d => d ? {
-                              ...d,
-                              transportPriceUsd: { ...d.transportPriceUsd, [m]: Number(e.target.value) },
-                            } : null)
-                          }
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
 
             <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
               <Button variant="secondary" onClick={() => pricing && setDraft(structuredClone(pricing))}>
@@ -141,12 +113,12 @@ export function AdminPricingPage() {
               <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200">
                 <div className="text-xs font-semibold text-slate-600">Formula</div>
                 <div className="mt-1">
-                  \(estimated = (total\_kg × price\_per\_kg) + handling + transport\_method\_fee\)
+                  \(estimated = (total\_kg × price\_per\_kg) + handling + warehouse\_transport\_fee\)
                 </div>
               </div>
               <div className="rounded-xl border border-slate-200 bg-white p-4">
-                <div className="text-xs font-semibold text-slate-600">Transport pricing rules</div>
-                <div className="mt-1">Dispatching via a method adds its fee. Drafts have no transport fee until dispatched.</div>
+                <div className="text-xs font-semibold text-slate-600">Warehouse-specific pricing</div>
+                <div className="mt-1">Each warehouse sets their own transport pricing (Air, Ship) and logistics methods in their profile settings.</div>
               </div>
               <div className="rounded-xl border border-slate-200 bg-white p-4">
                 <div className="text-xs font-semibold text-slate-600">Audit trail</div>

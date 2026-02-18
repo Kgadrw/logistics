@@ -74,7 +74,6 @@ export type Notification = {
 
 export type PricingRules = {
   pricePerKgUsd: number
-  transportPriceUsd: Record<TransportMethod, number>
   warehouseHandlingFeeUsd: number
 }
 

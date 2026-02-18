@@ -17,6 +17,11 @@ export function WarehouseProfilePage() {
     location: '',
     capacity: '',
     contact: '',
+    pricePerKgUsd: 0,
+    warehouseHandlingFeeUsd: 0,
+    transportPriceAir: 0,
+    transportPriceShip: 0,
+    logisticsMethods: [] as string[],
   })
   const [editingField, setEditingField] = React.useState<string | null>(null)
   const [tempValues, setTempValues] = React.useState<Record<string, string>>({})
@@ -46,6 +51,11 @@ export function WarehouseProfilePage() {
           location: profile.location || '',
           capacity: profile.capacity || '',
           contact: profile.contact || '',
+          pricePerKgUsd: profile.pricePerKgUsd || 0,
+          warehouseHandlingFeeUsd: profile.warehouseHandlingFeeUsd || 0,
+          transportPriceAir: profile.transportPriceUsd?.Air || 0,
+          transportPriceShip: profile.transportPriceUsd?.Ship || 0,
+          logisticsMethods: profile.logisticsMethods || [],
         })
       } catch (err: any) {
         if (err.is404 || err.status === 404 || err.message?.includes('404') || err.message?.includes('not found')) {
@@ -72,7 +82,7 @@ export function WarehouseProfilePage() {
     fetchProfile()
   }, [user])
 
-  const handleEdit = (field: string, currentValue: string) => {
+  const handleEdit = (field: string, currentValue: string | string[]) => {
     setEditingField(field)
     setTempValues({ ...tempValues, [field]: currentValue })
     setError(null)
@@ -102,9 +112,26 @@ export function WarehouseProfilePage() {
 
       const backendField = fieldMapping[field] || field
       const updateData: any = {}
-      const valueToSave = tempValues[field]?.trim() || ''
+      let valueToSave: any = tempValues[field]?.trim() || ''
       
-      updateData[backendField] = valueToSave
+      // Handle special fields
+      if (field === 'pricePerKgUsd' || field === 'warehouseHandlingFeeUsd') {
+        valueToSave = Number(valueToSave) || 0
+        updateData[backendField] = valueToSave
+      } else if (field === 'transportPriceAir' || field === 'transportPriceShip') {
+        valueToSave = Number(valueToSave) || 0
+        // Update transport prices - preserve the other method's price
+        updateData.transportPriceUsd = {
+          Air: field === 'transportPriceAir' ? valueToSave : (formData.transportPriceAir || 0),
+          Ship: field === 'transportPriceShip' ? valueToSave : (formData.transportPriceShip || 0),
+        }
+      } else if (field === 'logisticsMethods') {
+        // Handle logistics methods as array
+        valueToSave = Array.isArray(tempValues[field]) ? tempValues[field] : []
+        updateData.logisticsMethods = valueToSave
+      } else {
+        updateData[backendField] = valueToSave
+      }
 
       const result = await warehouseAPI.updateProfile(updateData, user?.id)
       
@@ -119,6 +146,11 @@ export function WarehouseProfilePage() {
           location: result.user.location || '',
           capacity: result.user.capacity || '',
           contact: result.user.contact || '',
+          pricePerKgUsd: result.user.pricePerKgUsd || 0,
+          warehouseHandlingFeeUsd: result.user.warehouseHandlingFeeUsd || 0,
+          transportPriceAir: result.user.transportPriceUsd?.Air || 0,
+          transportPriceShip: result.user.transportPriceUsd?.Ship || 0,
+          logisticsMethods: result.user.logisticsMethods || [],
         })
       } else {
         setFormData(d => ({ ...d, [field]: valueToSave }))
@@ -534,6 +566,276 @@ export function WarehouseProfilePage() {
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+
+        {/* Pricing & Logistics */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Pricing & Logistics Methods</CardTitle>
+            <div className="text-xs text-slate-500">Set your warehouse pricing and available transport methods</div>
+          </CardHeader>
+          <CardBody>
+            <div className="space-y-4">
+              <div>
+                <div className="text-xs font-semibold text-slate-600 mb-1">Price per kg (USD)</div>
+                {editingField === 'pricePerKgUsd' ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min={0}
+                      step={0.5}
+                      value={tempValues.pricePerKgUsd ?? formData.pricePerKgUsd}
+                      onChange={e => setTempValues({ ...tempValues, pricePerKgUsd: e.target.value })}
+                      className="flex-1"
+                    />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleSave('pricePerKgUsd')}
+                      className="h-8 w-8 p-0"
+                      disabled={saving === 'pricePerKgUsd'}
+                    >
+                      <Check className="h-4 w-4 text-green-600" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleCancel}
+                      className="h-8 w-8 p-0"
+                    >
+                      <X className="h-4 w-4 text-red-600" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-sm text-slate-900">
+                    <span>${formData.pricePerKgUsd.toFixed(2)}</span>
+                    <button
+                      onClick={() => handleEdit('pricePerKgUsd', formData.pricePerKgUsd.toString())}
+                      className="p-1 hover:bg-slate-100 rounded transition-colors"
+                      disabled={!user}
+                      title={!user ? 'Please log in to edit' : 'Edit price per kg'}
+                    >
+                      <Pencil className="h-3.5 w-3.5 text-slate-500" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <div className="text-xs font-semibold text-slate-600 mb-1">Warehouse Handling Fee (USD)</div>
+                {editingField === 'warehouseHandlingFeeUsd' ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={tempValues.warehouseHandlingFeeUsd ?? formData.warehouseHandlingFeeUsd}
+                      onChange={e => setTempValues({ ...tempValues, warehouseHandlingFeeUsd: e.target.value })}
+                      className="flex-1"
+                    />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleSave('warehouseHandlingFeeUsd')}
+                      className="h-8 w-8 p-0"
+                      disabled={saving === 'warehouseHandlingFeeUsd'}
+                    >
+                      <Check className="h-4 w-4 text-green-600" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleCancel}
+                      className="h-8 w-8 p-0"
+                    >
+                      <X className="h-4 w-4 text-red-600" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-sm text-slate-900">
+                    <span>${formData.warehouseHandlingFeeUsd.toFixed(2)}</span>
+                    <button
+                      onClick={() => handleEdit('warehouseHandlingFeeUsd', formData.warehouseHandlingFeeUsd.toString())}
+                      className="p-1 hover:bg-slate-100 rounded transition-colors"
+                      disabled={!user}
+                      title={!user ? 'Please log in to edit' : 'Edit handling fee'}
+                    >
+                      <Pencil className="h-3.5 w-3.5 text-slate-500" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <div className="text-xs font-semibold text-slate-600 mb-2">Transport Pricing (USD)</div>
+                <div className="space-y-3">
+                  <div>
+                    <div className="text-xs text-slate-500 mb-1">Air Transport</div>
+                    {editingField === 'transportPriceAir' ? (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min={0}
+                          step={5}
+                          value={tempValues.transportPriceAir ?? formData.transportPriceAir}
+                          onChange={e => setTempValues({ ...tempValues, transportPriceAir: e.target.value })}
+                          className="flex-1"
+                        />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleSave('transportPriceAir')}
+                          className="h-8 w-8 p-0"
+                          disabled={saving === 'transportPriceAir'}
+                        >
+                          <Check className="h-4 w-4 text-green-600" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={handleCancel}
+                          className="h-8 w-8 p-0"
+                        >
+                          <X className="h-4 w-4 text-red-600" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-sm text-slate-900">
+                        <span>${formData.transportPriceAir.toFixed(2)}</span>
+                        <button
+                          onClick={() => handleEdit('transportPriceAir', formData.transportPriceAir.toString())}
+                          className="p-1 hover:bg-slate-100 rounded transition-colors"
+                          disabled={!user}
+                          title={!user ? 'Please log in to edit' : 'Edit air transport price'}
+                        >
+                          <Pencil className="h-3.5 w-3.5 text-slate-500" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500 mb-1">Ship Transport</div>
+                    {editingField === 'transportPriceShip' ? (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min={0}
+                          step={5}
+                          value={tempValues.transportPriceShip ?? formData.transportPriceShip}
+                          onChange={e => setTempValues({ ...tempValues, transportPriceShip: e.target.value })}
+                          className="flex-1"
+                        />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleSave('transportPriceShip')}
+                          className="h-8 w-8 p-0"
+                          disabled={saving === 'transportPriceShip'}
+                        >
+                          <Check className="h-4 w-4 text-green-600" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={handleCancel}
+                          className="h-8 w-8 p-0"
+                        >
+                          <X className="h-4 w-4 text-red-600" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-sm text-slate-900">
+                        <span>${formData.transportPriceShip.toFixed(2)}</span>
+                        <button
+                          onClick={() => handleEdit('transportPriceShip', formData.transportPriceShip.toString())}
+                          className="p-1 hover:bg-slate-100 rounded transition-colors"
+                          disabled={!user}
+                          title={!user ? 'Please log in to edit' : 'Edit ship transport price'}
+                        >
+                          <Pencil className="h-3.5 w-3.5 text-slate-500" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div className="text-xs font-semibold text-slate-600 mb-2">Available Logistics Methods</div>
+                {editingField === 'logisticsMethods' ? (
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={Array.isArray(tempValues.logisticsMethods) ? tempValues.logisticsMethods.includes('Air') : formData.logisticsMethods.includes('Air')}
+                        onChange={e => {
+                          const current = Array.isArray(tempValues.logisticsMethods) ? tempValues.logisticsMethods : formData.logisticsMethods
+                          const updated = e.target.checked
+                            ? [...current.filter((m: string) => m !== 'Air'), 'Air']
+                            : current.filter((m: string) => m !== 'Air')
+                          setTempValues({ ...tempValues, logisticsMethods: updated })
+                        }}
+                        className="rounded border-slate-300"
+                      />
+                      <span className="text-sm text-slate-700">Air</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={Array.isArray(tempValues.logisticsMethods) ? tempValues.logisticsMethods.includes('Ship') : formData.logisticsMethods.includes('Ship')}
+                        onChange={e => {
+                          const current = Array.isArray(tempValues.logisticsMethods) ? tempValues.logisticsMethods : formData.logisticsMethods
+                          const updated = e.target.checked
+                            ? [...current.filter((m: string) => m !== 'Ship'), 'Ship']
+                            : current.filter((m: string) => m !== 'Ship')
+                          setTempValues({ ...tempValues, logisticsMethods: updated })
+                        }}
+                        className="rounded border-slate-300"
+                      />
+                      <span className="text-sm text-slate-700">Ship</span>
+                    </label>
+                    <div className="flex items-center gap-2 mt-3">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleSave('logisticsMethods')}
+                        className="h-8"
+                        disabled={saving === 'logisticsMethods'}
+                      >
+                        <Check className="h-4 w-4 text-green-600 mr-2" />
+                        Save
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleCancel}
+                        className="h-8"
+                      >
+                        <X className="h-4 w-4 text-red-600 mr-2" />
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <div className="text-sm text-slate-900">
+                      {formData.logisticsMethods.length > 0
+                        ? formData.logisticsMethods.join(', ')
+                        : 'None selected'}
+                    </div>
+                    <button
+                      onClick={() => handleEdit('logisticsMethods', formData.logisticsMethods)}
+                      className="p-1 hover:bg-slate-100 rounded transition-colors"
+                      disabled={!user}
+                      title={!user ? 'Please log in to edit' : 'Edit logistics methods'}
+                    >
+                      <Pencil className="h-3.5 w-3.5 text-slate-500" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </CardBody>
