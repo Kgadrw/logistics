@@ -71,7 +71,7 @@ export function ClientShipmentsPage() {
   }, [clientShipments])
 
   return (
-    <div className="w-full px-4 pt-6 pb-6">
+    <div className="w-full max-w-full px-4 pt-6 pb-6 mx-auto">
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="text-sm font-semibold text-slate-900">Shipments</div>
@@ -168,7 +168,7 @@ export function ClientShipmentsPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-12">
-        <div className="lg:col-span-7 order-2 lg:order-1">
+        <div className="lg:col-span-7 order-2 lg:order-1 w-full flex flex-col items-center sm:items-stretch">
           {filteredShipments.length === 0 ? (
             <Card>
               <CardBody className="text-center py-12">
@@ -190,12 +190,12 @@ export function ClientShipmentsPage() {
               </CardBody>
             </Card>
           ) : (
-          <div className="grid gap-3">
+          <div className="grid gap-3 w-full max-w-full">
               {filteredShipments.map(s => (
               <button
                 key={s.id}
                 className={[
-                  'text-left rounded-2xl shadow-card ring-1 px-5 py-4 transition-all duration-300 ease-in-out',
+                  'text-left rounded-2xl shadow-card ring-1 px-5 py-4 transition-all duration-300 ease-in-out w-full',
                   selected?.id === s.id
                     ? 'bg-blue-900 ring-2 ring-blue-800 text-white'
                     : 'bg-white ring-slate-200/70 hover:ring-blue-200',
