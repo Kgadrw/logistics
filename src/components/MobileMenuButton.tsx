@@ -58,26 +58,6 @@ export function MobileMenuButton() {
     }
   }, [isOpen])
 
-  return (
-    <>
-      {isOpen && (
-        <div
-          id="mobile-menu-backdrop"
-          className="fixed inset-0 bg-black/50 z-30 sm:hidden"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-      <button
-        id="mobile-menu-button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={cn(
-          'sm:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-blue-900 text-white shadow-lg',
-          'hover:bg-blue-800 transition-colors'
-        )}
-        aria-label="Toggle menu"
-      >
-        {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-      </button>
-    </>
-  )
+  // Hide mobile menu button since sidebar is now always visible as bottom bar on mobile
+  return null
 }

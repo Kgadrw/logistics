@@ -10,10 +10,12 @@ import { ImageViewer } from '../../components/ImageViewer'
 import { PDFViewer } from '../../components/PDFViewer'
 import { warehouseAPI, uploadAPI } from '../../lib/api'
 import { formatDateTime, formatMoneyUsd } from '../../lib/format'
+import { useToast } from '../../components/ui/Toast'
 
 export function WarehouseShipmentDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const [shipment, setShipment] = React.useState<any>(null)
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
@@ -61,8 +63,9 @@ export function WarehouseShipmentDetailPage() {
         setConsigneeNumber(data.dispatch?.consigneeNumber || '')
         setShippingMark(data.dispatch?.shippingMark || 'UZA Solutions')
       } catch (err: any) {
-        setError(err.message || 'Failed to load shipment')
-        console.error('Failed to fetch shipment:', err)
+        const errorMessage = err.message || 'Failed to load shipment'
+        setError(errorMessage)
+        showToast(errorMessage, 'error')
       } finally {
         setLoading(false)
       }
@@ -76,7 +79,7 @@ export function WarehouseShipmentDetailPage() {
     if (!file) return
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image size must be less than 5MB')
+      showToast('Image size must be less than 5MB', 'warning')
       return
     }
 
@@ -84,9 +87,9 @@ export function WarehouseShipmentDetailPage() {
       setUploadingImages(true)
       const imageUrl = await uploadAPI.uploadImage(file, 'uzalogistics/received')
       setReceivedImages(prev => [...prev, imageUrl])
+      showToast('Image uploaded successfully', 'success')
     } catch (error: any) {
-      console.error('Failed to upload image:', error)
-      alert(error.message || 'Failed to upload image. Please try again.')
+      showToast(error.message || 'Failed to upload image. Please try again.', 'error')
     } finally {
       setUploadingImages(false)
     }
@@ -101,7 +104,7 @@ export function WarehouseShipmentDetailPage() {
     if (!file) return
 
     if (file.size > 10 * 1024 * 1024) {
-      alert('File size must be less than 10MB')
+      showToast('File size must be less than 10MB', 'warning')
       return
     }
 
@@ -110,9 +113,9 @@ export function WarehouseShipmentDetailPage() {
       const documentUrl = await uploadAPI.uploadDocument(file, 'uzalogistics/draft-bl')
       setDraftBLFile(documentUrl)
       setDraftBL(documentUrl)
+      showToast('Draft BL uploaded successfully', 'success')
     } catch (error: any) {
-      console.error('Failed to upload draft BL:', error)
-      alert(error.message || 'Failed to upload draft BL. Please try again.')
+      showToast(error.message || 'Failed to upload draft BL. Please try again.', 'error')
     } finally {
       setUploadingDraftBL(false)
     }
@@ -143,9 +146,9 @@ export function WarehouseShipmentDetailPage() {
       setDraftBL(data.draftBL || '')
       setDraftBLFile(data.draftBL && data.draftBL.startsWith('http') ? data.draftBL : null)
       setConsumerNumber(data.consumerNumber || '')
+      showToast('Shipment marked as received', 'success')
     } catch (err: any) {
-      console.error('Failed to mark as received:', err)
-      alert(err.message || 'Failed to mark as received')
+      showToast(err.message || 'Failed to mark as received', 'error')
     } finally {
       setMarkingReceived(false)
     }
@@ -159,9 +162,9 @@ export function WarehouseShipmentDetailPage() {
       // Refresh shipment data
       const data = await warehouseAPI.getShipment(id)
       setShipment(data)
+      showToast('Shipment marked as left warehouse', 'success')
     } catch (err: any) {
-      console.error('Failed to mark as left warehouse:', err)
-      alert(err.message || 'Failed to mark as left warehouse')
+      showToast(err.message || 'Failed to mark as left warehouse', 'error')
     } finally {
       setMarkingLeftWarehouse(false)
     }
@@ -175,9 +178,9 @@ export function WarehouseShipmentDetailPage() {
       // Refresh shipment data
       const data = await warehouseAPI.getShipment(id)
       setShipment(data)
+      showToast('Shipment marked as in transit', 'success')
     } catch (err: any) {
-      console.error('Failed to mark as in transit:', err)
-      alert(err.message || 'Failed to mark as in transit')
+      showToast(err.message || 'Failed to mark as in transit', 'error')
     } finally {
       setMarkingInTransit(false)
     }
@@ -192,10 +195,9 @@ export function WarehouseShipmentDetailPage() {
       const data = await warehouseAPI.getShipment(id)
       setShipment(data)
       setShowReverseConfirm(null)
-      alert(`Status reversed to ${newStatus} successfully`)
+      showToast(`Status reversed to ${newStatus} successfully`, 'success')
     } catch (err: any) {
-      console.error('Failed to reverse status:', err)
-      alert(err.message || 'Failed to reverse status')
+      showToast(err.message || 'Failed to reverse status', 'error')
     } finally {
       setReversingStatus(false)
     }
@@ -222,10 +224,9 @@ export function WarehouseShipmentDetailPage() {
       const data = await warehouseAPI.getShipment(id)
       setShipment(data)
       setIsEditing(false)
-      alert('Shipment details updated successfully')
+      showToast('Shipment details updated successfully', 'success')
     } catch (err: any) {
-      console.error('Failed to save details:', err)
-      alert(err.message || 'Failed to save details')
+      showToast(err.message || 'Failed to save details', 'error')
     } finally {
       setSavingDetails(false)
     }

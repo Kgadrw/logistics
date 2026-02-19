@@ -10,10 +10,12 @@ import { ImageViewer } from '../../components/ImageViewer'
 import { PDFViewer } from '../../components/PDFViewer'
 import { clientAPI } from '../../lib/api'
 import { formatDateTime, formatMoneyUsd } from '../../lib/format'
+import { useToast } from '../../components/ui/Toast'
 
 export function ClientShipmentDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const [shipment, setShipment] = React.useState<any>(null)
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
@@ -38,8 +40,9 @@ export function ClientShipmentDetailPage() {
         setShipment(data)
         setNotes(data.notes || '')
       } catch (err: any) {
-        setError(err.message || 'Failed to load shipment')
-        console.error('Failed to fetch shipment:', err)
+        const errorMessage = err.message || 'Failed to load shipment'
+        setError(errorMessage)
+        showToast(errorMessage, 'error')
       } finally {
         setLoading(false)
       }
@@ -56,9 +59,9 @@ export function ClientShipmentDetailPage() {
       // Refresh shipment data
       const data = await clientAPI.getShipment(id)
       setShipment(data)
+      showToast('Shipment marked as delivered', 'success')
     } catch (err: any) {
-      console.error('Failed to mark as delivered:', err)
-      alert(err.message || 'Failed to mark as delivered')
+      showToast(err.message || 'Failed to mark as delivered', 'error')
     } finally {
       setMarkingDelivered(false)
     }
@@ -74,10 +77,9 @@ export function ClientShipmentDetailPage() {
       setShipment(data)
       setNotes(data.notes || '')
       setIsEditing(false)
-      alert('Notes updated successfully')
+      showToast('Notes updated successfully', 'success')
     } catch (err: any) {
-      console.error('Failed to save notes:', err)
-      alert(err.message || 'Failed to save notes')
+      showToast(err.message || 'Failed to save notes', 'error')
     } finally {
       setSavingNotes(false)
     }

@@ -6,6 +6,7 @@ import { Modal } from '../../components/ui/Modal'
 import { Select } from '../../components/ui/Select'
 import { clientAPI, uploadAPI } from '../../lib/api'
 import { cn } from '../../lib/cn'
+import { useToast } from '../../components/ui/Toast'
 import type { Shipment } from '../../lib/types'
 
 const categories = ['Electronics', 'Apparel', 'Accessories', 'Fragile', 'Food', 'Other']
@@ -39,6 +40,7 @@ export function CreateShipmentModal({
   onSubmit: (data: { products: ProductDraft[]; notes?: string; warehouseId?: string; warehouseName?: string }) => void
   shipment?: Shipment
 }) {
+  const { showToast } = useToast()
   const [products, setProducts] = React.useState<ProductDraft[]>([
     {
       name: '',
@@ -69,7 +71,7 @@ export function CreateShipmentModal({
             setSelectedWarehouseId(data[0].id)
           }
         } catch (err) {
-          console.error('Failed to fetch warehouses:', err)
+          // Silently fail - warehouses will just be empty
         } finally {
           setLoadingWarehouses(false)
         }
@@ -166,7 +168,7 @@ export function CreateShipmentModal({
     if (!file) return
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image size must be less than 5MB')
+      showToast('Image size must be less than 5MB', 'warning')
       return
     }
 
@@ -179,9 +181,9 @@ export function CreateShipmentModal({
       setProducts(ps =>
         ps.map((p, i) => (i === productIndex ? { ...p, imageUrl } : p)),
       )
+      showToast('Image uploaded successfully', 'success')
     } catch (error: any) {
-      console.error('Failed to upload image:', error)
-      alert(error.message || 'Failed to upload image. Please try again.')
+      showToast(error.message || 'Failed to upload image. Please try again.', 'error')
     } finally {
       setUploadingImages(prev => ({ ...prev, [productIndex]: false }))
     }

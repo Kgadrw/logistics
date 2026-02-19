@@ -5,13 +5,16 @@ import App from './App'
 import './index.css'
 import { StoreProvider } from './lib/store'
 import { AuthProvider } from './lib/authContext'
+import { ToastProvider } from './components/ui/Toast'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
       <StoreProvider>
         <AuthProvider>
-          <App />
+          <ToastProvider>
+            <App />
+          </ToastProvider>
         </AuthProvider>
       </StoreProvider>
     </BrowserRouter>

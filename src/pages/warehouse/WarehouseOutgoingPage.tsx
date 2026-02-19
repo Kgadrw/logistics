@@ -10,6 +10,7 @@ import { Table, TBody, TD, TH, THead, TR } from '../../components/ui/Table'
 import { useWarehouseAPI } from '../../lib/useAPI'
 import { warehouseAPI } from '../../lib/api'
 import { useAuth } from '../../lib/authContext'
+import { useToast } from '../../components/ui/Toast'
 import type { TransportMethod } from '../../lib/types'
 
 const methods: TransportMethod[] = ['Truck', 'Air', 'Bike', 'Ship']
@@ -17,6 +18,7 @@ const methods: TransportMethod[] = ['Truck', 'Air', 'Bike', 'Ship']
 export function WarehouseOutgoingPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { showToast } = useToast()
   const { outgoing, refresh, loading: loadingShipments } = useWarehouseAPI(user?.id)
 
   const [open, setOpen] = React.useState(false)
@@ -51,9 +53,9 @@ export function WarehouseOutgoingPage() {
       setPackagingList('')
       setPackageNumber('')
       setConsigneeNumber('')
+      showToast('Shipment dispatched successfully', 'success')
     } catch (err: any) {
-      console.error('Failed to dispatch shipment:', err)
-      alert(err.message || 'Failed to dispatch shipment')
+      showToast(err.message || 'Failed to dispatch shipment', 'error')
     } finally {
       setLoading(false)
     }
@@ -64,9 +66,9 @@ export function WarehouseOutgoingPage() {
       setMarkingInTransit(id)
       await warehouseAPI.markInTransit(id)
       await refresh()
+      showToast('Shipment marked as in transit', 'success')
     } catch (err: any) {
-      console.error('Failed to mark as in transit:', err)
-      alert(err.message || 'Failed to mark as in transit')
+      showToast(err.message || 'Failed to mark as in transit', 'error')
     } finally {
       setMarkingInTransit(null)
     }

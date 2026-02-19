@@ -72,7 +72,7 @@ export function AdminPricingPage() {
                   type="number"
                   min={0}
                   step={0.5}
-                  value={draft.pricePerKgUsd}
+                  value={draft.pricePerKgUsd || ''}
                   onChange={e => setDraft(d => d ? { ...d, pricePerKgUsd: Number(e.target.value) } : null)}
                 />
               </div>
@@ -82,7 +82,7 @@ export function AdminPricingPage() {
                   type="number"
                   min={0}
                   step={1}
-                  value={draft.warehouseHandlingFeeUsd}
+                  value={draft.warehouseHandlingFeeUsd || ''}
                   onChange={e => setDraft(d => d ? { ...d, warehouseHandlingFeeUsd: Number(e.target.value) } : null)}
                 />
               </div>

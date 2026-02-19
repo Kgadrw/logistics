@@ -13,17 +13,15 @@ import { useAuth } from '../../lib/authContext'
 import { formatDateTime } from '../../lib/format'
 import { Bell, ArrowRight, Upload, X, Image as ImageIcon } from 'lucide-react'
 import { cn } from '../../lib/cn'
+import { useToast } from '../../components/ui/Toast'
 
 export function WarehouseIncomingPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { showToast } = useToast()
   const { incoming, refresh, loading: loadingShipments } = useWarehouseAPI(user?.id)
   const { notifications, loading: loadingNotifications } = useNotificationsAPI('warehouse')
 
-  // Debug: Log incoming shipments
-  React.useEffect(() => {
-    console.log(`[WarehouseIncomingPage] User: ${user?.id}, Incoming shipments: ${incoming.length}`, incoming)
-  }, [user?.id, incoming])
 
   const [selectedId, setSelectedId] = React.useState<string | null>(incoming[0]?.id ?? null)
   const selected = incoming.find(s => s.id === selectedId) ?? incoming[0]
@@ -66,7 +64,7 @@ export function WarehouseIncomingPage() {
     if (!file) return
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image size must be less than 5MB')
+      showToast('Image size must be less than 5MB', 'warning')
       return
     }
 
@@ -74,9 +72,9 @@ export function WarehouseIncomingPage() {
       setUploadingImages(true)
       const imageUrl = await uploadAPI.uploadImage(file, 'uzalogistics/received')
       setReceivedImages(prev => [...prev, imageUrl])
+      showToast('Image uploaded successfully', 'success')
     } catch (error: any) {
-      console.error('Failed to upload image:', error)
-      alert(error.message || 'Failed to upload image. Please try again.')
+      showToast(error.message || 'Failed to upload image. Please try again.', 'error')
     } finally {
       setUploadingImages(false)
     }
@@ -91,7 +89,7 @@ export function WarehouseIncomingPage() {
     if (!file) return
 
     if (file.size > 10 * 1024 * 1024) {
-      alert('File size must be less than 10MB')
+      showToast('File size must be less than 10MB', 'warning')
       return
     }
 
@@ -100,9 +98,9 @@ export function WarehouseIncomingPage() {
       const documentUrl = await uploadAPI.uploadDocument(file, 'uzalogistics/draft-bl')
       setDraftBLFile(documentUrl)
       setDraftBL(documentUrl)
+      showToast('Draft BL uploaded successfully', 'success')
     } catch (error: any) {
-      console.error('Failed to upload draft BL:', error)
-      alert(error.message || 'Failed to upload draft BL. Please try again.')
+      showToast(error.message || 'Failed to upload draft BL. Please try again.', 'error')
     } finally {
       setUploadingDraftBL(false)
     }
@@ -130,9 +128,9 @@ export function WarehouseIncomingPage() {
       setDraftBL('')
       setDraftBLFile(null)
       setConsumerNumber('')
+      showToast('Shipment marked as received', 'success')
     } catch (err: any) {
-      console.error('Failed to mark shipment as received:', err)
-      alert(err.message || 'Failed to mark shipment as received')
+      showToast(err.message || 'Failed to mark shipment as received', 'error')
     } finally {
       setLoading(false)
     }

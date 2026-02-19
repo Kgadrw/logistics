@@ -12,10 +12,12 @@ import { useClientAPI } from '../../lib/useAPI'
 import { useAuth } from '../../lib/authContext'
 import { clientAPI } from '../../lib/api'
 import { CreateShipmentModal } from './CreateShipmentModal'
+import { useToast } from '../../components/ui/Toast'
 import { cn } from '../../lib/cn'
 
 export function ClientShipmentsPage() {
   const { user } = useAuth()
+  const { showToast } = useToast()
   const { shipments, createShipment, updateShipment, submitShipment, loading, refresh } = useClientAPI(user?.id)
   const clientShipments = React.useMemo(() => shipments, [shipments])
   const [markingDelivered, setMarkingDelivered] = React.useState<string | null>(null)
@@ -355,8 +357,9 @@ export function ClientShipmentsPage() {
                       <Button onClick={async () => {
                         try {
                           await submitShipment(selected.id)
-                        } catch (error) {
-                          console.error('Failed to submit shipment:', error)
+                          showToast('Shipment submitted successfully', 'success')
+                        } catch (error: any) {
+                          showToast(error.message || 'Failed to submit shipment', 'error')
                         }
                       }} className="flex-1">
                         <Send className="h-4 w-4" />
@@ -371,9 +374,9 @@ export function ClientShipmentsPage() {
                           setMarkingDelivered(selected.id)
                           await clientAPI.markDelivered(selected.id)
                           await refresh()
-                        } catch (error) {
-                          console.error('Failed to mark as delivered:', error)
-                          alert('Failed to mark as delivered')
+                          showToast('Shipment marked as delivered', 'success')
+                        } catch (error: any) {
+                          showToast(error.message || 'Failed to mark as delivered', 'error')
                         } finally {
                           setMarkingDelivered(null)
                         }
@@ -454,9 +457,8 @@ export function ClientShipmentsPage() {
               if (created) setSelectedId(created.id)
             }
             setOpen(false)
-          } catch (error) {
-            console.error('Failed to save shipment:', error)
-            // Error handling could be improved with a toast notification
+          } catch (error: any) {
+            showToast(error.message || 'Failed to save shipment', 'error')
           }
         }}
       />

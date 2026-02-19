@@ -5,9 +5,11 @@ import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { warehouseAPI } from '../../lib/api'
 import { useAuth } from '../../lib/authContext'
+import { useToast } from '../../components/ui/Toast'
 
 export function WarehouseProfilePage() {
   const { user } = useAuth()
+  const { showToast } = useToast()
   const [formData, setFormData] = React.useState({
     warehouseName: '',
     managerName: '',
@@ -79,8 +81,9 @@ export function WarehouseProfilePage() {
             contact: '',
           })
         } else {
-          setError(err.message || 'Failed to load profile')
-          console.error('Failed to fetch profile:', err)
+          const errorMessage = err.message || 'Failed to load profile'
+          setError(errorMessage)
+          showToast(errorMessage, 'error')
         }
       } finally {
         setLoading(false)
@@ -167,8 +170,9 @@ export function WarehouseProfilePage() {
       setEditingField(null)
       setTempValues({})
     } catch (err: any) {
-      setError(err.message || 'Failed to save profile')
-      console.error('Failed to save profile:', err)
+      const errorMessage = err.message || 'Failed to save profile'
+      setError(errorMessage)
+      showToast(errorMessage, 'error')
     } finally {
       setSaving(null)
     }
@@ -211,9 +215,7 @@ export function WarehouseProfilePage() {
         logisticsMethods: Array.isArray(pricingTempValues.logisticsMethods) ? pricingTempValues.logisticsMethods : [],
       }
 
-      console.log('Saving pricing data:', updateData)
       const result = await warehouseAPI.updateProfile(updateData, user?.id)
-      console.log('Update result:', result)
       
       // Use the result from update if available, otherwise refresh
       let updatedData = result?.user
@@ -224,7 +226,6 @@ export function WarehouseProfilePage() {
         
         // Refresh profile data from server
         updatedData = await warehouseAPI.getProfile(user?.id)
-        console.log('Refreshed profile:', updatedData)
       }
       
       if (updatedData) {
@@ -243,11 +244,9 @@ export function WarehouseProfilePage() {
           transportPriceShip: Number(updatedData.transportPriceUsd?.Ship) || 0,
           logisticsMethods: Array.isArray(updatedData.logisticsMethods) ? updatedData.logisticsMethods : [],
         }
-        console.log('Updated formData:', updatedFormData)
         setFormData(updatedFormData)
       } else {
         // Fallback: update from temp values if refresh fails
-        console.warn('Could not refresh profile, using saved values')
         setFormData(d => ({
           ...d,
           pricePerKgUsd: pricingTempValues.pricePerKgUsd,
@@ -267,10 +266,11 @@ export function WarehouseProfilePage() {
         logisticsMethods: [],
       })
       
-      alert('Pricing updated successfully')
+      showToast('Pricing updated successfully', 'success')
     } catch (err: any) {
-      setError(err.message || 'Failed to save pricing')
-      console.error('Failed to save pricing:', err)
+      const errorMessage = err.message || 'Failed to save pricing'
+      setError(errorMessage)
+      showToast(errorMessage, 'error')
     } finally {
       setSaving(null)
     }
@@ -737,7 +737,7 @@ export function WarehouseProfilePage() {
                       type="number"
                       min={0}
                       step={0.5}
-                      value={pricingTempValues.pricePerKgUsd}
+                      value={pricingTempValues.pricePerKgUsd || ''}
                       onChange={e => setPricingTempValues({ ...pricingTempValues, pricePerKgUsd: Number(e.target.value) || 0 })}
                       className="w-full"
                     />
@@ -755,7 +755,7 @@ export function WarehouseProfilePage() {
                       type="number"
                       min={0}
                       step={1}
-                      value={pricingTempValues.warehouseHandlingFeeUsd}
+                      value={pricingTempValues.warehouseHandlingFeeUsd || ''}
                       onChange={e => setPricingTempValues({ ...pricingTempValues, warehouseHandlingFeeUsd: Number(e.target.value) || 0 })}
                       className="w-full"
                     />
@@ -778,7 +778,7 @@ export function WarehouseProfilePage() {
                         type="number"
                         min={0}
                         step={5}
-                        value={pricingTempValues.transportPriceAir}
+                        value={pricingTempValues.transportPriceAir || ''}
                         onChange={e => setPricingTempValues({ ...pricingTempValues, transportPriceAir: Number(e.target.value) || 0 })}
                         className="w-full"
                       />
@@ -795,7 +795,7 @@ export function WarehouseProfilePage() {
                         type="number"
                         min={0}
                         step={5}
-                        value={pricingTempValues.transportPriceShip}
+                        value={pricingTempValues.transportPriceShip || ''}
                         onChange={e => setPricingTempValues({ ...pricingTempValues, transportPriceShip: Number(e.target.value) || 0 })}
                         className="w-full"
                       />

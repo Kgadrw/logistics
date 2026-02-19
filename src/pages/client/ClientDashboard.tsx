@@ -48,7 +48,7 @@ export function ClientDashboard() {
         />
 
         <main className="flex flex-1 flex-col overflow-hidden">
-          <div className="flex-1 overflow-auto px-4 py-6 pt-16 sm:pt-6">
+          <div className="flex-1 overflow-auto px-4 py-6 pt-16 pb-20 sm:pt-6 sm:pb-6">
             <Routes>
               <Route path="/" element={<ClientShipmentsPage />} />
               <Route path="/shipment/:id" element={<ClientShipmentDetailPage />} />
