@@ -32,9 +32,9 @@ export function WarehouseDashboard() {
   }
 
   return (
-    <div className="flex h-dvh flex-col bg-slate-50">
+    <div className="flex h-dvh flex-col bg-slate-50 overflow-x-hidden">
       <MobileMenuButton />
-      <div className="flex flex-1 w-full overflow-hidden relative">
+      <div className="flex flex-1 w-full overflow-hidden relative overflow-x-hidden">
         <Sidebar
           title="Warehouse"
           role="warehouse"

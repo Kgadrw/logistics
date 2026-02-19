@@ -128,15 +128,20 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        'shrink-0 flex flex-col bg-blue-900 transition-all duration-300 ease-in-out',
-        // Mobile: fixed bottom bar with top border only
-        'fixed bottom-0 left-0 right-0 z-40 border-t border-blue-800',
-        'sm:translate-y-0',
-        // Desktop: normal sidebar with all borders, rounded corners and margin
+        'shrink-0 flex flex-col bg-blue-900',
+        // Mobile: fixed bottom bar - truly fixed, no movement
+        'fixed bottom-0 left-0 right-0 z-50 border-t border-blue-800',
+        'w-full h-auto',
+        // Safe area for devices with home indicator
+        'pb-[env(safe-area-inset-bottom)] sm:pb-0',
+        // Prevent any transform or movement on mobile
+        'transform-none will-change-auto',
+        // Desktop: normal sidebar with transitions, borders, rounded corners and margin
         'sm:relative sm:inset-y-auto sm:left-auto sm:right-auto sm:bottom-auto',
         'sm:border sm:border-blue-800 sm:rounded-2xl sm:m-2',
-        // Width: full on mobile, collapsed/expanded on desktop
-        isCollapsed ? 'w-full sm:w-20' : 'w-full sm:w-64',
+        'sm:transition-all sm:duration-300 sm:ease-in-out',
+        // Desktop width
+        isCollapsed ? 'sm:w-20' : 'sm:w-64',
         // Shadow
         'shadow-xl sm:shadow-none'
       )}
@@ -171,11 +176,14 @@ export function Sidebar({
         </div>
       </div>
       <nav className={cn(
-        'flex overflow-auto gap-1.5',
-        // Mobile: horizontal layout
-        'flex-row px-2 py-2 sm:px-2 sm:py-0',
+        'flex',
+        // Mobile: horizontal layout with no overflow, evenly distributed
+        'flex-row justify-around items-center',
+        'px-2 py-2.5 min-h-[64px]',
+        'overflow-x-hidden overflow-y-hidden',
         // Desktop: vertical layout
-        'sm:flex-col sm:flex-1'
+        'sm:flex-col sm:justify-start sm:items-stretch',
+        'sm:px-2 sm:py-0 sm:min-h-0 sm:flex-1 sm:overflow-auto sm:gap-1.5'
       )}>
         {items.map(i => {
           const isActive = checkIsActive(i.to)
@@ -185,27 +193,43 @@ export function Sidebar({
               to={i.to}
               onClick={handleLinkClick}
               className={cn(
-                'flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-colors',
-                // Mobile: compact horizontal items
-                'flex-col sm:flex-row',
-                'justify-center sm:justify-start',
+                'flex transition-colors',
+                // Mobile: vertical stack (icon on top, label below)
+                'flex-col items-center justify-center',
+                'flex-1 min-w-0 px-1 py-1.5',
+                'rounded-lg',
+                // Desktop: horizontal layout
+                'sm:flex-row sm:items-center sm:gap-2',
+                'sm:rounded-xl sm:px-3 sm:py-2',
+                'sm:text-sm sm:font-medium',
                 // Desktop: handle collapsed state
                 isCollapsed && 'sm:justify-center sm:px-2',
+                // Active state
                 isActive
                   ? 'bg-blue-800 text-white'
-                  : 'text-blue-100 hover:bg-blue-800 hover:text-white',
+                  : 'text-blue-100 active:bg-blue-800 sm:hover:bg-blue-800 sm:hover:text-white',
               )}
               title={isCollapsed ? i.label : undefined}
             >
               {i.icon ? (
-                <span className={cn('transition-colors shrink-0', isActive ? 'text-white' : 'text-blue-200')}>
+                <span className={cn(
+                  'transition-colors shrink-0',
+                  'flex items-center justify-center',
+                  // Mobile: icon size
+                  'h-5 w-5 mb-1',
+                  // Desktop: icon size
+                  'sm:h-4 sm:w-4 sm:mb-0',
+                  isActive ? 'text-white' : 'text-blue-200'
+                )}>
                   {i.icon}
                 </span>
               ) : null}
               <span className={cn(
-                'truncate text-xs sm:text-sm',
-                // Mobile: always show label below icon
-                'block',
+                'truncate text-center',
+                // Mobile: small label below icon
+                'text-[10px] leading-tight',
+                // Desktop: normal size
+                'sm:text-sm sm:text-left',
                 // Desktop: hide when collapsed
                 isCollapsed && 'sm:hidden'
               )}>
