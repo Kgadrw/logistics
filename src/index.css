@@ -12,11 +12,18 @@ html,
 body {
   margin: 0;
   padding: 0;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  position: relative;
 }
 
 #root {
   min-height: 100vh;
   width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  position: relative;
 }
 
 /* Improve focus visibility */
@@ -96,7 +103,60 @@ body {
   
   /* Ensure main content doesn't overflow */
   main {
-    overflow-x: hidden;
-    width: 100%;
+    overflow-x: hidden !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    position: relative;
+  }
+  
+  /* Ensure content inside main is centered and constrained */
+  main > div {
+    overflow-x: hidden !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  /* Prevent any child elements from causing horizontal scroll */
+  main * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  /* Ensure tables and wide content don't overflow */
+  main table,
+  main .overflow-x-auto,
+  main [class*="overflow"] {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Ensure images and media don't cause overflow */
+  main img,
+  main video,
+  main iframe,
+  main embed,
+  main object {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* Ensure all containers are properly constrained */
+  main .container,
+  main .max-w-7xl,
+  main .max-w-6xl,
+  main .max-w-5xl,
+  main .max-w-4xl,
+  main .max-w-3xl,
+  main .max-w-2xl,
+  main .max-w-xl,
+  main .max-w-lg,
+  main .max-w-md,
+  main .max-w-sm {
+    max-width: 100% !important;
+    margin-left: auto;
+    margin-right: auto;
   }
 }

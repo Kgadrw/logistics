@@ -47,8 +47,8 @@ export function ClientDashboard() {
           onLogout={() => setShowLogoutModal(true)}
         />
 
-        <main className="flex flex-1 flex-col overflow-hidden">
-          <div className="flex-1 overflow-auto px-4 py-6 pt-16 pb-20 sm:pt-6 sm:pb-6">
+        <main className="flex flex-1 flex-col overflow-hidden overflow-x-hidden w-full max-w-full">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-6 pt-16 pb-20 sm:pt-6 sm:pb-6 w-full max-w-full mx-auto">
             <Routes>
               <Route path="/" element={<ClientShipmentsPage />} />
               <Route path="/shipment/:id" element={<ClientShipmentDetailPage />} />
