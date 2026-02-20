@@ -7,10 +7,12 @@ import { Input } from '../../components/ui/Input'
 import { Modal } from '../../components/ui/Modal'
 import { Select } from '../../components/ui/Select'
 import { Table, TBody, TD, TH, THead, TR } from '../../components/ui/Table'
+import { PDFViewer } from '../../components/PDFViewer'
 import { useWarehouseAPI } from '../../lib/useAPI'
-import { warehouseAPI } from '../../lib/api'
+import { warehouseAPI, uploadAPI } from '../../lib/api'
 import { useAuth } from '../../lib/authContext'
 import { useToast } from '../../components/ui/Toast'
+import { Upload, X, Image as ImageIcon } from 'lucide-react'
 import type { TransportMethod } from '../../lib/types'
 
 const methods: TransportMethod[] = ['Truck', 'Air', 'Bike', 'Ship']
@@ -29,10 +31,41 @@ export function WarehouseOutgoingPage() {
   const [packagingList, setPackagingList] = React.useState('')
   const [packageNumber, setPackageNumber] = React.useState('')
   const [consigneeNumber, setConsigneeNumber] = React.useState('')
+  const [blDocument, setBlDocument] = React.useState<string | null>(null)
+  const [blDocumentFile, setBlDocumentFile] = React.useState<string | null>(null)
+  const [uploadingBL, setUploadingBL] = React.useState(false)
+  const [viewingBL, setViewingBL] = React.useState<string | null>(null)
   const [loading, setLoading] = React.useState(false)
   const [markingInTransit, setMarkingInTransit] = React.useState<string | null>(null)
 
   const selected = outgoing.find(s => s.id === shipmentId) ?? null
+
+  const handleBLUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('File size must be less than 10MB', 'warning')
+      return
+    }
+
+    try {
+      setUploadingBL(true)
+      const documentUrl = await uploadAPI.uploadDocument(file, 'uzalogistics/bl-documents')
+      setBlDocumentFile(documentUrl)
+      setBlDocument(documentUrl)
+      showToast('BL document uploaded successfully', 'success')
+    } catch (error: any) {
+      showToast(error.message || 'Failed to upload BL document. Please try again.', 'error')
+    } finally {
+      setUploadingBL(false)
+    }
+  }
+
+  const removeBL = () => {
+    setBlDocumentFile(null)
+    setBlDocument('')
+  }
 
   const handleDispatch = async () => {
     if (!shipmentId) return
@@ -46,6 +79,7 @@ export function WarehouseOutgoingPage() {
         packageNumber: packageNumber.trim() || undefined,
         consigneeNumber: consigneeNumber.trim() || undefined,
         shippingMark: 'UZA Solutions',
+        blDocument: blDocument || undefined,
       })
       await refresh()
       setOpen(false)
@@ -53,6 +87,8 @@ export function WarehouseOutgoingPage() {
       setPackagingList('')
       setPackageNumber('')
       setConsigneeNumber('')
+      setBlDocument('')
+      setBlDocumentFile(null)
       showToast('Shipment dispatched successfully', 'success')
     } catch (err: any) {
       showToast(err.message || 'Failed to dispatch shipment', 'error')
@@ -75,10 +111,10 @@ export function WarehouseOutgoingPage() {
   }
 
   return (
-    <div className="pt-4">
-      <div className="mb-4">
-        <div className="text-sm font-semibold text-slate-900">Outgoing Shipments</div>
-        <div className="mt-1 text-sm text-slate-600">Dispatch with transport details — clients are notified automatically.</div>
+    <div className="px-3 pt-2 pb-2 sm:px-0 sm:pt-4">
+      <div className="mb-3 sm:mb-4">
+        <div className="text-xs sm:text-sm font-semibold text-slate-900">Outgoing Shipments</div>
+        <div className="mt-1 text-xs sm:text-sm text-slate-600">Dispatch with transport details — clients are notified automatically.</div>
       </div>
 
       <Card className="overflow-hidden">
@@ -180,7 +216,7 @@ export function WarehouseOutgoingPage() {
             <div className="text-sm text-slate-600">Client will be notified automatically.</div>
             <Button
               onClick={handleDispatch}
-              disabled={!shipmentId || loading}
+              disabled={!shipmentId || loading || !blDocument || uploadingBL}
             >
               Confirm dispatch
             </Button>
@@ -223,6 +259,50 @@ export function WarehouseOutgoingPage() {
             <Input value="UZA Solutions" disabled className="bg-slate-50" />
           </div>
 
+          <div className="sm:col-span-2">
+            <div className="text-xs font-semibold text-slate-600 mb-2">BL Document (Bill of Lading) *</div>
+            {blDocumentFile ? (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50">
+                  <button
+                    type="button"
+                    onClick={() => setViewingBL(blDocumentFile)}
+                    className="text-sm text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-2"
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                    View BL Document
+                  </button>
+                  <button
+                    type="button"
+                    onClick={removeBL}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center h-32 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
+                <input
+                  type="file"
+                  accept=".pdf,application/pdf,.jpg,.jpeg,.png,.gif,.webp,image/jpeg,image/png,image/gif,image/webp"
+                  className="hidden"
+                  onChange={handleBLUpload}
+                  disabled={uploadingBL}
+                />
+                {uploadingBL ? (
+                  <div className="text-sm text-slate-600">Uploading document...</div>
+                ) : (
+                  <>
+                    <Upload className="h-6 w-6 text-slate-400 mb-2" />
+                    <div className="text-sm font-medium text-slate-600">Click to upload BL Document</div>
+                    <div className="text-xs text-slate-500 mt-1">PDF, JPG, PNG, GIF, WEBP (Max 10MB)</div>
+                  </>
+                )}
+              </label>
+            )}
+          </div>
+
           <div className="sm:col-span-2 rounded-xl border border-slate-200 bg-white p-4">
             <div className="text-xs font-semibold text-slate-600">Auto notification message</div>
             <div className="mt-1 text-sm text-slate-600">
@@ -231,6 +311,13 @@ export function WarehouseOutgoingPage() {
           </div>
         </div>
       </Modal>
+
+      <PDFViewer 
+        pdfUrl={viewingBL}
+        open={!!viewingBL}
+        onClose={() => setViewingBL(null)}
+        title="BL Document (Bill of Lading)"
+      />
     </div>
   )
 }

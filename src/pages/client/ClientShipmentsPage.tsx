@@ -71,7 +71,7 @@ export function ClientShipmentsPage() {
   }, [clientShipments])
 
   return (
-    <div className="w-full max-w-full px-4 pt-6 pb-6 mx-auto">
+    <div className="w-full max-w-full px-0 pt-0 pb-0 sm:px-4 sm:pt-6 sm:pb-6 mx-auto">
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="text-sm font-semibold text-slate-900">Shipments</div>

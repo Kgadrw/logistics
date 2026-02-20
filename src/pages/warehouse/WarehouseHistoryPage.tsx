@@ -14,10 +14,10 @@ export function WarehouseHistoryPage() {
   const { history, loading } = useWarehouseAPI(user?.id)
 
   return (
-    <div className="pt-4">
-      <div className="mb-4">
-        <div className="text-sm font-semibold text-slate-900">History</div>
-        <div className="mt-1 text-sm text-slate-600">Recently dispatched and delivered shipments.</div>
+    <div className="px-3 pt-2 pb-2 sm:px-0 sm:pt-4">
+      <div className="mb-3 sm:mb-4">
+        <div className="text-xs sm:text-sm font-semibold text-slate-900">History</div>
+        <div className="mt-1 text-xs sm:text-sm text-slate-600">Recently dispatched and delivered shipments.</div>
       </div>
 
       <Card className="overflow-hidden">

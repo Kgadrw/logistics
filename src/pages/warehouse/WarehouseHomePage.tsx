@@ -73,22 +73,22 @@ export function WarehouseHomePage() {
 
   if (loading && !dashboardStats) {
     return (
-      <div className="pt-4">
+      <div className="px-3 pt-2 pb-2 sm:px-0 sm:pt-4">
         <div className="mb-6">
-          <div className="text-sm font-semibold text-slate-900">Warehouse Dashboard</div>
-          <div className="mt-1 text-sm text-slate-600">Loading...</div>
+          <div className="text-xs sm:text-sm font-semibold text-slate-900">Warehouse Dashboard</div>
+          <div className="mt-1 text-xs sm:text-sm text-slate-600">Loading...</div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="pt-4">
-      <div className="mb-6">
-        <div className="flex items-center justify-between flex-wrap gap-4">
+    <div className="px-3 pt-2 pb-2 sm:px-0 sm:pt-4">
+      <div className="mb-4 sm:mb-6">
+        <div className="flex items-center justify-between flex-wrap gap-2 sm:gap-4">
           <div>
-        <div className="text-sm font-semibold text-slate-900">Warehouse Dashboard</div>
-        <div className="mt-1 text-sm text-slate-600">Operational overview — focus on speed and accuracy.</div>
+        <div className="text-xs sm:text-sm font-semibold text-slate-900">Warehouse Dashboard</div>
+        <div className="mt-1 text-xs sm:text-sm text-slate-600">Operational overview — focus on speed and accuracy.</div>
           </div>
           {stats.pending > 0 && (
             <Button
@@ -103,7 +103,7 @@ export function WarehouseHomePage() {
       </div>
 
       {/* Statistics Cards */}
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-4 sm:mb-6 grid gap-2 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className={cn(
           "border-l-4 border-l-orange-500 hover:shadow-md transition-shadow cursor-pointer",
           stats.pending > 0 && "ring-2 ring-orange-100"

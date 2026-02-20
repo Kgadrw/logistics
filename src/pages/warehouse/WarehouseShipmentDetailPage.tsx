@@ -26,10 +26,10 @@ export function WarehouseShipmentDetailPage() {
   const [receivedImages, setReceivedImages] = React.useState<string[]>([])
   const [uploadingImages, setUploadingImages] = React.useState(false)
   const [viewingImage, setViewingImage] = React.useState<string | null>(null)
-  const [draftBL, setDraftBL] = React.useState('')
-  const [draftBLFile, setDraftBLFile] = React.useState<string | null>(null)
-  const [uploadingDraftBL, setUploadingDraftBL] = React.useState(false)
-  const [viewingDraftBL, setViewingDraftBL] = React.useState<string | null>(null)
+  const [deliveryNote, setDeliveryNote] = React.useState('')
+  const [deliveryNoteFile, setDeliveryNoteFile] = React.useState<string | null>(null)
+  const [uploadingDeliveryNote, setUploadingDeliveryNote] = React.useState(false)
+  const [viewingDeliveryNote, setViewingDeliveryNote] = React.useState<string | null>(null)
   const [consumerNumber, setConsumerNumber] = React.useState('')
   const [isEditing, setIsEditing] = React.useState(false)
   const [reversingStatus, setReversingStatus] = React.useState(false)
@@ -39,7 +39,7 @@ export function WarehouseShipmentDetailPage() {
   const [packageNumber, setPackageNumber] = React.useState('')
   const [consigneeNumber, setConsigneeNumber] = React.useState('')
   const [shippingMark, setShippingMark] = React.useState('UZA Solutions')
-  const [clientNotes, setClientNotes] = React.useState('')
+  const [productDimensions, setProductDimensions] = React.useState<Record<string, { lengthCm?: number; widthCm?: number; heightCm?: number; cbm?: number }>>({})
 
   React.useEffect(() => {
     const fetchShipment = async () => {
@@ -55,13 +55,24 @@ export function WarehouseShipmentDetailPage() {
         setShipment(data)
         setRemarks(data.warehouseRemarks || '')
         setReceivedImages(data.receivedProductImages || [])
-        setDraftBL(data.draftBL || '')
-        setDraftBLFile(data.draftBL && data.draftBL.startsWith('http') ? data.draftBL : null)
+        setDeliveryNote(data.deliveryNote || '')
+        setDeliveryNoteFile(data.deliveryNote && data.deliveryNote.startsWith('http') ? data.deliveryNote : null)
         setConsumerNumber(data.consumerNumber || '')
         setPackagingList(data.dispatch?.packagingList || '')
         setPackageNumber(data.dispatch?.packageNumber || '')
         setConsigneeNumber(data.dispatch?.consigneeNumber || '')
         setShippingMark(data.dispatch?.shippingMark || 'UZA Solutions')
+        // Initialize product dimensions
+        const dimensions: Record<string, { lengthCm?: number; widthCm?: number; heightCm?: number; cbm?: number }> = {}
+        data.products?.forEach((p: any) => {
+          dimensions[p.id] = {
+            lengthCm: p.lengthCm,
+            widthCm: p.widthCm,
+            heightCm: p.heightCm,
+            cbm: p.cbm,
+          }
+        })
+        setProductDimensions(dimensions)
       } catch (err: any) {
         const errorMessage = err.message || 'Failed to load shipment'
         setError(errorMessage)
@@ -99,7 +110,7 @@ export function WarehouseShipmentDetailPage() {
     setReceivedImages(prev => prev.filter((_, i) => i !== index))
   }
 
-  const handleDraftBLUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDeliveryNoteUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -109,21 +120,21 @@ export function WarehouseShipmentDetailPage() {
     }
 
     try {
-      setUploadingDraftBL(true)
-      const documentUrl = await uploadAPI.uploadDocument(file, 'uzalogistics/draft-bl')
-      setDraftBLFile(documentUrl)
-      setDraftBL(documentUrl)
-      showToast('Draft BL uploaded successfully', 'success')
+      setUploadingDeliveryNote(true)
+      const documentUrl = await uploadAPI.uploadDocument(file, 'uzalogistics/delivery-notes')
+      setDeliveryNoteFile(documentUrl)
+      setDeliveryNote(documentUrl)
+      showToast('Delivery note uploaded successfully', 'success')
     } catch (error: any) {
-      showToast(error.message || 'Failed to upload draft BL. Please try again.', 'error')
+      showToast(error.message || 'Failed to upload delivery note. Please try again.', 'error')
     } finally {
-      setUploadingDraftBL(false)
+      setUploadingDeliveryNote(false)
     }
   }
 
-  const removeDraftBL = () => {
-    setDraftBLFile(null)
-    setDraftBL('')
+  const removeDeliveryNote = () => {
+    setDeliveryNoteFile(null)
+    setDeliveryNote('')
   }
 
   const handleMarkReceived = async () => {
@@ -132,7 +143,7 @@ export function WarehouseShipmentDetailPage() {
       setMarkingReceived(true)
       await warehouseAPI.receiveShipment(id, {
         receivedProductImages: receivedImages.length > 0 ? receivedImages : undefined,
-        draftBL: draftBL.trim() || undefined,
+        deliveryNote: deliveryNote || undefined,
         consumerNumber: consumerNumber.trim() || undefined,
       })
       if (remarks.trim()) {
@@ -143,8 +154,8 @@ export function WarehouseShipmentDetailPage() {
       setShipment(data)
       setRemarks(data.warehouseRemarks || '')
       setReceivedImages(data.receivedProductImages || [])
-      setDraftBL(data.draftBL || '')
-      setDraftBLFile(data.draftBL && data.draftBL.startsWith('http') ? data.draftBL : null)
+      setDeliveryNote(data.deliveryNote || '')
+      setDeliveryNoteFile(data.deliveryNote && data.deliveryNote.startsWith('http') ? data.deliveryNote : null)
       setConsumerNumber(data.consumerNumber || '')
       showToast('Shipment marked as received', 'success')
     } catch (err: any) {
@@ -207,15 +218,41 @@ export function WarehouseShipmentDetailPage() {
     if (!id) return
     try {
       setSavingDetails(true)
+      // Update products with dimensions and CBM (only if dimensions were changed)
+      const updatedProducts = shipment.products?.map((p: any) => {
+        const dims = productDimensions[p.id]
+        if (dims && (
+          dims.lengthCm !== p.lengthCm ||
+          dims.widthCm !== p.widthCm ||
+          dims.heightCm !== p.heightCm ||
+          dims.cbm !== p.cbm
+        )) {
+          return {
+            ...p,
+            lengthCm: dims.lengthCm,
+            widthCm: dims.widthCm,
+            heightCm: dims.heightCm,
+            cbm: dims.cbm,
+          }
+        }
+        return p
+      })
+
       await warehouseAPI.updateShipmentDetails(id, {
         receivedProductImages: receivedImages.length > 0 ? receivedImages : undefined,
-        draftBL: draftBL.trim() || undefined,
+        deliveryNote: deliveryNote || undefined,
         consumerNumber: consumerNumber.trim() || undefined,
         packagingList: packagingList.trim() || undefined,
         packageNumber: packageNumber.trim() || undefined,
         consigneeNumber: consigneeNumber.trim() || undefined,
         shippingMark: shippingMark.trim() || undefined,
-        notes: clientNotes.trim() || undefined,
+        ...(updatedProducts && updatedProducts.some((p: any, i: number) => {
+          const original = shipment.products?.[i]
+          return p.lengthCm !== original?.lengthCm ||
+                 p.widthCm !== original?.widthCm ||
+                 p.heightCm !== original?.heightCm ||
+                 p.cbm !== original?.cbm
+        }) ? { products: updatedProducts } : {}),
       })
       if (remarks.trim()) {
         await warehouseAPI.addRemarks(id, remarks.trim())
@@ -223,6 +260,17 @@ export function WarehouseShipmentDetailPage() {
       // Refresh shipment data
       const data = await warehouseAPI.getShipment(id)
       setShipment(data)
+      // Update product dimensions from refreshed data
+      const dimensions: Record<string, { lengthCm?: number; widthCm?: number; heightCm?: number; cbm?: number }> = {}
+      data.products?.forEach((p: any) => {
+        dimensions[p.id] = {
+          lengthCm: p.lengthCm,
+          widthCm: p.widthCm,
+          heightCm: p.heightCm,
+          cbm: p.cbm,
+        }
+      })
+      setProductDimensions(dimensions)
       setIsEditing(false)
       showToast('Shipment details updated successfully', 'success')
     } catch (err: any) {
@@ -230,6 +278,33 @@ export function WarehouseShipmentDetailPage() {
     } finally {
       setSavingDetails(false)
     }
+  }
+
+  const calculateCBM = (lengthCm?: number, widthCm?: number, heightCm?: number): number | undefined => {
+    if (lengthCm && widthCm && heightCm) {
+      return (lengthCm * widthCm * heightCm) / 1000000 // Convert cm³ to m³
+    }
+    return undefined
+  }
+
+  const updateProductDimension = (productId: string, field: 'lengthCm' | 'widthCm' | 'heightCm', value: number | undefined) => {
+    setProductDimensions(prev => {
+      const current = prev[productId] || {}
+      const updated = {
+        ...current,
+        [field]: value ? Number(value) : undefined,
+      }
+      // Auto-calculate CBM when all dimensions are provided
+      if (updated.lengthCm && updated.widthCm && updated.heightCm) {
+        updated.cbm = calculateCBM(updated.lengthCm, updated.widthCm, updated.heightCm)
+      } else {
+        updated.cbm = undefined
+      }
+      return {
+        ...prev,
+        [productId]: updated,
+      }
+    })
   }
 
   const getPreviousStatus = (currentStatus: string): string | null => {
@@ -411,95 +486,98 @@ export function WarehouseShipmentDetailPage() {
           {/* Edit Details */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
+              <CardTitle className="flex items-center justify-between w-full">
                 <span className="flex items-center gap-2">
                   <Edit className="h-5 w-5 text-blue-600" />
                   Shipment Details
                 </span>
-                {!isEditing ? (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setIsEditing(true)}
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
-                ) : (
-                  <div className="flex gap-2">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={handleSaveDetails}
-                      disabled={savingDetails}
-                    >
-                      <Save className="h-4 w-4 mr-2" />
-                      {savingDetails ? 'Saving...' : 'Save'}
-                    </Button>
+                <div className="flex items-center gap-2 justify-end">
+                  {!isEditing ? (
                     <Button
                       variant="secondary"
                       size="sm"
-                      onClick={() => {
-                        setIsEditing(false)
-                        // Reset to original values
-                        const data = shipment
-                        setReceivedImages(data.receivedProductImages || [])
-                        setDraftBL(data.draftBL || '')
-                        setDraftBLFile(data.draftBL && data.draftBL.startsWith('http') ? data.draftBL : null)
-                        setConsumerNumber(data.consumerNumber || '')
-                        setPackagingList(data.dispatch?.packagingList || '')
-                        setPackageNumber(data.dispatch?.packageNumber || '')
-                        setConsigneeNumber(data.dispatch?.consigneeNumber || '')
+                      onClick={() => setIsEditing(true)}
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit
+                    </Button>
+                  ) : (
+                    <>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={handleSaveDetails}
+                        disabled={savingDetails}
+                      >
+                        <Save className="h-4 w-4 mr-2" />
+                        {savingDetails ? 'Saving...' : 'Save'}
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          setIsEditing(false)
+                          // Reset to original values
+                          const data = shipment
+                          setReceivedImages(data.receivedProductImages || [])
+                          setDeliveryNote(data.deliveryNote || '')
+                          setDeliveryNoteFile(data.deliveryNote && data.deliveryNote.startsWith('http') ? data.deliveryNote : null)
+                          setConsumerNumber(data.consumerNumber || '')
+                          setPackagingList(data.dispatch?.packagingList || '')
+                          setPackageNumber(data.dispatch?.packageNumber || '')
+                          setConsigneeNumber(data.dispatch?.consigneeNumber || '')
                         setShippingMark(data.dispatch?.shippingMark || 'UZA Solutions')
                         setRemarks(data.warehouseRemarks || '')
-                        setClientNotes(data.notes || '')
+                        // Reset product dimensions
+                        const dimensions: Record<string, { lengthCm?: number; widthCm?: number; heightCm?: number; cbm?: number }> = {}
+                        data.products?.forEach((p: any) => {
+                          dimensions[p.id] = {
+                            lengthCm: p.lengthCm,
+                            widthCm: p.widthCm,
+                            heightCm: p.heightCm,
+                            cbm: p.cbm,
+                          }
+                        })
+                        setProductDimensions(dimensions)
                       }}
-                      disabled={savingDetails}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                )}
+                        disabled={savingDetails}
+                      >
+                        Cancel
+                      </Button>
+                    </>
+                  )}
+                </div>
               </CardTitle>
             </CardHeader>
             <CardBody>
               <div className="space-y-6">
-                {/* Client Notes */}
+                {/* Client Notes - Read Only */}
                 <div>
                   <div className="text-xs font-semibold text-slate-600 mb-2">Client Notes</div>
-                  {isEditing ? (
-                    <Textarea
-                      value={clientNotes}
-                      onChange={e => setClientNotes(e.target.value)}
-                      placeholder="Add or edit client notes..."
-                      rows={4}
-                    />
-                  ) : (
-                    <div className="text-sm text-slate-700 p-3 rounded-lg bg-slate-50 border border-slate-200 min-h-[80px]">
-                      {shipment.notes || <span className="text-slate-400 italic">No notes added</span>}
-                    </div>
-                  )}
+                  <div className="text-sm text-slate-700 p-3 rounded-lg bg-slate-50 border border-slate-200 min-h-[80px]">
+                    {shipment.notes || <span className="text-slate-400 italic">No notes added</span>}
+                  </div>
                 </div>
 
-                {/* Draft BL */}
+                {/* Delivery Note */}
                 <div>
-                  <div className="text-xs font-semibold text-slate-600 mb-2">Draft BL (Bill of Lading)</div>
+                  <div className="text-xs font-semibold text-slate-600 mb-2">Delivery Note *</div>
                   {isEditing ? (
                     <>
-                      {draftBLFile ? (
+                      {deliveryNoteFile ? (
                         <div className="space-y-2">
                           <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50">
                             <button
                               type="button"
-                              onClick={() => setViewingDraftBL(draftBLFile)}
+                              onClick={() => setViewingDeliveryNote(deliveryNoteFile)}
                               className="text-sm text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-2"
                             >
                               <ImageIcon className="h-4 w-4" />
-                              View Draft BL Document
+                              View Delivery Note
                             </button>
                             <button
                               type="button"
-                              onClick={removeDraftBL}
+                              onClick={removeDeliveryNote}
                               className="text-red-600 hover:text-red-700"
                             >
                               <X className="h-4 w-4" />
@@ -510,41 +588,41 @@ export function WarehouseShipmentDetailPage() {
                         <label className="flex flex-col items-center justify-center h-32 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
                           <input
                             type="file"
-                            accept=".pdf,application/pdf"
+                            accept=".pdf,application/pdf,.jpg,.jpeg,.png,.gif,.webp,image/jpeg,image/png,image/gif,image/webp"
                             className="hidden"
-                            onChange={handleDraftBLUpload}
-                            disabled={uploadingDraftBL}
+                            onChange={handleDeliveryNoteUpload}
+                            disabled={uploadingDeliveryNote}
                           />
-                          {uploadingDraftBL ? (
+                          {uploadingDeliveryNote ? (
                             <div className="text-sm text-slate-600">Uploading document...</div>
                           ) : (
                             <>
                               <Upload className="h-6 w-6 text-slate-400 mb-2" />
-                              <div className="text-sm font-medium text-slate-600">Click to upload Draft BL</div>
-                              <div className="text-xs text-slate-500 mt-1">PDF (Max 10MB)</div>
+                              <div className="text-sm font-medium text-slate-600">Click to upload Delivery Note</div>
+                              <div className="text-xs text-slate-500 mt-1">PDF, JPG, PNG, GIF, WEBP (Max 10MB)</div>
                             </>
                           )}
                         </label>
                       )}
                     </>
                   ) : (
-                    shipment.draftBL ? (
-                      shipment.draftBL.startsWith('http') ? (
+                    shipment.deliveryNote ? (
+                      shipment.deliveryNote.startsWith('http') ? (
                         <button
                           type="button"
-                          onClick={() => setViewingDraftBL(shipment.draftBL)}
+                          onClick={() => setViewingDeliveryNote(shipment.deliveryNote)}
                           className="text-sm text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-2 p-3 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors w-full text-left"
                         >
                           <ImageIcon className="h-4 w-4" />
-                          View Draft BL Document
+                          View Delivery Note
                         </button>
                       ) : (
                         <div className="text-sm text-slate-700 p-3 rounded-lg bg-slate-50 border border-slate-200">
-                          {shipment.draftBL}
+                          {shipment.deliveryNote}
                         </div>
                       )
                     ) : (
-                      <div className="text-sm text-slate-500 italic">No Draft BL uploaded</div>
+                      <div className="text-sm text-slate-500 italic">No Delivery Note uploaded</div>
                     )
                   )}
                 </div>
@@ -746,14 +824,68 @@ export function WarehouseShipmentDetailPage() {
                               {product.packagingType && (
                                 <div>Packaging: {product.packagingType}</div>
                               )}
-                              {product.cbm && (
-                                <div>CBM: {product.cbm.toFixed(3)} m³</div>
-                              )}
-                              {(product.lengthCm || product.widthCm || product.heightCm) && (
-                                <div>
-                                  Dimensions: {product.lengthCm || '—'} × {product.widthCm || '—'} ×{' '}
-                                  {product.heightCm || '—'} cm
+                              {isEditing ? (
+                                <div className="mt-3 pt-3 border-t border-slate-200">
+                                  <div className="text-xs font-semibold text-slate-700 mb-2">Dimensions & CBM Calculation</div>
+                                  <div className="grid grid-cols-3 gap-2 mb-2">
+                                    <div>
+                                      <div className="text-xs text-slate-600 mb-1">Length (cm)</div>
+                                      <Input
+                                        type="number"
+                                        min={0}
+                                        step={0.1}
+                                        value={productDimensions[product.id]?.lengthCm || product.lengthCm || ''}
+                                        onChange={e => updateProductDimension(product.id, 'lengthCm', e.target.value ? Number(e.target.value) : undefined)}
+                                        placeholder="Length"
+                                        className="text-xs"
+                                      />
+                                    </div>
+                                    <div>
+                                      <div className="text-xs text-slate-600 mb-1">Width (cm)</div>
+                                      <Input
+                                        type="number"
+                                        min={0}
+                                        step={0.1}
+                                        value={productDimensions[product.id]?.widthCm || product.widthCm || ''}
+                                        onChange={e => updateProductDimension(product.id, 'widthCm', e.target.value ? Number(e.target.value) : undefined)}
+                                        placeholder="Width"
+                                        className="text-xs"
+                                      />
+                                    </div>
+                                    <div>
+                                      <div className="text-xs text-slate-600 mb-1">Height (cm)</div>
+                                      <Input
+                                        type="number"
+                                        min={0}
+                                        step={0.1}
+                                        value={productDimensions[product.id]?.heightCm || product.heightCm || ''}
+                                        onChange={e => updateProductDimension(product.id, 'heightCm', e.target.value ? Number(e.target.value) : undefined)}
+                                        placeholder="Height"
+                                        className="text-xs"
+                                      />
+                                    </div>
+                                  </div>
+                                  {(productDimensions[product.id]?.cbm || product.cbm) && (
+                                    <div className="text-xs font-semibold text-blue-700 mt-2">
+                                      Calculated CBM: {(productDimensions[product.id]?.cbm || product.cbm)?.toFixed(4)} m³
+                                    </div>
+                                  )}
+                                  {!productDimensions[product.id]?.lengthCm && !productDimensions[product.id]?.widthCm && !productDimensions[product.id]?.heightCm && !product.lengthCm && !product.widthCm && !product.heightCm && (
+                                    <div className="text-xs text-slate-500 italic mt-1">Enter dimensions to calculate CBM</div>
+                                  )}
                                 </div>
+                              ) : (
+                                <>
+                                  {product.cbm && (
+                                    <div>CBM: {product.cbm.toFixed(3)} m³</div>
+                                  )}
+                                  {(product.lengthCm || product.widthCm || product.heightCm) && (
+                                    <div>
+                                      Dimensions: {product.lengthCm || '—'} × {product.widthCm || '—'} ×{' '}
+                                      {product.heightCm || '—'} cm
+                                    </div>
+                                  )}
+                                </>
                               )}
                               {(product.isFragile || product.isHazardous) && (
                                 <div className="flex gap-2 mt-2">
@@ -832,21 +964,21 @@ export function WarehouseShipmentDetailPage() {
                       </div>
                     </div>
                   )}
-                  {shipment.draftBL && (
+                  {shipment.deliveryNote && (
                     <div>
-                      <div className="text-xs font-semibold text-slate-600 mb-1">Draft BL (Bill of Lading)</div>
-                      {shipment.draftBL.startsWith('http') ? (
+                      <div className="text-xs font-semibold text-slate-600 mb-1">Delivery Note</div>
+                      {shipment.deliveryNote.startsWith('http') ? (
                         <button
                           type="button"
-                          onClick={() => setViewingDraftBL(shipment.draftBL)}
+                          onClick={() => setViewingDeliveryNote(shipment.deliveryNote)}
                           className="text-sm text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-2 p-3 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors w-full text-left"
                         >
                           <ImageIcon className="h-4 w-4" />
-                          View Draft BL Document
+                          View Delivery Note
                         </button>
                       ) : (
                         <div className="text-sm text-slate-700 p-3 rounded-lg bg-slate-50 border border-slate-200">
-                          {shipment.draftBL}
+                          {shipment.deliveryNote}
                         </div>
                       )}
                     </div>
@@ -1010,10 +1142,10 @@ export function WarehouseShipmentDetailPage() {
       />
       
       <PDFViewer 
-        pdfUrl={viewingDraftBL}
-        open={!!viewingDraftBL}
-        onClose={() => setViewingDraftBL(null)}
-        title="Draft BL (Bill of Lading)"
+        pdfUrl={viewingDeliveryNote}
+        open={!!viewingDeliveryNote}
+        onClose={() => setViewingDeliveryNote(null)}
+        title="Delivery Note"
       />
     </div>
   )

@@ -163,7 +163,7 @@ export const warehouseAPI = {
   getHistory: (warehouseId?: string) => 
     fetchAPI<any[]>(`/warehouse/history${warehouseId ? `?warehouseId=${warehouseId}` : ''}`),
   getShipment: (id: string) => fetchAPI<any>(`/warehouse/shipments/${id}`),
-  receiveShipment: (id: string, data?: { receivedProductImages?: string[]; draftBL?: string; consumerNumber?: string }) =>
+  receiveShipment: (id: string, data?: { receivedProductImages?: string[]; deliveryNote?: string; consumerNumber?: string }) =>
     fetchAPI<any>(`/warehouse/shipments/${id}/receive`, {
       method: 'POST',
       body: JSON.stringify(data || {}),
@@ -189,13 +189,14 @@ export const warehouseAPI = {
     }),
   updateShipmentDetails: (id: string, data: {
     receivedProductImages?: string[];
-    draftBL?: string;
+    deliveryNote?: string;
     consumerNumber?: string;
     packagingList?: string;
     packageNumber?: string;
     consigneeNumber?: string;
     shippingMark?: string;
     notes?: string;
+    products?: any[];
   }) =>
     fetchAPI<any>(`/warehouse/shipments/${id}/details`, {
       method: 'PUT',

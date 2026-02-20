@@ -179,11 +179,11 @@ export function Sidebar({
         'flex',
         // Mobile: horizontal layout with no overflow, evenly distributed
         'flex-row justify-around items-center',
-        'px-2 py-2.5 min-h-[64px]',
+        'px-1 py-2.5 min-h-[72px]',
         'overflow-x-hidden overflow-y-hidden',
-        // Desktop: vertical layout
+        // Desktop: vertical layout with reduced spacing
         'sm:flex-col sm:justify-start sm:items-stretch',
-        'sm:px-2 sm:py-0 sm:min-h-0 sm:flex-1 sm:overflow-auto sm:gap-1.5'
+        'sm:px-2 sm:py-0 sm:min-h-0 sm:flex-1 sm:overflow-auto sm:gap-0.5'
       )}>
         {items.map(i => {
           const isActive = checkIsActive(i.to)
@@ -196,7 +196,7 @@ export function Sidebar({
                 'flex transition-colors',
                 // Mobile: vertical stack (icon on top, label below)
                 'flex-col items-center justify-center',
-                'flex-1 min-w-0 px-1 py-1.5',
+                'flex-1 min-w-0 px-0.5 py-1',
                 'rounded-lg',
                 // Desktop: horizontal layout
                 'sm:flex-row sm:items-center sm:gap-2',
@@ -215,8 +215,8 @@ export function Sidebar({
                 <span className={cn(
                   'transition-colors shrink-0',
                   'flex items-center justify-center',
-                  // Mobile: icon size
-                  'h-5 w-5 mb-1',
+                  // Mobile: icon size - larger for visibility
+                  'h-6 w-6 mb-1',
                   // Desktop: icon size
                   'sm:h-4 sm:w-4 sm:mb-0',
                   isActive ? 'text-white' : 'text-blue-200'
@@ -226,10 +226,10 @@ export function Sidebar({
               ) : null}
               <span className={cn(
                 'truncate text-center',
-                // Mobile: small label below icon
-                'text-[10px] leading-tight',
+                // Mobile: larger label for better visibility
+                'text-xs leading-tight font-medium',
                 // Desktop: normal size
-                'sm:text-sm sm:text-left',
+                'sm:text-sm sm:text-left sm:font-normal',
                 // Desktop: hide when collapsed
                 isCollapsed && 'sm:hidden'
               )}>

@@ -31,10 +31,10 @@ export function WarehouseIncomingPage() {
   const [receivedImages, setReceivedImages] = React.useState<string[]>([])
   const [uploadingImages, setUploadingImages] = React.useState(false)
   const [viewingImage, setViewingImage] = React.useState<string | null>(null)
-  const [draftBL, setDraftBL] = React.useState('')
-  const [draftBLFile, setDraftBLFile] = React.useState<string | null>(null)
-  const [uploadingDraftBL, setUploadingDraftBL] = React.useState(false)
-  const [viewingDraftBL, setViewingDraftBL] = React.useState<string | null>(null)
+  const [deliveryNote, setDeliveryNote] = React.useState<string | null>(null)
+  const [deliveryNoteFile, setDeliveryNoteFile] = React.useState<string | null>(null)
+  const [uploadingDeliveryNote, setUploadingDeliveryNote] = React.useState(false)
+  const [viewingDeliveryNote, setViewingDeliveryNote] = React.useState<string | null>(null)
   const [consumerNumber, setConsumerNumber] = React.useState('')
 
   // Filter shipment-related notifications for incoming shipments
@@ -53,9 +53,9 @@ export function WarehouseIncomingPage() {
     if (selected?.id) {
       setRemarks(selected.warehouseRemarks ?? '')
       setReceivedImages(selected.receivedProductImages || [])
-      setDraftBL(selected.draftBL ?? '')
-      setDraftBLFile(selected.draftBL && selected.draftBL.startsWith('http') ? selected.draftBL : null)
       setConsumerNumber(selected.consumerNumber ?? '')
+      setDeliveryNote(selected.deliveryNote ?? '')
+      setDeliveryNoteFile(selected.deliveryNote && selected.deliveryNote.startsWith('http') ? selected.deliveryNote : null)
     }
   }, [selected?.id])
 
@@ -84,7 +84,7 @@ export function WarehouseIncomingPage() {
     setReceivedImages(prev => prev.filter((_, i) => i !== index))
   }
 
-  const handleDraftBLUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDeliveryNoteUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -94,21 +94,21 @@ export function WarehouseIncomingPage() {
     }
 
     try {
-      setUploadingDraftBL(true)
-      const documentUrl = await uploadAPI.uploadDocument(file, 'uzalogistics/draft-bl')
-      setDraftBLFile(documentUrl)
-      setDraftBL(documentUrl)
-      showToast('Draft BL uploaded successfully', 'success')
+      setUploadingDeliveryNote(true)
+      const documentUrl = await uploadAPI.uploadDocument(file, 'uzalogistics/delivery-notes')
+      setDeliveryNoteFile(documentUrl)
+      setDeliveryNote(documentUrl)
+      showToast('Delivery note uploaded successfully', 'success')
     } catch (error: any) {
-      showToast(error.message || 'Failed to upload draft BL. Please try again.', 'error')
+      showToast(error.message || 'Failed to upload delivery note. Please try again.', 'error')
     } finally {
-      setUploadingDraftBL(false)
+      setUploadingDeliveryNote(false)
     }
   }
 
-  const removeDraftBL = () => {
-    setDraftBLFile(null)
-    setDraftBL('')
+  const removeDeliveryNote = () => {
+    setDeliveryNoteFile(null)
+    setDeliveryNote('')
   }
 
   const handleMarkReceived = async (id: string, remarksText?: string) => {
@@ -116,7 +116,7 @@ export function WarehouseIncomingPage() {
       setLoading(true)
       await warehouseAPI.receiveShipment(id, {
         receivedProductImages: receivedImages.length > 0 ? receivedImages : undefined,
-        draftBL: draftBL.trim() || undefined,
+        deliveryNote: deliveryNote || undefined,
         consumerNumber: consumerNumber.trim() || undefined,
       })
       if (remarksText) {
@@ -125,25 +125,25 @@ export function WarehouseIncomingPage() {
       await refresh()
       setRemarks('')
       setReceivedImages([])
-      setDraftBL('')
-      setDraftBLFile(null)
+      setDeliveryNote('')
+      setDeliveryNoteFile(null)
       setConsumerNumber('')
-      showToast('Shipment marked as received', 'success')
+      showToast('Shipment marked as delivered', 'success')
     } catch (err: any) {
-      showToast(err.message || 'Failed to mark shipment as received', 'error')
+      showToast(err.message || 'Failed to mark shipment as delivered', 'error')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="pt-4">
-      <div className="mb-4">
-        <div className="text-sm font-semibold text-slate-900">Incoming Shipments</div>
-        <div className="mt-1 text-sm text-slate-600">Confirm receipt quickly — clients get notified automatically.</div>
+    <div className="px-3 pt-2 pb-2 sm:px-0 sm:pt-4">
+      <div className="mb-3 sm:mb-4">
+        <div className="text-xs sm:text-sm font-semibold text-slate-900">Incoming Shipments</div>
+        <div className="mt-1 text-xs sm:text-sm text-slate-600">Confirm receipt quickly — clients get notified automatically.</div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-12">
+      <div className="grid gap-2 sm:gap-4 lg:grid-cols-12">
         <Card className="lg:col-span-7 overflow-hidden order-2 lg:order-1">
           <CardHeader>
             <CardTitle>Incoming table</CardTitle>
@@ -213,7 +213,7 @@ export function WarehouseIncomingPage() {
                             }}
                             disabled={loading || uploadingImages}
                           >
-                            {loading && s.id === selected?.id ? 'Processing...' : 'Mark as Received'}
+                            {loading && s.id === selected?.id ? 'Processing...' : 'Mark as Delivered'}
                           </Button>
                         ) : s.status === 'Received' ? (
                           <Button
@@ -282,21 +282,26 @@ export function WarehouseIncomingPage() {
                 </div>
 
                 <div>
-                  <div className="text-xs font-semibold text-slate-600 mb-2">Draft BL (Bill of Lading)</div>
-                  {draftBLFile ? (
+                  <div className="text-xs font-semibold text-slate-600">Consumer Number</div>
+                  <Input value={consumerNumber} onChange={e => setConsumerNumber(e.target.value)} placeholder="Enter consumer number" />
+                </div>
+
+                <div>
+                  <div className="text-xs font-semibold text-slate-600 mb-2">Delivery Note *</div>
+                  {deliveryNoteFile ? (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50">
                         <button
                           type="button"
-                          onClick={() => setViewingDraftBL(draftBLFile)}
+                          onClick={() => setViewingDeliveryNote(deliveryNoteFile)}
                           className="text-sm text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-2"
                         >
                           <ImageIcon className="h-4 w-4" />
-                          View Draft BL Document
+                          View Delivery Note
                         </button>
                         <button
                           type="button"
-                          onClick={removeDraftBL}
+                          onClick={removeDeliveryNote}
                           className="text-red-600 hover:text-red-700"
                         >
                           <X className="h-4 w-4" />
@@ -309,25 +314,20 @@ export function WarehouseIncomingPage() {
                         type="file"
                         accept=".pdf,application/pdf,.jpg,.jpeg,.png,.gif,.webp,image/jpeg,image/png,image/gif,image/webp"
                         className="hidden"
-                        onChange={handleDraftBLUpload}
-                        disabled={uploadingDraftBL}
+                        onChange={handleDeliveryNoteUpload}
+                        disabled={uploadingDeliveryNote}
                       />
-                      {uploadingDraftBL ? (
+                      {uploadingDeliveryNote ? (
                         <div className="text-sm text-slate-600">Uploading document...</div>
                       ) : (
                         <>
                           <Upload className="h-6 w-6 text-slate-400 mb-2" />
-                          <div className="text-sm font-medium text-slate-600">Click to upload Draft BL</div>
+                          <div className="text-sm font-medium text-slate-600">Click to upload Delivery Note</div>
                           <div className="text-xs text-slate-500 mt-1">PDF, JPG, PNG, GIF, WEBP (Max 10MB)</div>
                         </>
                       )}
                     </label>
                   )}
-                </div>
-
-                <div>
-                  <div className="text-xs font-semibold text-slate-600">Consumer Number</div>
-                  <Input value={consumerNumber} onChange={e => setConsumerNumber(e.target.value)} placeholder="Enter consumer number" />
                 </div>
 
                 <div>
@@ -377,24 +377,24 @@ export function WarehouseIncomingPage() {
                   <Button variant="secondary" onClick={() => {
                     setRemarks('')
                     setReceivedImages([])
-                    setDraftBL('')
-                    setDraftBLFile(null)
+                    setDeliveryNote('')
+                    setDeliveryNoteFile(null)
                     setConsumerNumber('')
                   }}>
                     Clear
                   </Button>
                   <Button 
                     onClick={() => handleMarkReceived(selected.id, remarks.trim() ? remarks.trim() : undefined)}
-                    disabled={loading || uploadingImages || uploadingDraftBL}
+                    disabled={loading || uploadingImages || uploadingDeliveryNote || !deliveryNote}
                   >
-                    {loading ? 'Processing...' : 'Confirm Received'}
+                    {loading ? 'Processing...' : 'Confirm Delivered'}
                   </Button>
                 </div>
 
                 <div className="rounded-xl border border-slate-200 bg-white p-4">
                   <div className="text-xs font-semibold text-slate-600">Auto-notification</div>
                   <div className="mt-1 text-sm text-slate-600">
-                    On receipt confirmation, the client and admin are notified: "Your shipment #{selected.id} has been received by {selected.warehouseName || 'warehouse'}".
+                    On delivery confirmation, the client and admin are notified: "Your shipment #{selected.id} has been delivered to {selected.warehouseName || 'warehouse'}".
                   </div>
                 </div>
               </div>
@@ -472,10 +472,10 @@ export function WarehouseIncomingPage() {
       />
       
       <PDFViewer 
-        pdfUrl={viewingDraftBL}
-        open={!!viewingDraftBL}
-        onClose={() => setViewingDraftBL(null)}
-        title="Draft BL (Bill of Lading)"
+        pdfUrl={viewingDeliveryNote}
+        open={!!viewingDeliveryNote}
+        onClose={() => setViewingDeliveryNote(null)}
+        title="Delivery Note"
       />
     </div>
   )

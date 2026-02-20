@@ -20,6 +20,11 @@ export function AdminUsersPage({ focus }: { focus: Extract<Role, 'client' | 'war
       capacity: '',
       manager: '',
       contact: '',
+      consigneeName: '',
+      consigneeTin: '',
+      consigneeAddress: '',
+      consigneePhone: '',
+      consigneeEmail: '',
     } : {
       phone: '',
       address: '',
@@ -87,6 +92,18 @@ export function AdminUsersPage({ focus }: { focus: Extract<Role, 'client' | 'war
       setError('Password must be at least 6 characters long')
       return false
     }
+    // Validate consignee details for warehouse
+    if (focus === 'warehouse') {
+      const warehouseData = formData as any
+      if (!warehouseData.consigneeName?.trim()) {
+        setError('Consignee name is required')
+        return false
+      }
+      if (!warehouseData.consigneeTin?.trim()) {
+        setError('TIN number is required')
+        return false
+      }
+    }
     return true
   }
 
@@ -110,6 +127,11 @@ export function AdminUsersPage({ focus }: { focus: Extract<Role, 'client' | 'war
           capacity: (formData as any).capacity,
           manager: (formData as any).manager,
           contact: (formData as any).contact,
+          consigneeName: (formData as any).consigneeName,
+          consigneeTin: (formData as any).consigneeTin,
+          consigneeAddress: (formData as any).consigneeAddress,
+          consigneePhone: (formData as any).consigneePhone,
+          consigneeEmail: (formData as any).consigneeEmail,
         } : {
           phone: (formData as any).phone,
           address: (formData as any).address,
@@ -127,6 +149,11 @@ export function AdminUsersPage({ focus }: { focus: Extract<Role, 'client' | 'war
           capacity: '',
           manager: '',
           contact: '',
+          consigneeName: '',
+          consigneeTin: '',
+          consigneeAddress: '',
+          consigneePhone: '',
+          consigneeEmail: '',
         } : {
           phone: '',
           address: '',
@@ -317,6 +344,82 @@ export function AdminUsersPage({ focus }: { focus: Extract<Role, 'client' | 'war
                           className="pl-10"
                           disabled={isLoading}
                         />
+                      </div>
+                    </div>
+
+                    {/* Consignee Details Section */}
+                    <div className="pt-2 mt-2 border-t border-slate-200">
+                      <div className="text-xs font-semibold text-slate-700 mb-3">Consignee Details</div>
+                      
+                      <div>
+                        <div className="text-xs font-semibold text-slate-600 mb-1.5">Consignee Name <span className="text-red-500">*</span></div>
+                        <div className="relative">
+                          <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                          <Input
+                            value={(formData as any).consigneeName}
+                            onChange={e => handleChange('consigneeName', e.target.value)}
+                            placeholder="Consignee Company Name"
+                            className="pl-10"
+                            disabled={isLoading}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-xs font-semibold text-slate-600 mb-1.5">TIN Number <span className="text-red-500">*</span></div>
+                        <div className="relative">
+                          <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                          <Input
+                            value={(formData as any).consigneeTin}
+                            onChange={e => handleChange('consigneeTin', e.target.value)}
+                            placeholder="123456789"
+                            className="pl-10"
+                            disabled={isLoading}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-xs font-semibold text-slate-600 mb-1.5">Consignee Address</div>
+                        <div className="relative">
+                          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                          <Input
+                            value={(formData as any).consigneeAddress}
+                            onChange={e => handleChange('consigneeAddress', e.target.value)}
+                            placeholder="123 Main St, City, Country"
+                            className="pl-10"
+                            disabled={isLoading}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-xs font-semibold text-slate-600 mb-1.5">Consignee Phone</div>
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                          <Input
+                            value={(formData as any).consigneePhone}
+                            onChange={e => handleChange('consigneePhone', e.target.value)}
+                            placeholder="+1234567890"
+                            className="pl-10"
+                            disabled={isLoading}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-xs font-semibold text-slate-600 mb-1.5">Consignee Email</div>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                          <Input
+                            type="email"
+                            value={(formData as any).consigneeEmail}
+                            onChange={e => handleChange('consigneeEmail', e.target.value)}
+                            placeholder="consignee@example.com"
+                            className="pl-10"
+                            disabled={isLoading}
+                          />
+                        </div>
                       </div>
                     </div>
                   </>

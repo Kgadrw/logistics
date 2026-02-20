@@ -289,13 +289,13 @@ export function WarehouseProfilePage() {
 
   if (loading) {
     return (
-      <div className="pt-4">
-        <div className="mb-4">
-          <div className="text-sm font-semibold text-slate-900">Warehouse Profile</div>
+      <div className="px-3 pt-2 pb-2 sm:px-0 sm:pt-4">
+        <div className="mb-3 sm:mb-4">
+          <div className="text-xs sm:text-sm font-semibold text-slate-900">Warehouse Profile</div>
         </div>
         <Card>
           <CardBody>
-            <div className="text-sm text-slate-600 text-center py-8">Loading profile...</div>
+            <div className="text-xs sm:text-sm text-slate-600 text-center py-8">Loading profile...</div>
           </CardBody>
         </Card>
       </div>
@@ -303,9 +303,9 @@ export function WarehouseProfilePage() {
   }
 
   return (
-    <div className="pt-4">
-      <div className="mb-4">
-        <div className="text-sm font-semibold text-slate-900">Warehouse Profile</div>
+    <div className="px-3 pt-2 pb-2 sm:px-0 sm:pt-4">
+      <div className="mb-3 sm:mb-4">
+        <div className="text-xs sm:text-sm font-semibold text-slate-900">Warehouse Profile</div>
       </div>
 
       {error && (
