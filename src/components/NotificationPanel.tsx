@@ -169,8 +169,8 @@ export function NotificationPanel({ role, className }: { role: Role; className?:
                     <div
                       key={n.id}
                       className={cn(
-                        'rounded-xl border border-slate-200 bg-white px-4 py-3',
-                        n.unreadBy?.[role] ? 'ring-2 ring-brand-100' : null,
+                        'rounded-xl border border-slate-200 px-4 py-3',
+                        n.unreadBy?.[role] ? 'ring-2 ring-blue-100 bg-blue-50/50' : 'bg-white',
                         n.shipmentId ? 'cursor-pointer hover:bg-slate-50 transition-colors' : null,
                       )}
                       onClick={async () => {

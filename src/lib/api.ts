@@ -250,6 +250,12 @@ export const adminAPI = {
       body: JSON.stringify(data),
     }),
   getAuditLogs: () => fetchAPI<any[]>('/admin/audit'),
+  getSettings: () => fetchAPI<any>('/admin/settings'),
+  updateSettings: (data: any) =>
+    fetchAPI<any>('/admin/settings', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
 }
 
 // Notifications API (shared)
