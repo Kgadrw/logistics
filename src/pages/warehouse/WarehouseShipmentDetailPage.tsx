@@ -31,6 +31,9 @@ export function WarehouseShipmentDetailPage() {
   const [uploadingDeliveryNote, setUploadingDeliveryNote] = React.useState(false)
   const [viewingDeliveryNote, setViewingDeliveryNote] = React.useState<string | null>(null)
   const [viewingBL, setViewingBL] = React.useState<string | null>(null)
+  const [blDocument, setBlDocument] = React.useState('')
+  const [blDocumentFile, setBlDocumentFile] = React.useState<string | null>(null)
+  const [uploadingBL, setUploadingBL] = React.useState(false)
   const [consumerNumber, setConsumerNumber] = React.useState('')
   const [isEditing, setIsEditing] = React.useState(false)
   const [reversingStatus, setReversingStatus] = React.useState(false)
@@ -63,6 +66,8 @@ export function WarehouseShipmentDetailPage() {
         setPackageNumber(data.dispatch?.packageNumber || '')
         setConsigneeNumber(data.dispatch?.consigneeNumber || '')
         setShippingMark(data.dispatch?.shippingMark || 'UZA Solutions')
+        setBlDocument(data.dispatch?.blDocument || '')
+        setBlDocumentFile(data.dispatch?.blDocument && data.dispatch?.blDocument.startsWith('http') ? data.dispatch.blDocument : null)
         // Initialize product dimensions
         const dimensions: Record<string, { lengthCm?: number; widthCm?: number; heightCm?: number; cbm?: number }> = {}
         data.products?.forEach((p: any) => {
@@ -136,6 +141,33 @@ export function WarehouseShipmentDetailPage() {
   const removeDeliveryNote = () => {
     setDeliveryNoteFile(null)
     setDeliveryNote('')
+  }
+
+  const handleBLUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('File size must be less than 10MB', 'warning')
+      return
+    }
+
+    try {
+      setUploadingBL(true)
+      const documentUrl = await uploadAPI.uploadDocument(file, 'uzalogistics/bl-documents')
+      setBlDocumentFile(documentUrl)
+      setBlDocument(documentUrl)
+      showToast('BL document uploaded successfully', 'success')
+    } catch (error: any) {
+      showToast(error.message || 'Failed to upload BL document. Please try again.', 'error')
+    } finally {
+      setUploadingBL(false)
+    }
+  }
+
+  const removeBL = () => {
+    setBlDocumentFile(null)
+    setBlDocument('')
   }
 
   const handleMarkReceived = async () => {
@@ -247,6 +279,7 @@ export function WarehouseShipmentDetailPage() {
         packageNumber: packageNumber.trim() || undefined,
         consigneeNumber: consigneeNumber.trim() || undefined,
         shippingMark: shippingMark.trim() || undefined,
+        blDocument: blDocument || undefined,
         ...(updatedProducts && updatedProducts.some((p: any, i: number) => {
           const original = shipment.products?.[i]
           return p.lengthCm !== original?.lengthCm ||
@@ -528,6 +561,8 @@ export function WarehouseShipmentDetailPage() {
                           setPackageNumber(data.dispatch?.packageNumber || '')
                           setConsigneeNumber(data.dispatch?.consigneeNumber || '')
                         setShippingMark(data.dispatch?.shippingMark || 'UZA Solutions')
+                        setBlDocument(data.dispatch?.blDocument || '')
+                        setBlDocumentFile(data.dispatch?.blDocument && data.dispatch?.blDocument.startsWith('http') ? data.dispatch.blDocument : null)
                         setRemarks(data.warehouseRemarks || '')
                         // Reset product dimensions
                         const dimensions: Record<string, { lengthCm?: number; widthCm?: number; heightCm?: number; cbm?: number }> = {}
@@ -786,6 +821,72 @@ export function WarehouseShipmentDetailPage() {
                         </div>
                       )}
                     </div>
+                    <div>
+                      <div className="text-xs font-semibold text-slate-600 mb-2">BL Document (Bill of Lading) *</div>
+                      {isEditing ? (
+                        <>
+                          {blDocumentFile ? (
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50">
+                                <button
+                                  type="button"
+                                  onClick={() => setViewingBL(blDocumentFile)}
+                                  className="text-sm text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-2"
+                                >
+                                  <ImageIcon className="h-4 w-4" />
+                                  View BL Document
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={removeBL}
+                                  className="text-red-600 hover:text-red-700"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <label className="flex flex-col items-center justify-center h-32 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
+                              <input
+                                type="file"
+                                accept=".pdf,application/pdf,.jpg,.jpeg,.png,.gif,.webp,image/jpeg,image/png,image/gif,image/webp"
+                                className="hidden"
+                                onChange={handleBLUpload}
+                                disabled={uploadingBL}
+                              />
+                              {uploadingBL ? (
+                                <div className="text-sm text-slate-600">Uploading document...</div>
+                              ) : (
+                                <>
+                                  <Upload className="h-6 w-6 text-slate-400 mb-2" />
+                                  <div className="text-sm font-medium text-slate-600">Click to upload BL Document</div>
+                                  <div className="text-xs text-slate-500 mt-1">PDF, JPG, PNG, GIF, WEBP (Max 10MB)</div>
+                                </>
+                              )}
+                            </label>
+                          )}
+                        </>
+                      ) : (
+                        shipment.dispatch.blDocument ? (
+                          shipment.dispatch.blDocument.startsWith('http') ? (
+                            <button
+                              type="button"
+                              onClick={() => setViewingBL(shipment.dispatch.blDocument)}
+                              className="text-sm text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-2 p-3 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors w-full text-left"
+                            >
+                              <ImageIcon className="h-4 w-4" />
+                              View BL Document
+                            </button>
+                          ) : (
+                            <div className="text-sm text-slate-700 p-3 rounded-lg bg-slate-50 border border-slate-200">
+                              {shipment.dispatch.blDocument}
+                            </div>
+                          )
+                        ) : (
+                          <div className="text-sm text-slate-500 italic">No BL Document uploaded</div>
+                        )
+                      )}
+                    </div>
                   </>
                 )}
               </div>
@@ -986,7 +1087,7 @@ export function WarehouseShipmentDetailPage() {
                   )}
                   {shipment.consumerNumber && (
                     <div>
-                      <div className="text-xs font-semibold text-slate-600 mb-1">Consumer Number</div>
+                      <div className="text-xs font-semibold text-slate-600 mb-1">Consinee Number</div>
                       <div className="text-sm text-slate-700 p-3 rounded-lg bg-slate-50 border border-slate-200">
                         {shipment.consumerNumber}
                       </div>
