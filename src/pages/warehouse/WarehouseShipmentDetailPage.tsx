@@ -30,6 +30,7 @@ export function WarehouseShipmentDetailPage() {
   const [deliveryNoteFile, setDeliveryNoteFile] = React.useState<string | null>(null)
   const [uploadingDeliveryNote, setUploadingDeliveryNote] = React.useState(false)
   const [viewingDeliveryNote, setViewingDeliveryNote] = React.useState<string | null>(null)
+  const [viewingBL, setViewingBL] = React.useState<string | null>(null)
   const [consumerNumber, setConsumerNumber] = React.useState('')
   const [isEditing, setIsEditing] = React.useState(false)
   const [reversingStatus, setReversingStatus] = React.useState(false)
@@ -1090,6 +1091,25 @@ export function WarehouseShipmentDetailPage() {
                       <div className="mt-1 text-sm text-slate-700">{shipment.dispatch.shippingMark}</div>
                     </div>
                   )}
+                  {shipment.dispatch.blDocument && (
+                    <div>
+                      <div className="text-xs font-semibold text-slate-600 mb-2">BL Document (Bill of Lading)</div>
+                      {shipment.dispatch.blDocument.startsWith('http') ? (
+                        <button
+                          type="button"
+                          onClick={() => setViewingBL(shipment.dispatch.blDocument)}
+                          className="text-sm text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-2 p-3 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors w-full text-left"
+                        >
+                          <ImageIcon className="h-4 w-4" />
+                          View BL Document
+                        </button>
+                      ) : (
+                        <div className="text-sm text-slate-700 p-3 rounded-lg bg-slate-50 border border-slate-200">
+                          {shipment.dispatch.blDocument}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </CardBody>
             </Card>
@@ -1146,6 +1166,13 @@ export function WarehouseShipmentDetailPage() {
         open={!!viewingDeliveryNote}
         onClose={() => setViewingDeliveryNote(null)}
         title="Delivery Note"
+      />
+      
+      <PDFViewer 
+        pdfUrl={viewingBL}
+        open={!!viewingBL}
+        onClose={() => setViewingBL(null)}
+        title="BL Document (Bill of Lading)"
       />
     </div>
   )

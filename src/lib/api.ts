@@ -195,6 +195,7 @@ export const warehouseAPI = {
     packageNumber?: string;
     consigneeNumber?: string;
     shippingMark?: string;
+    blDocument?: string;
     notes?: string;
     products?: any[];
   }) =>

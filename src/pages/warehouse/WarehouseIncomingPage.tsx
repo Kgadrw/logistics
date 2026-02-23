@@ -253,15 +253,89 @@ export function WarehouseIncomingPage() {
               <div className="text-sm text-slate-600">Select a shipment to view details.</div>
             ) : (
               <div className="space-y-4">
+                {/* Shipping Status Section */}
+                <div className="rounded-xl bg-blue-50 p-4 ring-1 ring-blue-200">
+                  <div className="text-xs font-semibold text-blue-900 mb-2">Shipping Status</div>
+                  <div className="flex items-center gap-2">
+                    <Badge tone={statusTone(selected.status)} className="text-sm">
+                      {selected.status}
+                    </Badge>
+                    <div className="text-xs text-blue-700">
+                      {selected.status === 'Submitted' && 'Awaiting warehouse receipt confirmation'}
+                      {selected.status === 'Received' && 'Shipment received at warehouse'}
+                      {selected.status === 'Left Warehouse' && 'Shipment has left the warehouse'}
+                      {selected.status === 'In Transit' && 'Shipment is in transit'}
+                      {selected.status === 'Delivered' && 'Shipment has been delivered'}
+                    </div>
+                  </div>
+                  {selected.updatedAtIso && (
+                    <div className="text-xs text-blue-600 mt-2">
+                      Last updated: {formatDateTime(selected.updatedAtIso)}
+                    </div>
+                  )}
+                </div>
+
+                {/* Client Information Section */}
                 <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200">
-                  <div className="text-xs font-semibold text-slate-600">Full product breakdown</div>
-                  <div className="mt-2 space-y-2">
+                  <div className="text-xs font-semibold text-slate-600 mb-3">Client Information</div>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="font-semibold text-slate-700">Client:</span>{' '}
+                      <span className="text-slate-600">{selected.clientName || selected.client?.name || 'Unknown'}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-slate-700">Shipment ID:</span>{' '}
+                      <span className="text-slate-600 font-mono">{selected.id}</span>
+                    </div>
+                    {selected.createdAtIso && (
+                      <div>
+                        <span className="font-semibold text-slate-700">Created:</span>{' '}
+                        <span className="text-slate-600">{formatDateTime(selected.createdAtIso)}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Full Product Breakdown */}
+                <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200">
+                  <div className="text-xs font-semibold text-slate-600 mb-3">Full Product Breakdown (from Client)</div>
+                  <div className="mt-2 space-y-4">
                     {selected.products?.map(p => (
-                      <div key={p.id} className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-semibold text-slate-900">{p.name}</div>
-                          <div className="text-sm text-slate-600">
-                            Qty {p.quantity} • {p.weightKg}kg • {p.category}
+                      <div key={p.id} className="bg-white rounded-lg p-3 border border-slate-200">
+                        <div className="flex gap-3">
+                          {p.imageUrl && (
+                            <img
+                              src={p.imageUrl}
+                              alt={p.name}
+                              className="h-16 w-16 rounded-lg object-cover border border-slate-200 shrink-0 cursor-pointer hover:opacity-90 transition-opacity"
+                              onClick={() => setViewingImage(p.imageUrl)}
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-semibold text-slate-900">{p.name}</div>
+                            <div className="mt-1 space-y-1 text-xs text-slate-600">
+                              <div>Quantity: {p.quantity} • Weight: {p.weightKg} kg</div>
+                              <div>Category: {p.category}</div>
+                              {p.packagingType && <div>Packaging: {p.packagingType}</div>}
+                              {(p.lengthCm || p.widthCm || p.heightCm) && (
+                                <div>
+                                  Dimensions: {p.lengthCm || '—'} × {p.widthCm || '—'} × {p.heightCm || '—'} cm
+                                </div>
+                              )}
+                              {p.cbm && <div>CBM: {p.cbm.toFixed(3)} m³</div>}
+                              {(p.isFragile || p.isHazardous) && (
+                                <div className="flex gap-2 mt-1">
+                                  {p.isFragile && <Badge tone="orange" className="text-xs">Fragile</Badge>}
+                                  {p.isHazardous && <Badge tone="red" className="text-xs">Hazardous</Badge>}
+                                </div>
+                              )}
+                              {p.specialInstructions && (
+                                <div className="mt-2 p-2 rounded bg-amber-50 border border-amber-200">
+                                  <div className="text-xs font-semibold text-amber-900">Special Instructions:</div>
+                                  <div className="text-xs text-amber-800 mt-0.5">{p.specialInstructions}</div>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -269,10 +343,11 @@ export function WarehouseIncomingPage() {
                   </div>
                 </div>
 
+                {/* Client Notes */}
                 {selected.notes ? (
-                  <div>
-                    <div className="text-xs font-semibold text-slate-600">Client notes</div>
-                    <div className="mt-1 text-sm text-slate-700">{selected.notes}</div>
+                  <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200">
+                    <div className="text-xs font-semibold text-slate-600 mb-2">Client Notes</div>
+                    <div className="mt-1 text-sm text-slate-700 whitespace-pre-wrap">{selected.notes}</div>
                   </div>
                 ) : null}
 
