@@ -21,7 +21,8 @@ export function ClientShipmentDetailPage() {
   const [error, setError] = React.useState<string | null>(null)
   const [markingDelivered, setMarkingDelivered] = React.useState(false)
   const [viewingImage, setViewingImage] = React.useState<string | null>(null)
-  const [viewingDraftBL, setViewingDraftBL] = React.useState<string | null>(null)
+  const [viewingDeliveryNote, setViewingDeliveryNote] = React.useState<string | null>(null)
+  const [viewingBL, setViewingBL] = React.useState<string | null>(null)
   const [isEditing, setIsEditing] = React.useState(false)
   const [notes, setNotes] = React.useState('')
   const [savingNotes, setSavingNotes] = React.useState(false)
@@ -435,31 +436,63 @@ export function ClientShipmentDetailPage() {
           )}
 
           {/* Documents */}
-          {shipment.draftBL && (
+          {(shipment.deliveryNote || shipment.dispatch?.blDocument) && (
             <Card>
               <CardHeader>
                 <CardTitle>Documents</CardTitle>
+                <div className="text-xs text-slate-500">Shipping documents from warehouse</div>
               </CardHeader>
               <CardBody>
-                <div className="space-y-4">
-                  {shipment.draftBL.startsWith('http') ? (
-                    <button
-                      type="button"
-                      onClick={() => setViewingDraftBL(shipment.draftBL)}
-                      className="w-full flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
-                    >
-                      <div className="flex items-center gap-2">
-                        <ImageIcon className="h-4 w-4 text-blue-600" />
-                        <span className="text-sm font-medium text-slate-900">Draft BL (Bill of Lading)</span>
-                      </div>
-                      <span className="text-xs text-slate-500">View</span>
-                    </button>
-                  ) : (
+                <div className="space-y-3">
+                  {/* Delivery Note */}
+                  {shipment.deliveryNote && (
                     <div>
-                      <div className="text-xs font-semibold text-slate-600 mb-1">Draft BL (Bill of Lading)</div>
-                      <div className="text-sm text-slate-700 p-3 rounded-lg bg-slate-50 border border-slate-200">
-                        {shipment.draftBL}
-                      </div>
+                      {shipment.deliveryNote.startsWith('http') ? (
+                        <button
+                          type="button"
+                          onClick={() => setViewingDeliveryNote(shipment.deliveryNote)}
+                          className="w-full flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
+                        >
+                          <div className="flex items-center gap-2">
+                            <ImageIcon className="h-4 w-4 text-blue-600" />
+                            <span className="text-sm font-medium text-slate-900">Delivery Note</span>
+                          </div>
+                          <span className="text-xs text-slate-500">View</span>
+                        </button>
+                      ) : (
+                        <div>
+                          <div className="text-xs font-semibold text-slate-600 mb-1">Delivery Note</div>
+                          <div className="text-sm text-slate-700 p-3 rounded-lg bg-slate-50 border border-slate-200">
+                            {shipment.deliveryNote}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* BL Document */}
+                  {shipment.dispatch?.blDocument && (
+                    <div>
+                      {shipment.dispatch.blDocument.startsWith('http') ? (
+                        <button
+                          type="button"
+                          onClick={() => setViewingBL(shipment.dispatch.blDocument)}
+                          className="w-full flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
+                        >
+                          <div className="flex items-center gap-2">
+                            <ImageIcon className="h-4 w-4 text-blue-600" />
+                            <span className="text-sm font-medium text-slate-900">BL Document (Bill of Lading)</span>
+                          </div>
+                          <span className="text-xs text-slate-500">View</span>
+                        </button>
+                      ) : (
+                        <div>
+                          <div className="text-xs font-semibold text-slate-600 mb-1">BL Document (Bill of Lading)</div>
+                          <div className="text-sm text-slate-700 p-3 rounded-lg bg-slate-50 border border-slate-200">
+                            {shipment.dispatch.blDocument}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -514,10 +547,17 @@ export function ClientShipmentDetailPage() {
       />
       
       <PDFViewer 
-        pdfUrl={viewingDraftBL}
-        open={!!viewingDraftBL}
-        onClose={() => setViewingDraftBL(null)}
-        title="Draft BL (Bill of Lading)"
+        pdfUrl={viewingDeliveryNote}
+        open={!!viewingDeliveryNote}
+        onClose={() => setViewingDeliveryNote(null)}
+        title="Delivery Note"
+      />
+      
+      <PDFViewer 
+        pdfUrl={viewingBL}
+        open={!!viewingBL}
+        onClose={() => setViewingBL(null)}
+        title="BL Document (Bill of Lading)"
       />
     </div>
   )
