@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Upload, X, Image as ImageIcon, Edit, Save, RotateCcw, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Upload, X, Image as ImageIcon, Edit, Save, ChevronUp, ChevronDown, AlertTriangle } from 'lucide-react'
 import { Badge, statusTone } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
@@ -38,7 +38,6 @@ export function WarehouseShipmentDetailPage() {
   const [isEditing, setIsEditing] = React.useState(false)
   const [reversingStatus, setReversingStatus] = React.useState(false)
   const [savingDetails, setSavingDetails] = React.useState(false)
-  const [showReverseConfirm, setShowReverseConfirm] = React.useState<string | null>(null)
   const [packagingList, setPackagingList] = React.useState('')
   const [packageNumber, setPackageNumber] = React.useState('')
   const [consigneeNumber, setConsigneeNumber] = React.useState('')
@@ -238,10 +237,9 @@ export function WarehouseShipmentDetailPage() {
       // Refresh shipment data
       const data = await warehouseAPI.getShipment(id)
       setShipment(data)
-      setShowReverseConfirm(null)
-      showToast(`Status reversed to ${newStatus} successfully`, 'success')
+      showToast(`Status changed to ${newStatus} successfully`, 'success')
     } catch (err: any) {
-      showToast(err.message || 'Failed to reverse status', 'error')
+      showToast(err.message || 'Failed to change status', 'error')
     } finally {
       setReversingStatus(false)
     }
@@ -350,6 +348,15 @@ export function WarehouseShipmentDetailPage() {
     return statusMap[currentStatus] || null
   }
 
+  const getNextStatus = (currentStatus: string): string | null => {
+    const statusMap: Record<string, string> = {
+      'Submitted': 'Received',
+      'Received': 'Left Warehouse',
+      'Left Warehouse': 'In Transit',
+    }
+    return statusMap[currentStatus] || null
+  }
+
   if (loading) {
     return (
       <div className="pt-4">
@@ -454,65 +461,80 @@ export function WarehouseShipmentDetailPage() {
             </CardBody>
           </Card>
 
-          {/* Status Reversal */}
-          {getPreviousStatus(shipment.status) && (
+          {/* Status Navigation */}
+          {(getPreviousStatus(shipment.status) || getNextStatus(shipment.status)) && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <RotateCcw className="h-5 w-5 text-orange-600" />
-                  Reverse Status
-                </CardTitle>
+                <CardTitle>Status Navigation</CardTitle>
+                <div className="text-xs text-slate-500">Move status forward or backward</div>
               </CardHeader>
               <CardBody>
-                <div className="space-y-4">
-                  <div className="p-4 rounded-lg bg-orange-50 border border-orange-200">
-                    <div className="flex items-start gap-3">
-                      <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5 shrink-0" />
-                      <div className="flex-1">
-                        <div className="text-sm font-semibold text-orange-900 mb-1">Warning</div>
-                        <div className="text-xs text-orange-800">
-                          Reversing status will change the shipment from <strong>{shipment.status}</strong> back to <strong>{getPreviousStatus(shipment.status)}</strong>. 
-                          This action will clear dispatch information if reversing from "Left Warehouse" or "In Transit".
-                        </div>
+                <div className="flex items-center justify-center gap-4">
+                  {/* Previous Status (Chevron Down) */}
+                  {getPreviousStatus(shipment.status) && (
+                    <div className="flex flex-col items-center gap-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleReverseStatus(getPreviousStatus(shipment.status)!)}
+                        disabled={reversingStatus}
+                        className="flex items-center gap-2"
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                        Previous
+                      </Button>
+                      <div className="text-xs text-slate-600 text-center">
+                        {getPreviousStatus(shipment.status)}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Current Status */}
+                  <div className="flex flex-col items-center gap-2 px-4">
+                    <Badge tone={statusTone(shipment.status)} className="text-sm">
+                      {shipment.status}
+                    </Badge>
+                    <div className="text-xs text-slate-500">Current</div>
+                  </div>
+
+                  {/* Next Status (Chevron Up) */}
+                  {getNextStatus(shipment.status) && (
+                    <div className="flex flex-col items-center gap-2">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => {
+                          const nextStatus = getNextStatus(shipment.status)
+                          if (nextStatus === 'Received') {
+                            handleMarkReceived()
+                          } else if (nextStatus === 'Left Warehouse') {
+                            handleMarkLeftWarehouse()
+                          } else if (nextStatus === 'In Transit') {
+                            handleMarkInTransit()
+                          }
+                        }}
+                        disabled={markingReceived || markingLeftWarehouse || markingInTransit || reversingStatus}
+                        className="flex items-center gap-2"
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                        Next
+                      </Button>
+                      <div className="text-xs text-slate-600 text-center">
+                        {getNextStatus(shipment.status)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {getPreviousStatus(shipment.status) && (
+                  <div className="mt-4 p-3 rounded-lg bg-orange-50 border border-orange-200">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="h-4 w-4 text-orange-600 mt-0.5 shrink-0" />
+                      <div className="text-xs text-orange-800">
+                        Reversing status will clear dispatch information if moving from "Left Warehouse" or "In Transit".
                       </div>
                     </div>
                   </div>
-                  {showReverseConfirm === shipment.status ? (
-                    <div className="space-y-3">
-                      <div className="text-sm text-slate-700">
-                        Are you sure you want to reverse the status from <strong>{shipment.status}</strong> to <strong>{getPreviousStatus(shipment.status)}</strong>?
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => handleReverseStatus(getPreviousStatus(shipment.status)!)}
-                          disabled={reversingStatus}
-                        >
-                          {reversingStatus ? 'Reversing...' : 'Confirm Reverse'}
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => setShowReverseConfirm(null)}
-                          disabled={reversingStatus}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setShowReverseConfirm(shipment.status)}
-                      disabled={reversingStatus}
-                    >
-                      <RotateCcw className="h-4 w-4 mr-2" />
-                      Reverse to {getPreviousStatus(shipment.status)}
-                    </Button>
-                  )}
-                </div>
+                )}
               </CardBody>
             </Card>
           )}
