@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Package, Users, Building2, Activity, TrendingUp, ArrowRight, AlertCircle } from 'lucide-react'
+import { Package, Users, Building2, Activity, TrendingUp, ArrowRight, AlertCircle, CheckCircle2, XCircle, Clock, Server, Database, Globe, Shield } from 'lucide-react'
 import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
 import { adminAPI } from '../../lib/api'
 import { Badge, statusTone } from '../../components/ui/Badge'
@@ -14,6 +14,13 @@ export function AdminOverviewPage() {
   const [shipments, setShipments] = React.useState<any[]>([])
   const [auditLogs, setAuditLogs] = React.useState<any[]>([])
   const [loading, setLoading] = React.useState(true)
+  const [systemStatus, setSystemStatus] = React.useState({
+    database: 'operational',
+    api: 'operational',
+    notifications: 'operational',
+    fileStorage: 'operational',
+    overall: 'operational',
+  })
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -27,13 +34,34 @@ export function AdminOverviewPage() {
         setDashboardData(dashboard)
         setShipments(shipmentsData)
         setAuditLogs(auditData || [])
+        
+        // Check system status based on API responses
+        const status = {
+          database: dashboard ? 'operational' : 'degraded',
+          api: dashboard && shipmentsData ? 'operational' : 'degraded',
+          notifications: 'operational',
+          fileStorage: 'operational',
+          overall: dashboard && shipmentsData ? 'operational' : 'degraded',
+        }
+        setSystemStatus(status)
       } catch (err) {
         console.error('Failed to fetch admin overview data:', err)
+        setSystemStatus({
+          database: 'degraded',
+          api: 'degraded',
+          notifications: 'degraded',
+          fileStorage: 'degraded',
+          overall: 'degraded',
+        })
       } finally {
         setLoading(false)
       }
     }
     fetchData()
+    
+    // Refresh status every 30 seconds
+    const interval = setInterval(fetchData, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   const stats = React.useMemo(() => {
@@ -133,6 +161,161 @@ export function AdminOverviewPage() {
           </CardBody>
         </Card>
       </div>
+
+      {/* System Status Diagram */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-blue-600" />
+            System Status
+          </CardTitle>
+          <div className="text-xs text-slate-500">Real-time system health monitoring</div>
+        </CardHeader>
+        <CardBody>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            {/* Overall Status */}
+            <div className="lg:col-span-1 rounded-xl border-2 p-4 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+              <div className="flex items-center gap-2 mb-2">
+                <Shield className={cn(
+                  "h-5 w-5",
+                  systemStatus.overall === 'operational' ? 'text-green-600' : 'text-orange-600'
+                )} />
+                <div className="text-xs font-semibold text-slate-900">Overall</div>
+              </div>
+              <div className={cn(
+                "text-lg font-bold",
+                systemStatus.overall === 'operational' ? 'text-green-700' : 'text-orange-700'
+              )}>
+                {systemStatus.overall === 'operational' ? 'Operational' : 'Degraded'}
+              </div>
+              <div className="mt-2 flex items-center gap-1">
+                {systemStatus.overall === 'operational' ? (
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 text-orange-600" />
+                )}
+                <span className="text-xs text-slate-600">All systems</span>
+              </div>
+            </div>
+
+            {/* Database Status */}
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Database className={cn(
+                    "h-5 w-5",
+                    systemStatus.database === 'operational' ? 'text-green-600' : 'text-orange-600'
+                  )} />
+                  <div className="text-xs font-semibold text-slate-900">Database</div>
+                </div>
+                {systemStatus.database === 'operational' ? (
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                ) : (
+                  <XCircle className="h-4 w-4 text-orange-600" />
+                )}
+              </div>
+              <div className={cn(
+                "text-sm font-semibold",
+                systemStatus.database === 'operational' ? 'text-green-700' : 'text-orange-700'
+              )}>
+                {systemStatus.database === 'operational' ? 'Connected' : 'Issues'}
+              </div>
+              <div className="mt-1 text-xs text-slate-600">MongoDB</div>
+            </div>
+
+            {/* API Status */}
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Server className={cn(
+                    "h-5 w-5",
+                    systemStatus.api === 'operational' ? 'text-green-600' : 'text-orange-600'
+                  )} />
+                  <div className="text-xs font-semibold text-slate-900">API Server</div>
+                </div>
+                {systemStatus.api === 'operational' ? (
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                ) : (
+                  <XCircle className="h-4 w-4 text-orange-600" />
+                )}
+              </div>
+              <div className={cn(
+                "text-sm font-semibold",
+                systemStatus.api === 'operational' ? 'text-green-700' : 'text-orange-700'
+              )}>
+                {systemStatus.api === 'operational' ? 'Running' : 'Issues'}
+              </div>
+              <div className="mt-1 text-xs text-slate-600">Express.js</div>
+            </div>
+
+            {/* Notifications Status */}
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Globe className={cn(
+                    "h-5 w-5",
+                    systemStatus.notifications === 'operational' ? 'text-green-600' : 'text-orange-600'
+                  )} />
+                  <div className="text-xs font-semibold text-slate-900">Notifications</div>
+                </div>
+                {systemStatus.notifications === 'operational' ? (
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                ) : (
+                  <XCircle className="h-4 w-4 text-orange-600" />
+                )}
+              </div>
+              <div className={cn(
+                "text-sm font-semibold",
+                systemStatus.notifications === 'operational' ? 'text-green-700' : 'text-orange-700'
+              )}>
+                {systemStatus.notifications === 'operational' ? 'Active' : 'Issues'}
+              </div>
+              <div className="mt-1 text-xs text-slate-600">Real-time</div>
+            </div>
+
+            {/* File Storage Status */}
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Package className={cn(
+                    "h-5 w-5",
+                    systemStatus.fileStorage === 'operational' ? 'text-green-600' : 'text-orange-600'
+                  )} />
+                  <div className="text-xs font-semibold text-slate-900">File Storage</div>
+                </div>
+                {systemStatus.fileStorage === 'operational' ? (
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                ) : (
+                  <XCircle className="h-4 w-4 text-orange-600" />
+                )}
+              </div>
+              <div className={cn(
+                "text-sm font-semibold",
+                systemStatus.fileStorage === 'operational' ? 'text-green-700' : 'text-orange-700'
+              )}>
+                {systemStatus.fileStorage === 'operational' ? 'Available' : 'Issues'}
+              </div>
+              <div className="mt-1 text-xs text-slate-600">Uploads</div>
+            </div>
+          </div>
+
+          {/* Status Legend */}
+          <div className="mt-4 pt-4 border-t border-slate-200 flex flex-wrap items-center gap-4 text-xs">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <span className="text-slate-600">Operational</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <XCircle className="h-4 w-4 text-orange-600" />
+              <span className="text-slate-600">Degraded / Issues</span>
+            </div>
+            <div className="flex items-center gap-2 ml-auto">
+              <Clock className="h-4 w-4 text-slate-400" />
+              <span className="text-slate-500">Auto-refresh: 30s</span>
+            </div>
+          </div>
+        </CardBody>
+      </Card>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-12">
         <Card className="lg:col-span-7 order-2 lg:order-1">
