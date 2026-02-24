@@ -1,10 +1,9 @@
 import * as React from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Search, Settings, Waves } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Waves } from 'lucide-react'
 import { cn } from '../lib/cn'
 import { NotificationBell } from './NotificationBell'
-import { useAuth } from '../lib/authContext'
 import type { Role } from '../lib/types'
 
 export function Sidebar({
@@ -23,12 +22,10 @@ export function Sidebar({
   onLogout?: () => void
 }) {
   const location = useLocation()
-  const { user } = useAuth()
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem(`sidebar-collapsed-${role || 'default'}`)
     return saved ? JSON.parse(saved) : false
   })
-  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     localStorage.setItem(`sidebar-collapsed-${role || 'default'}`, JSON.stringify(isCollapsed))
@@ -123,28 +120,9 @@ export function Sidebar({
     setIsCollapsed(!isCollapsed)
   }
 
-  // Filter items based on search query
-  const filteredItems = React.useMemo(() => {
-    if (!searchQuery.trim()) return items
-    const query = searchQuery.toLowerCase()
-    return items.filter(item => 
-      item.label.toLowerCase().includes(query)
-    )
-  }, [items, searchQuery])
-
   // No need to close mobile menu since it's always visible as bottom bar
   const handleLinkClick = () => {
     // Sidebar is always visible on mobile now, so no action needed
-  }
-
-  // Get user initials for avatar
-  const getUserInitials = () => {
-    if (!user?.name) return 'U'
-    const names = user.name.split(' ')
-    if (names.length >= 2) {
-      return (names[0][0] + names[1][0]).toUpperCase()
-    }
-    return user.name[0].toUpperCase()
   }
 
   return (
@@ -192,22 +170,6 @@ export function Sidebar({
         )}
       </div>
 
-      {/* Search Bar - Desktop only */}
-      {!isCollapsed && (
-        <div className="hidden sm:block px-4 py-3 border-b border-blue-800">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-300" />
-            <input
-              type="text"
-              placeholder="Search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-blue-800 rounded-lg bg-blue-800/50 text-white placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600"
-            />
-          </div>
-        </div>
-      )}
-
       {/* Navigation */}
       <nav className={cn(
         'flex',
@@ -219,7 +181,7 @@ export function Sidebar({
         'sm:flex-col sm:justify-start sm:items-stretch',
         'sm:px-3 sm:py-2 sm:min-h-0 sm:flex-1 sm:overflow-auto sm:gap-0.5'
       )}>
-        {filteredItems.map(i => {
+        {items.map(i => {
           const isActive = checkIsActive(i.to)
           return (
             <NavLink
@@ -297,51 +259,6 @@ export function Sidebar({
         'hidden sm:flex sm:flex-col',
         'border-t border-blue-800 px-3 py-3 gap-2'
       )}>
-        {/* Settings */}
-        <button
-          onClick={() => {
-            // Navigate to settings/profile page if available
-            const settingsItem = items.find(item => 
-              item.label.toLowerCase().includes('settings') || 
-              item.label.toLowerCase().includes('profile')
-            )
-            if (settingsItem) {
-              handleLinkClick()
-              window.location.href = settingsItem.to
-            }
-          }}
-          className={cn(
-            'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium',
-            'text-blue-100 hover:bg-blue-800/40 active:bg-blue-800/50',
-            'transition-colors duration-200',
-            isCollapsed && 'justify-center px-2'
-          )}
-          title={isCollapsed ? 'Settings' : undefined}
-        >
-          <Settings className="h-5 w-5 text-blue-200 shrink-0" />
-          {!isCollapsed && <span className="truncate">Settings</span>}
-        </button>
-
-        {/* User Profile */}
-        <div className={cn(
-          'flex items-center gap-3 rounded-lg px-3 py-2',
-          isCollapsed && 'justify-center px-2'
-        )}>
-          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xs font-semibold shrink-0">
-            {getUserInitials()}
-          </div>
-          {!isCollapsed && (
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium text-white truncate">
-                {user?.name || 'User'}
-              </div>
-              <div className="text-xs text-blue-200 truncate">
-                {user?.email || ''}
-              </div>
-            </div>
-          )}
-        </div>
-
         {/* Exit/Logout */}
         {exitItem && (
           <div className="pt-2 border-t border-blue-800">
