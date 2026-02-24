@@ -177,10 +177,10 @@ export const warehouseAPI = {
     fetchAPI<any>(`/warehouse/shipments/${id}/in-transit`, {
       method: 'POST',
     }),
-  updateShipmentStatus: (id: string, status: string) =>
+  updateShipmentStatus: (id: string, status: string, blDocument?: string) =>
     fetchAPI<any>(`/warehouse/shipments/${id}/status`, {
       method: 'PUT',
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, blDocument }),
     }),
   addRemarks: (id: string, remarks: string) =>
     fetchAPI<any>(`/warehouse/shipments/${id}/remarks`, {

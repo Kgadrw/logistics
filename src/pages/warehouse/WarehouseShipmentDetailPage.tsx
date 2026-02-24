@@ -199,12 +199,18 @@ export function WarehouseShipmentDetailPage() {
 
   const handleMarkLeftWarehouse = async () => {
     if (!id) return
+    if (!blDocument && !blDocumentFile) {
+      showToast('Please upload BL Document before marking as left warehouse', 'warning')
+      return
+    }
     try {
       setMarkingLeftWarehouse(true)
-      await warehouseAPI.updateShipmentStatus(id, 'Left Warehouse')
+      await warehouseAPI.updateShipmentStatus(id, 'Left Warehouse', blDocument || blDocumentFile || undefined)
       // Refresh shipment data
       const data = await warehouseAPI.getShipment(id)
       setShipment(data)
+      setBlDocument(data.dispatch?.blDocument || '')
+      setBlDocumentFile(data.dispatch?.blDocument && data.dispatch?.blDocument.startsWith('http') ? data.dispatch.blDocument : null)
       showToast('Shipment marked as left warehouse', 'success')
     } catch (err: any) {
       showToast(err.message || 'Failed to mark as left warehouse', 'error')
@@ -438,13 +444,59 @@ export function WarehouseShipmentDetailPage() {
                 />
               )}
               {shipment.status === 'Received' && (
-                <ShipmentTimeline 
-                  status={shipment.status}
-                  onAction={handleMarkLeftWarehouse}
-                  actionLabel="Mark as Left Warehouse"
-                  actionDisabled={markingLeftWarehouse}
-                  actionLoading={markingLeftWarehouse}
-                />
+                <>
+                  <div className="mb-4">
+                    <div className="text-xs font-semibold text-slate-600 mb-2">BL Document (Bill of Lading) *</div>
+                    {blDocumentFile ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50">
+                          <button
+                            type="button"
+                            onClick={() => setViewingBL(blDocumentFile)}
+                            className="text-sm text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-2"
+                          >
+                            <ImageIcon className="h-4 w-4" />
+                            View BL Document
+                          </button>
+                          <button
+                            type="button"
+                            onClick={removeBL}
+                            className="text-red-600 hover:text-red-700"
+                            disabled={markingLeftWarehouse}
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center h-32 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
+                        <input
+                          type="file"
+                          accept=".pdf,application/pdf,.jpg,.jpeg,.png,.gif,.webp,image/jpeg,image/png,image/gif,image/webp"
+                          className="hidden"
+                          onChange={handleBLUpload}
+                          disabled={uploadingBL || markingLeftWarehouse}
+                        />
+                        {uploadingBL ? (
+                          <div className="text-sm text-slate-600">Uploading document...</div>
+                        ) : (
+                          <>
+                            <Upload className="h-6 w-6 text-slate-400 mb-2" />
+                            <div className="text-sm font-medium text-slate-600">Click to upload BL Document</div>
+                            <div className="text-xs text-slate-500 mt-1">PDF, JPG, PNG, GIF, WEBP (Max 10MB)</div>
+                          </>
+                        )}
+                      </label>
+                    )}
+                  </div>
+                  <ShipmentTimeline 
+                    status={shipment.status}
+                    onAction={handleMarkLeftWarehouse}
+                    actionLabel="Mark as Left Warehouse"
+                    actionDisabled={markingLeftWarehouse || uploadingBL || !blDocumentFile}
+                    actionLoading={markingLeftWarehouse}
+                  />
+                </>
               )}
               {shipment.status === 'Left Warehouse' && (
                 <ShipmentTimeline 
