@@ -473,16 +473,16 @@ export function WarehouseShipmentDetailPage() {
                   {/* Previous Status (Chevron Down) */}
                   {getPreviousStatus(shipment.status) && (
                     <div className="flex flex-col items-center gap-2">
-                      <Button
+                        <Button
                         variant="secondary"
-                        size="sm"
-                        onClick={() => handleReverseStatus(getPreviousStatus(shipment.status)!)}
-                        disabled={reversingStatus}
+                          size="sm"
+                          onClick={() => handleReverseStatus(getPreviousStatus(shipment.status)!)}
+                          disabled={reversingStatus}
                         className="flex items-center gap-2"
-                      >
+                        >
                         <ChevronDown className="h-4 w-4" />
                         Previous
-                      </Button>
+                        </Button>
                       <div className="text-xs text-slate-600 text-center">
                         {getPreviousStatus(shipment.status)}
                       </div>
@@ -500,9 +500,9 @@ export function WarehouseShipmentDetailPage() {
                   {/* Next Status (Chevron Up) */}
                   {getNextStatus(shipment.status) && (
                     <div className="flex flex-col items-center gap-2">
-                      <Button
+                    <Button
                         variant="primary"
-                        size="sm"
+                      size="sm"
                         onClick={() => {
                           const nextStatus = getNextStatus(shipment.status)
                           if (nextStatus === 'Received') {
@@ -518,7 +518,7 @@ export function WarehouseShipmentDetailPage() {
                       >
                         <ChevronUp className="h-4 w-4" />
                         Next
-                      </Button>
+                    </Button>
                       <div className="text-xs text-slate-600 text-center">
                         {getNextStatus(shipment.status)}
                       </div>
@@ -548,40 +548,40 @@ export function WarehouseShipmentDetailPage() {
                   Shipment Details
                 </span>
                 <div className="flex items-center gap-2 justify-end">
-                  {!isEditing ? (
+                {!isEditing ? (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                ) : (
+                    <>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleSaveDetails}
+                      disabled={savingDetails}
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {savingDetails ? 'Saving...' : 'Save'}
+                    </Button>
                     <Button
                       variant="secondary"
                       size="sm"
-                      onClick={() => setIsEditing(true)}
-                    >
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit
-                    </Button>
-                  ) : (
-                    <>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={handleSaveDetails}
-                        disabled={savingDetails}
-                      >
-                        <Save className="h-4 w-4 mr-2" />
-                        {savingDetails ? 'Saving...' : 'Save'}
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => {
-                          setIsEditing(false)
-                          // Reset to original values
-                          const data = shipment
-                          setReceivedImages(data.receivedProductImages || [])
+                      onClick={() => {
+                        setIsEditing(false)
+                        // Reset to original values
+                        const data = shipment
+                        setReceivedImages(data.receivedProductImages || [])
                           setDeliveryNote(data.deliveryNote || '')
                           setDeliveryNoteFile(data.deliveryNote && data.deliveryNote.startsWith('http') ? data.deliveryNote : null)
-                          setConsumerNumber(data.consumerNumber || '')
-                          setPackagingList(data.dispatch?.packagingList || '')
-                          setPackageNumber(data.dispatch?.packageNumber || '')
-                          setConsigneeNumber(data.dispatch?.consigneeNumber || '')
+                        setConsumerNumber(data.consumerNumber || '')
+                        setPackagingList(data.dispatch?.packagingList || '')
+                        setPackageNumber(data.dispatch?.packageNumber || '')
+                        setConsigneeNumber(data.dispatch?.consigneeNumber || '')
                         setShippingMark(data.dispatch?.shippingMark || 'UZA Solutions')
                         setBlDocument(data.dispatch?.blDocument || '')
                         setBlDocumentFile(data.dispatch?.blDocument && data.dispatch?.blDocument.startsWith('http') ? data.dispatch.blDocument : null)
@@ -598,12 +598,12 @@ export function WarehouseShipmentDetailPage() {
                         })
                         setProductDimensions(dimensions)
                       }}
-                        disabled={savingDetails}
-                      >
-                        Cancel
-                      </Button>
+                      disabled={savingDetails}
+                    >
+                      Cancel
+                    </Button>
                     </>
-                  )}
+                )}
                 </div>
               </CardTitle>
             </CardHeader>
@@ -612,9 +612,9 @@ export function WarehouseShipmentDetailPage() {
                 {/* Client Notes - Read Only */}
                 <div>
                   <div className="text-xs font-semibold text-slate-600 mb-2">Client Notes</div>
-                  <div className="text-sm text-slate-700 p-3 rounded-lg bg-slate-50 border border-slate-200 min-h-[80px]">
-                    {shipment.notes || <span className="text-slate-400 italic">No notes added</span>}
-                  </div>
+                    <div className="text-sm text-slate-700 p-3 rounded-lg bg-slate-50 border border-slate-200 min-h-[80px]">
+                      {shipment.notes || <span className="text-slate-400 italic">No notes added</span>}
+                    </div>
                 </div>
 
                 {/* Delivery Note */}
@@ -1000,14 +1000,14 @@ export function WarehouseShipmentDetailPage() {
                                 </div>
                               ) : (
                                 <>
-                                  {product.cbm && (
-                                    <div>CBM: {product.cbm.toFixed(3)} m³</div>
-                                  )}
-                                  {(product.lengthCm || product.widthCm || product.heightCm) && (
-                                    <div>
-                                      Dimensions: {product.lengthCm || '—'} × {product.widthCm || '—'} ×{' '}
-                                      {product.heightCm || '—'} cm
-                                    </div>
+                              {product.cbm && (
+                                <div>CBM: {product.cbm.toFixed(3)} m³</div>
+                              )}
+                              {(product.lengthCm || product.widthCm || product.heightCm) && (
+                                <div>
+                                  Dimensions: {product.lengthCm || '—'} × {product.widthCm || '—'} ×{' '}
+                                  {product.heightCm || '—'} cm
+                                </div>
                                   )}
                                 </>
                               )}

@@ -318,7 +318,7 @@ export function WarehouseIncomingPage() {
                               <div>Category: {p.category}</div>
                               {p.packagingType && <div>Packaging: {p.packagingType}</div>}
                               {(p.lengthCm || p.widthCm || p.heightCm) && (
-                                <div>
+                        <div>
                                   Dimensions: {p.lengthCm || '—'} × {p.widthCm || '—'} × {p.heightCm || '—'} cm
                                 </div>
                               )}
