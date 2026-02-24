@@ -153,13 +153,13 @@ export function Sidebar({
         'shrink-0 flex flex-col',
         // Mobile: fixed bottom bar
         'fixed bottom-0 left-0 right-0 z-50',
-        'bg-white border-t border-slate-200',
+        'bg-blue-900 border-t border-blue-800',
         'w-full h-auto',
         'pb-[env(safe-area-inset-bottom)] sm:pb-0',
         'transform-none will-change-auto',
         // Desktop: sidebar with modern design
         'sm:relative sm:inset-y-auto sm:left-auto sm:right-auto sm:bottom-auto',
-        'sm:bg-white sm:border sm:border-slate-200 sm:rounded-xl sm:m-2',
+        'sm:bg-blue-900 sm:border sm:border-blue-800 sm:rounded-xl sm:m-2',
         'sm:transition-all sm:duration-300 sm:ease-in-out',
         'sm:shadow-sm',
         // Desktop width
@@ -173,7 +173,7 @@ export function Sidebar({
       {/* Header with Logo and Title - Desktop only */}
       <div className={cn(
         'hidden sm:flex sm:items-center sm:gap-3',
-        'px-4 py-4 border-b border-slate-200',
+        'px-4 py-4 border-b border-blue-800',
         isCollapsed && 'sm:justify-center sm:px-2'
       )}>
         {!isCollapsed ? (
@@ -182,7 +182,7 @@ export function Sidebar({
               <Waves className="h-5 w-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <h2 className="text-sm font-semibold text-slate-900 truncate">{title}</h2>
+              <h2 className="text-sm font-semibold text-white truncate">{title}</h2>
             </div>
           </>
         ) : (
@@ -194,15 +194,15 @@ export function Sidebar({
 
       {/* Search Bar - Desktop only */}
       {!isCollapsed && (
-        <div className="hidden sm:block px-4 py-3 border-b border-slate-200">
+        <div className="hidden sm:block px-4 py-3 border-b border-blue-800">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-300" />
             <input
               type="text"
               placeholder="Search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-blue-800 rounded-lg bg-blue-800/50 text-white placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600"
             />
           </div>
         </div>
@@ -240,8 +240,8 @@ export function Sidebar({
                 isCollapsed && 'sm:justify-center sm:px-2',
                 // Active state
                 isActive
-                  ? 'bg-slate-100 text-slate-900'
-                  : 'text-slate-600 bg-transparent hover:bg-slate-50 active:bg-slate-100',
+                  ? 'bg-blue-800/60 text-white'
+                  : 'text-blue-100 bg-transparent hover:bg-blue-800/40 active:bg-blue-800/50',
                 // Mobile active state
                 isActive && 'bg-blue-600 text-white'
               )}
@@ -255,8 +255,8 @@ export function Sidebar({
                   // Desktop: icon size
                   'sm:h-5 sm:w-5 sm:mb-0',
                   isActive 
-                    ? 'text-slate-900 sm:text-slate-700' 
-                    : 'text-slate-500 sm:text-slate-500',
+                    ? 'text-white' 
+                    : 'text-blue-200',
                   // Mobile active
                   isActive && 'text-white'
                 )}>
@@ -270,7 +270,7 @@ export function Sidebar({
                   'text-xs font-medium leading-tight text-center',
                   // Desktop: label
                   'sm:text-sm sm:text-left sm:font-medium',
-                  isActive ? 'text-slate-900' : 'text-slate-600',
+                  isActive ? 'text-white' : 'text-blue-100',
                   // Mobile active
                   isActive && 'text-white'
                 )}>
@@ -281,8 +281,8 @@ export function Sidebar({
                 <span className={cn(
                   'shrink-0 h-5 min-w-[20px] px-1.5 rounded-full flex items-center justify-center text-xs font-medium',
                   isActive 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-slate-200 text-slate-700'
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-blue-800/60 text-blue-100'
                 )}>
                   {i.badge}
                 </span>
@@ -295,7 +295,7 @@ export function Sidebar({
       {/* Footer with Settings and User Profile - Desktop only */}
       <div className={cn(
         'hidden sm:flex sm:flex-col',
-        'border-t border-slate-200 px-3 py-3 gap-2'
+        'border-t border-blue-800 px-3 py-3 gap-2'
       )}>
         {/* Settings */}
         <button
@@ -312,13 +312,13 @@ export function Sidebar({
           }}
           className={cn(
             'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium',
-            'text-slate-600 hover:bg-slate-50 active:bg-slate-100',
+            'text-blue-100 hover:bg-blue-800/40 active:bg-blue-800/50',
             'transition-colors duration-200',
             isCollapsed && 'justify-center px-2'
           )}
           title={isCollapsed ? 'Settings' : undefined}
         >
-          <Settings className="h-5 w-5 text-slate-500 shrink-0" />
+          <Settings className="h-5 w-5 text-blue-200 shrink-0" />
           {!isCollapsed && <span className="truncate">Settings</span>}
         </button>
 
@@ -332,10 +332,10 @@ export function Sidebar({
           </div>
           {!isCollapsed && (
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium text-slate-900 truncate">
+              <div className="text-sm font-medium text-white truncate">
                 {user?.name || 'User'}
               </div>
-              <div className="text-xs text-slate-500 truncate">
+              <div className="text-xs text-blue-200 truncate">
                 {user?.email || ''}
               </div>
             </div>
@@ -344,7 +344,7 @@ export function Sidebar({
 
         {/* Exit/Logout */}
         {exitItem && (
-          <div className="pt-2 border-t border-slate-200">
+          <div className="pt-2 border-t border-blue-800">
             {onLogout ? (
               <button
                 onClick={() => {
@@ -353,14 +353,14 @@ export function Sidebar({
                 }}
                 className={cn(
                   'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium',
-                  'text-slate-600 hover:bg-slate-50 active:bg-slate-100',
+                  'text-blue-100 hover:bg-blue-800/40 active:bg-blue-800/50',
                   'transition-colors duration-200',
                   isCollapsed && 'justify-center px-2'
                 )}
                 title={isCollapsed ? exitItem.label : undefined}
               >
                 {exitItem.icon ? (
-                  <span className="shrink-0 text-slate-500 h-5 w-5 flex items-center justify-center">
+                  <span className="shrink-0 text-blue-200 h-5 w-5 flex items-center justify-center">
                     {exitItem.icon}
                   </span>
                 ) : null}
@@ -372,14 +372,14 @@ export function Sidebar({
                 onClick={handleLinkClick}
                 className={cn(
                   'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium',
-                  'text-slate-600 hover:bg-slate-50 active:bg-slate-100',
+                  'text-blue-100 hover:bg-blue-800/40 active:bg-blue-800/50',
                   'transition-colors duration-200',
                   isCollapsed && 'justify-center px-2'
                 )}
                 title={isCollapsed ? exitItem.label : undefined}
               >
                 {exitItem.icon ? (
-                  <span className="shrink-0 text-slate-500 h-5 w-5 flex items-center justify-center">
+                  <span className="shrink-0 text-blue-200 h-5 w-5 flex items-center justify-center">
                     {exitItem.icon}
                   </span>
                 ) : null}
@@ -391,10 +391,10 @@ export function Sidebar({
       </div>
 
       {/* Collapse Button - Desktop only */}
-      <div className="hidden sm:block border-t border-slate-200 px-3 py-2">
+      <div className="hidden sm:block border-t border-blue-800 px-3 py-2">
         <button
           onClick={toggleCollapse}
-          className="w-full flex items-center justify-center p-2 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors"
+          className="w-full flex items-center justify-center p-2 rounded-lg text-blue-200 hover:bg-blue-800/40 hover:text-white transition-colors"
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {isCollapsed ? (
