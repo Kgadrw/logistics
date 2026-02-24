@@ -128,51 +128,55 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        'shrink-0 flex flex-col bg-blue-900',
+        'shrink-0 flex flex-col',
         // Mobile: fixed bottom bar - truly fixed, no movement
-        'fixed bottom-0 left-0 right-0 z-50 border-t border-blue-800',
+        'fixed bottom-0 left-0 right-0 z-50',
+        'bg-white border-t border-slate-200',
         'w-full h-auto',
         // Safe area for devices with home indicator
         'pb-[env(safe-area-inset-bottom)] sm:pb-0',
         // Prevent any transform or movement on mobile
         'transform-none will-change-auto',
-        // Desktop: normal sidebar with transitions, borders, rounded corners and margin
+        // Desktop: modern sidebar card
         'sm:relative sm:inset-y-auto sm:left-auto sm:right-auto sm:bottom-auto',
-        'sm:border sm:border-blue-800 sm:rounded-2xl sm:m-2',
-        'sm:transition-all sm:duration-300 sm:ease-in-out',
-        // Desktop width
-        isCollapsed ? 'sm:w-20' : 'sm:w-64',
+        'sm:bg-slate-900/70 sm:backdrop-blur-sm',
+        'sm:border sm:border-white/10 sm:rounded-2xl sm:m-2',
+        'sm:transition-[width] sm:duration-300 sm:ease-in-out',
+        // Desktop width: w-72 expanded, w-20 collapsed
+        isCollapsed ? 'sm:w-20' : 'sm:w-72',
         // Shadow
-        'shadow-xl sm:shadow-none'
+        'shadow-xl sm:shadow-lg'
       )}
       data-collapsed={isCollapsed}
       id="sidebar"
     >
       {/* Header - hidden on mobile, visible on desktop */}
-      <div className={cn('px-4 py-4 hidden sm:block', isCollapsed && 'px-2')}>
-        <div className="flex items-center justify-between gap-2">
-          {!isCollapsed && (
-            <div>
-              <div className="text-sm font-semibold text-white">{title}</div>
-              <div className="mt-1 text-xs text-blue-200">Operational view</div>
-            </div>
-          )}
-          <div className="flex items-center gap-2">
-            {role && onOpenNotifications && !isCollapsed ? (
-              <NotificationBell role={role} onClick={onOpenNotifications} />
-            ) : null}
-            <button
-              onClick={toggleCollapse}
-              className="p-1.5 rounded-lg text-blue-200 hover:bg-blue-800 hover:text-white transition-colors"
-              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              {isCollapsed ? (
-                <ChevronRight className="h-4 w-4" />
-              ) : (
-                <ChevronLeft className="h-4 w-4" />
-              )}
-            </button>
+      <div className={cn(
+        'hidden sm:flex sm:items-center sm:justify-between',
+        'h-16 px-4 border-b border-white/10',
+        isCollapsed && 'sm:justify-center sm:px-2'
+      )}>
+        {!isCollapsed && (
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-semibold text-white truncate">{title}</div>
+            <div className="text-xs text-slate-400 mt-0.5">Operational view</div>
           </div>
+        )}
+        <div className="flex items-center gap-2">
+          {role && onOpenNotifications && !isCollapsed && (
+            <NotificationBell role={role} onClick={onOpenNotifications} />
+          )}
+          <button
+            onClick={toggleCollapse}
+            className="p-1.5 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-colors"
+            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {isCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
+          </button>
         </div>
       </div>
       <nav className={cn(
@@ -181,9 +185,9 @@ export function Sidebar({
         'flex-row justify-around items-center',
         'px-1 py-2.5 min-h-[72px]',
         'overflow-x-hidden overflow-y-hidden',
-        // Desktop: vertical layout with reduced spacing
+        // Desktop: vertical layout with proper spacing
         'sm:flex-col sm:justify-start sm:items-stretch',
-        'sm:px-2 sm:py-0 sm:min-h-0 sm:flex-1 sm:overflow-auto sm:gap-0.5'
+        'sm:px-2 sm:py-2 sm:min-h-0 sm:flex-1 sm:overflow-auto sm:space-y-1.5'
       )}>
         {items.map(i => {
           const isActive = checkIsActive(i.to)
@@ -193,33 +197,34 @@ export function Sidebar({
               to={i.to}
               onClick={handleLinkClick}
               className={cn(
-                'flex transition-colors',
+                'flex items-center transition-all duration-200',
                 // Mobile: vertical stack (icon on top, label below)
-                'flex-col items-center justify-center',
-                'flex-1 min-w-0 px-0.5 py-1',
+                'flex-col justify-center',
+                'flex-1 min-w-0 px-2 py-2',
                 'rounded-lg',
-                // Desktop: horizontal layout
-                'sm:flex-row sm:items-center sm:gap-2',
-                'sm:rounded-xl sm:px-3 sm:py-2',
-                'sm:text-sm sm:font-medium',
+                // Desktop: horizontal layout with proper sizing
+                'sm:flex-row sm:h-10 sm:px-3 sm:rounded-xl',
+                'sm:gap-3 sm:text-sm sm:font-medium',
                 // Desktop: handle collapsed state
                 isCollapsed && 'sm:justify-center sm:px-2',
-                // Active state
+                // Active state: pill highlight
                 isActive
-                  ? 'bg-blue-800 text-white'
-                  : 'text-blue-100 active:bg-blue-800 sm:hover:bg-blue-800 sm:hover:text-white',
+                  ? 'bg-white/10 text-white ring-1 ring-white/10'
+                  : 'text-slate-200 active:bg-white/5 sm:hover:bg-white/5 sm:hover:text-white',
+                // Mobile active state
+                isActive && 'bg-blue-600 text-white'
               )}
               title={isCollapsed ? i.label : undefined}
             >
               {i.icon ? (
                 <span className={cn(
-                  'transition-colors shrink-0',
+                  'shrink-0 transition-colors',
                   'flex items-center justify-center',
                   // Mobile: icon size - larger for visibility
                   'h-6 w-6 mb-1',
-                  // Desktop: icon size
-                  'sm:h-4 sm:w-4 sm:mb-0',
-                  isActive ? 'text-white' : 'text-blue-200'
+                  // Desktop: proper icon size
+                  'sm:h-5 sm:w-5 sm:mb-0',
+                  isActive ? 'text-white' : 'text-slate-400'
                 )}>
                   {i.icon}
                 </span>
@@ -228,10 +233,11 @@ export function Sidebar({
                 'truncate text-center',
                 // Mobile: larger label for better visibility
                 'text-xs leading-tight font-medium',
-                // Desktop: normal size
-                'sm:text-sm sm:text-left sm:font-normal',
+                // Desktop: proper text size
+                'sm:text-sm sm:text-left sm:font-medium',
                 // Desktop: hide when collapsed
-                isCollapsed && 'sm:hidden'
+                isCollapsed && 'sm:hidden',
+                isActive ? 'text-white' : 'text-slate-200'
               )}>
                 {i.label}
               </span>
@@ -241,10 +247,9 @@ export function Sidebar({
       </nav>
       {exitItem ? (
         <div className={cn(
-          'border-t border-blue-800 px-2 pt-2',
-          // Mobile: no bottom padding, desktop: pb-4
-          'pb-2 sm:pb-4',
-          // Mobile: hide exit item (or show in nav if needed)
+          'border-t border-white/10',
+          'px-2 pt-2 pb-2',
+          // Mobile: hide exit item
           'hidden sm:block'
         )}>
           {onLogout ? (
@@ -254,14 +259,15 @@ export function Sidebar({
                 onLogout()
               }}
               className={cn(
-                'flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-colors',
-                isCollapsed && 'justify-center px-2',
-                'text-blue-100 hover:bg-blue-800 hover:text-white',
+                'flex w-full items-center gap-3 rounded-xl h-10 px-3',
+                'text-sm font-medium transition-all duration-200',
+                'text-slate-300 hover:bg-red-500/10 hover:text-red-400 active:bg-red-500/20',
+                isCollapsed && 'justify-center px-2'
               )}
               title={isCollapsed ? exitItem.label : undefined}
             >
               {exitItem.icon ? (
-                <span className="shrink-0 transition-colors text-blue-200">
+                <span className="shrink-0 text-slate-400 h-5 w-5 flex items-center justify-center">
                   {exitItem.icon}
                 </span>
               ) : null}
@@ -272,14 +278,15 @@ export function Sidebar({
               to={exitItem.to}
               onClick={handleLinkClick}
               className={cn(
-                'flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-colors',
-                isCollapsed && 'justify-center px-2',
-                'text-blue-100 hover:bg-blue-800 hover:text-white',
+                'flex items-center gap-3 rounded-xl h-10 px-3',
+                'text-sm font-medium transition-all duration-200',
+                'text-slate-300 hover:bg-red-500/10 hover:text-red-400 active:bg-red-500/20',
+                isCollapsed && 'justify-center px-2'
               )}
               title={isCollapsed ? exitItem.label : undefined}
             >
               {exitItem.icon ? (
-                <span className="shrink-0 transition-colors text-blue-200">
+                <span className="shrink-0 text-slate-400 h-5 w-5 flex items-center justify-center">
                   {exitItem.icon}
                 </span>
               ) : null}
