@@ -27,9 +27,59 @@ export function AdminOverviewPage() {
   const [apiTick, setApiTick] = React.useState(0)
   const [apiLiveSeconds, setApiLiveSeconds] = React.useState(0)
   const [apiNonLiveSeconds, setApiNonLiveSeconds] = React.useState(0)
+  const statsRefreshing = React.useRef(false)
+  const auditRefreshing = React.useRef(false)
 
   React.useEffect(() => {
-    const fetchData = async () => {
+    let statsInterval: number | undefined
+    let auditInterval: number | undefined
+
+    const refreshStatsSilently = async () => {
+      // Prevent overlapping requests (slow network / interval drift)
+      if (statsRefreshing.current) return
+      statsRefreshing.current = true
+      try {
+        const [dashboard, shipmentsData] = await Promise.all([
+          adminAPI.getDashboard(),
+          adminAPI.getShipments(),
+        ])
+
+        setDashboardData(dashboard)
+        setShipments(shipmentsData)
+
+        // Check system status based on API responses (lightweight heuristic)
+        const status = {
+          database: dashboard ? 'operational' : 'degraded',
+          api: dashboard && shipmentsData ? 'operational' : 'degraded',
+          notifications: 'operational',
+          fileStorage: 'operational',
+          overall: dashboard && shipmentsData ? 'operational' : 'degraded',
+        }
+        setSystemStatus(status)
+      } catch (err) {
+        // Silent/background refresh: keep existing UI values
+        // console.debug('Background stats refresh failed:', err)
+      } finally {
+        statsRefreshing.current = false
+      }
+    }
+
+    const refreshAuditSilently = async () => {
+      if (auditRefreshing.current) return
+      auditRefreshing.current = true
+      try {
+        const auditData = await adminAPI.getAuditLogs().catch(() => [])
+        setAuditLogs(auditData || [])
+      } catch (err) {
+        // Silent/background refresh: keep existing UI values
+        // console.debug('Background audit refresh failed:', err)
+      } finally {
+        auditRefreshing.current = false
+      }
+    }
+
+    // Initial load (visible loading state only once)
+    const initialFetch = async () => {
       try {
         setLoading(true)
         const [dashboard, shipmentsData, auditData] = await Promise.all([
@@ -37,11 +87,11 @@ export function AdminOverviewPage() {
           adminAPI.getShipments(),
           adminAPI.getAuditLogs().catch(() => []), // Audit logs might not be available
         ])
+
         setDashboardData(dashboard)
         setShipments(shipmentsData)
         setAuditLogs(auditData || [])
-        
-        // Check system status based on API responses
+
         const status = {
           database: dashboard ? 'operational' : 'degraded',
           api: dashboard && shipmentsData ? 'operational' : 'degraded',
@@ -63,11 +113,19 @@ export function AdminOverviewPage() {
         setLoading(false)
       }
     }
-    fetchData()
-    
-    // Refresh status every 30 seconds
-    const interval = setInterval(fetchData, 30000)
-    return () => clearInterval(interval)
+
+    // Simple in-flight guards for background refreshes
+    initialFetch()
+
+    // Background refresh: no loading spinner / no visible UI switch
+    // Refresh stats/shipments every 30s; audits less frequently
+    statsInterval = window.setInterval(refreshStatsSilently, 30000)
+    auditInterval = window.setInterval(refreshAuditSilently, 60000)
+
+    return () => {
+      if (statsInterval) window.clearInterval(statsInterval)
+      if (auditInterval) window.clearInterval(auditInterval)
+    }
   }, [])
 
   const stats = React.useMemo(() => {
@@ -260,7 +318,7 @@ export function AdminOverviewPage() {
           <div className="text-xs text-slate-500">Real-time system health monitoring</div>
         </CardHeader>
         <CardBody>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {/* Overall Status */}
             <div className="lg:col-span-1 rounded-xl border-2 p-4 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
               <div className="flex items-center gap-2 mb-2">
