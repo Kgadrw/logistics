@@ -226,6 +226,13 @@ export const adminAPI = {
     fetchAPI<any>(`/admin/shipments/${id}`, {
       method: 'DELETE',
     }),
+  // External documents/shipments (out-of-system)
+  getExternalDocuments: () => fetchAPI<any[]>('/admin/external-documents'),
+  createExternalDocument: (data: any) =>
+    fetchAPI<any>('/admin/external-documents', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
   getUsers: (role?: string) =>
     fetchAPI<any[]>(`/admin/users${role ? `?role=${role}` : ''}`),
   getUser: (id: string) => fetchAPI<any>(`/admin/users/${id}`),

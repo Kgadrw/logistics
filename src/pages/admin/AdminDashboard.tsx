@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { NavLink, Route, Routes, useNavigate } from 'react-router-dom'
-import { Bell, Building2, Coins, LayoutDashboard, LogOut, MapPinned, Settings, Truck, Users } from 'lucide-react'
+import { Bell, Building2, Coins, FileText, LayoutDashboard, LogOut, MapPinned, Settings, Truck, Users } from 'lucide-react'
 import { MobileMenuButton } from '../../components/MobileMenuButton'
 import { NotificationPanel } from '../../components/NotificationPanel'
 import { LogoutConfirmationModal } from '../../components/LogoutConfirmationModal'
@@ -13,6 +13,7 @@ import { AdminUsersPage } from './AdminUsersPage'
 import { AdminSettingsPage } from './AdminSettingsPage'
 import { AdminProfilePage } from './AdminProfilePage'
 import { AdminShipmentDetailPage } from './AdminShipmentDetailPage'
+import { AdminExternalDocumentsPage } from './AdminExternalDocumentsPage'
 
 export function AdminDashboard() {
   const navigate = useNavigate()
@@ -48,6 +49,7 @@ export function AdminDashboard() {
                   { to: '/admin/clients', label: 'Clients', icon: <Users className="h-4 w-4" /> },
                   { to: '/admin/settings', label: 'Settings', icon: <Settings className="h-4 w-4" /> },
                   { to: '/admin/notifications', label: 'Notifications', icon: <Bell className="h-4 w-4" /> },
+                  { to: '/admin/external-docs', label: 'External Docs', icon: <FileText className="h-4 w-4" /> },
                 ].map(item => (
                   <NavLink
                     key={item.to}
@@ -96,6 +98,7 @@ export function AdminDashboard() {
                   </div>
                 }
               />
+              <Route path="/external-docs" element={<AdminExternalDocumentsPage />} />
               <Route
                 path="/map"
                 element={
