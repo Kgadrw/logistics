@@ -22,6 +22,7 @@ export function Sidebar({
   onLogout?: () => void
 }) {
   const location = useLocation()
+  const isClientRole = role === 'client'
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem(`sidebar-collapsed-${role || 'default'}`)
     return saved ? JSON.parse(saved) : false
@@ -179,7 +180,8 @@ export function Sidebar({
         'overflow-x-hidden overflow-y-hidden',
         // Desktop: vertical layout
         'sm:flex-col sm:justify-start sm:items-stretch',
-        'sm:px-3 sm:py-2 sm:min-h-0 sm:flex-1 sm:overflow-auto sm:gap-0.5'
+        'sm:px-3 sm:py-2 sm:min-h-0 sm:flex-1 sm:overflow-auto',
+        isClientRole ? 'sm:gap-0' : 'sm:gap-0.5'
       )}>
         {items.map(i => {
           const isActive = checkIsActive(i.to)
@@ -196,7 +198,8 @@ export function Sidebar({
                 'rounded-lg',
                 // Desktop: horizontal layout
                 'sm:flex-row sm:gap-3',
-                'sm:rounded-lg sm:px-3 sm:py-2.5',
+                'sm:rounded-lg sm:px-3',
+                isClientRole ? 'sm:py-2' : 'sm:py-2.5',
                 'sm:text-sm sm:font-medium',
                 // Desktop: handle collapsed state
                 isCollapsed && 'sm:justify-center sm:px-2',
