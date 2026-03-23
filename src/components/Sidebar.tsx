@@ -152,21 +152,34 @@ export function Sidebar({
       {/* Header with Logo and Title - Desktop only */}
       <div className={cn(
         'hidden sm:flex sm:items-center sm:gap-3',
-        'px-4 py-4 border-b border-blue-800',
+        'border-b border-blue-800',
+        isClientRole ? 'px-3 py-3 sm:gap-2' : 'px-4 py-4',
         isCollapsed && 'sm:justify-center sm:px-2'
       )}>
         {!isCollapsed ? (
           <>
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0">
-              <Waves className="h-5 w-5 text-white" />
+            <div className={cn(
+              'rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0',
+              isClientRole ? 'h-9 w-9' : 'h-10 w-10'
+            )}>
+              <Waves className={cn(
+                'text-white',
+                isClientRole ? 'h-4 w-4' : 'h-5 w-5'
+              )} />
             </div>
             <div className="flex-1 min-w-0">
               <h2 className="text-sm font-semibold text-white truncate">{title}</h2>
             </div>
           </>
         ) : (
-          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-            <Waves className="h-5 w-5 text-white" />
+          <div className={cn(
+            'rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center',
+            isClientRole ? 'h-9 w-9' : 'h-10 w-10'
+          )}>
+            <Waves className={cn(
+              'text-white',
+              isClientRole ? 'h-4 w-4' : 'h-5 w-5'
+            )} />
           </div>
         )}
       </div>
