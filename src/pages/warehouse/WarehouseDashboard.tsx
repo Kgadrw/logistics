@@ -28,9 +28,16 @@ export function WarehouseDashboard() {
       <MobileMenuButton />
       <div className="flex flex-1 flex-col w-full overflow-hidden relative overflow-x-hidden">
         <header className="hidden sm:block bg-blue-900 border-b border-blue-800">
-          <div className="mx-auto w-full max-w-full px-4 py-3">
+          <div className="mx-auto w-full max-w-full px-6 py-3">
             <div className="flex items-center justify-between gap-4">
-              <div className="text-white text-sm font-semibold">Warehouse</div>
+              <div className="flex items-center gap-2 shrink-0">
+                <img
+                  src="/logo.png"
+                  alt="UZA Logistics"
+                    className="h-8 w-8 rounded-lg object-contain"
+                />
+                  <div className="text-blue-100 text-xs font-semibold">( warehouse )</div>
+              </div>
               <nav className="flex items-center gap-1.5">
                 {[
                   { to: '/warehouse', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" /> },

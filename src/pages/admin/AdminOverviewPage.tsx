@@ -96,70 +96,72 @@ export function AdminOverviewPage() {
 
   return (
     <div className="pt-4">
-      <div className="mb-4">
-        <div className="text-sm font-semibold text-slate-900">Admin Overview</div>
-        <div className="mt-1 text-sm text-slate-600">Data-driven snapshot across the system.</div>
-      </div>
+      <div className="mb-6 rounded-xl bg-blue-900 border border-blue-800 px-4 py-4 sm:px-5 sm:py-5">
+        <div className="mb-4 sm:mb-5">
+          <div className="text-sm font-semibold text-white">Admin Overview</div>
+          <div className="mt-1 text-sm text-blue-100">Data-driven snapshot across the system.</div>
+        </div>
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <Card className="border-l-4 border-l-blue-500 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/admin/shipments')}>
-          <CardBody>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs font-semibold text-slate-600">Total Shipments</div>
-                <div className="mt-1 text-2xl font-semibold text-slate-900">{stats.totalShipments}</div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <Card className="border-l-4 border-l-blue-400 hover:shadow-md transition-shadow cursor-pointer bg-blue-800/40 ring-blue-700/60" onClick={() => navigate('/admin/shipments')}>
+            <CardBody>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-semibold text-blue-100">Total Shipments</div>
+                  <div className="mt-1 text-2xl font-semibold text-white">{stats.totalShipments}</div>
+                </div>
+                <Package className="h-8 w-8 text-blue-300 opacity-50" />
               </div>
-              <Package className="h-8 w-8 text-blue-500 opacity-20" />
-            </div>
-          </CardBody>
-        </Card>
-        <Card className="border-l-4 border-l-orange-500 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/admin/shipments')}>
-          <CardBody>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs font-semibold text-slate-600">Active Shipments</div>
-                <div className="mt-1 text-2xl font-semibold text-slate-900">{stats.activeShipments}</div>
-                {stats.activeShipments > 0 && (
-                  <div className="mt-1 text-xs text-orange-600 font-medium">In progress</div>
-                )}
+            </CardBody>
+          </Card>
+          <Card className="border-l-4 border-l-orange-400 hover:shadow-md transition-shadow cursor-pointer bg-blue-800/40 ring-blue-700/60" onClick={() => navigate('/admin/shipments')}>
+            <CardBody>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-semibold text-blue-100">Active Shipments</div>
+                  <div className="mt-1 text-2xl font-semibold text-white">{stats.activeShipments}</div>
+                  {stats.activeShipments > 0 && (
+                    <div className="mt-1 text-xs text-orange-200 font-medium">In progress</div>
+                  )}
+                </div>
+                <Activity className="h-8 w-8 text-orange-300 opacity-50" />
               </div>
-              <Activity className="h-8 w-8 text-orange-500 opacity-20" />
-            </div>
-          </CardBody>
-        </Card>
-        <Card className="border-l-4 border-l-green-500 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/admin/users?focus=client')}>
-          <CardBody>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs font-semibold text-slate-600">Active Clients</div>
-                <div className="mt-1 text-2xl font-semibold text-slate-900">{stats.totalClients}</div>
+            </CardBody>
+          </Card>
+          <Card className="border-l-4 border-l-green-400 hover:shadow-md transition-shadow cursor-pointer bg-blue-800/40 ring-blue-700/60" onClick={() => navigate('/admin/users?focus=client')}>
+            <CardBody>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-semibold text-blue-100">Active Clients</div>
+                  <div className="mt-1 text-2xl font-semibold text-white">{stats.totalClients}</div>
+                </div>
+                <Users className="h-8 w-8 text-green-300 opacity-50" />
               </div>
-              <Users className="h-8 w-8 text-green-500 opacity-20" />
-            </div>
-          </CardBody>
-        </Card>
-        <Card className="border-l-4 border-l-purple-500 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/admin/users?focus=warehouse')}>
-          <CardBody>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs font-semibold text-slate-600">Active Warehouses</div>
-                <div className="mt-1 text-2xl font-semibold text-slate-900">{stats.totalWarehouses}</div>
+            </CardBody>
+          </Card>
+          <Card className="border-l-4 border-l-purple-400 hover:shadow-md transition-shadow cursor-pointer bg-blue-800/40 ring-blue-700/60" onClick={() => navigate('/admin/users?focus=warehouse')}>
+            <CardBody>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-semibold text-blue-100">Active Warehouses</div>
+                  <div className="mt-1 text-2xl font-semibold text-white">{stats.totalWarehouses}</div>
+                </div>
+                <Building2 className="h-8 w-8 text-purple-300 opacity-50" />
               </div>
-              <Building2 className="h-8 w-8 text-purple-500 opacity-20" />
-            </div>
-          </CardBody>
-        </Card>
-        <Card className="bg-slate-800 hover:bg-slate-700 transition-colors cursor-pointer" onClick={() => navigate('/admin/settings')}>
-          <CardBody>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs font-semibold text-slate-300">Recent Audit Events</div>
-                <div className="mt-1 text-2xl font-semibold text-white">{stats.recentAudit}</div>
+            </CardBody>
+          </Card>
+          <Card className="bg-blue-800/50 hover:bg-blue-800/70 transition-colors cursor-pointer border border-blue-700/60" onClick={() => navigate('/admin/settings')}>
+            <CardBody>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-semibold text-blue-100">Recent Audit Events</div>
+                  <div className="mt-1 text-2xl font-semibold text-white">{stats.recentAudit}</div>
+                </div>
+                <Activity className="h-8 w-8 text-blue-200 opacity-50" />
               </div>
-              <Activity className="h-8 w-8 text-slate-400 opacity-20" />
-            </div>
-          </CardBody>
-        </Card>
+            </CardBody>
+          </Card>
+        </div>
       </div>
 
       {/* System Status Diagram */}

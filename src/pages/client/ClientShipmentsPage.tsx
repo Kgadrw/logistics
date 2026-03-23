@@ -72,63 +72,65 @@ export function ClientShipmentsPage() {
 
   return (
     <div className="w-full max-w-full px-0 pt-0 pb-0 sm:px-4 sm:pt-6 sm:pb-6 mx-auto">
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="text-sm font-semibold text-slate-900">Shipments</div>
-          <div className="mt-1 text-sm text-slate-600">Create new shipments, track status, and communicate with the warehouse.</div>
+      <div className="mb-6 rounded-xl bg-blue-900 border border-blue-800 px-4 py-4 sm:px-5 sm:py-5">
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="text-sm font-semibold text-white">Shipments</div>
+            <div className="mt-1 text-sm text-blue-100">Create new shipments, track status, and communicate with the warehouse.</div>
+          </div>
+          <Button onClick={() => setOpen(true)}>
+            <PackagePlus className="h-4 w-4" />
+            Create New Shipment
+          </Button>
         </div>
-        <Button onClick={() => setOpen(true)}>
-          <PackagePlus className="h-4 w-4" />
-          Create New Shipment
-        </Button>
-      </div>
 
-      {/* Quick Stats Cards */}
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-l-4 border-l-blue-500 hover:shadow-md transition-shadow">
-          <CardBody>
-            <div className="flex items-center justify-between">
-              <div>
-            <div className="text-xs font-semibold text-slate-600">Total Shipments</div>
-            <div className="mt-1 text-2xl font-semibold text-slate-900">{stats.total}</div>
+        {/* Quick Stats Cards */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Card className="border-l-4 border-l-blue-400 hover:shadow-md transition-shadow bg-blue-800/40 ring-blue-700/60">
+            <CardBody>
+              <div className="flex items-center justify-between">
+                <div>
+              <div className="text-xs font-semibold text-blue-100">Total Shipments</div>
+              <div className="mt-1 text-2xl font-semibold text-white">{stats.total}</div>
+                </div>
+                <Package className="h-8 w-8 text-blue-200 opacity-40" />
               </div>
-              <Package className="h-8 w-8 text-blue-500 opacity-20" />
-            </div>
-          </CardBody>
-        </Card>
-        <Card className="border-l-4 border-l-orange-500 hover:shadow-md transition-shadow">
-          <CardBody>
-            <div className="flex items-center justify-between">
-              <div>
-            <div className="text-xs font-semibold text-slate-600">Active Shipments</div>
-            <div className="mt-1 text-2xl font-semibold text-slate-900">{stats.active}</div>
+            </CardBody>
+          </Card>
+          <Card className="border-l-4 border-l-orange-400 hover:shadow-md transition-shadow bg-blue-800/40 ring-blue-700/60">
+            <CardBody>
+              <div className="flex items-center justify-between">
+                <div>
+              <div className="text-xs font-semibold text-blue-100">Active Shipments</div>
+              <div className="mt-1 text-2xl font-semibold text-white">{stats.active}</div>
+                </div>
+                <Clock className="h-8 w-8 text-orange-300 opacity-50" />
               </div>
-              <Clock className="h-8 w-8 text-orange-500 opacity-20" />
-            </div>
-          </CardBody>
-        </Card>
-        <Card className="border-l-4 border-l-green-500 hover:shadow-md transition-shadow">
-          <CardBody>
-            <div className="flex items-center justify-between">
-              <div>
-            <div className="text-xs font-semibold text-slate-600">Delivered</div>
-            <div className="mt-1 text-2xl font-semibold text-slate-900">{stats.delivered}</div>
+            </CardBody>
+          </Card>
+          <Card className="border-l-4 border-l-green-400 hover:shadow-md transition-shadow bg-blue-800/40 ring-blue-700/60">
+            <CardBody>
+              <div className="flex items-center justify-between">
+                <div>
+              <div className="text-xs font-semibold text-blue-100">Delivered</div>
+              <div className="mt-1 text-2xl font-semibold text-white">{stats.delivered}</div>
+                </div>
+                <CheckCircle2 className="h-8 w-8 text-green-300 opacity-50" />
               </div>
-              <CheckCircle2 className="h-8 w-8 text-green-500 opacity-20" />
-            </div>
-          </CardBody>
-        </Card>
-        <Card className="border-l-4 border-l-purple-500 hover:shadow-md transition-shadow">
-          <CardBody>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs font-semibold text-purple-700">Total Spent</div>
-                <div className="mt-1 text-2xl font-semibold text-purple-900">${stats.totalSpent.toLocaleString()}</div>
+            </CardBody>
+          </Card>
+          <Card className="border-l-4 border-l-purple-400 hover:shadow-md transition-shadow bg-blue-800/40 ring-blue-700/60">
+            <CardBody>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-semibold text-blue-100">Total Spent</div>
+                  <div className="mt-1 text-2xl font-semibold text-white">${stats.totalSpent.toLocaleString()}</div>
+                </div>
+                <TrendingUp className="h-8 w-8 text-purple-300 opacity-50" />
               </div>
-              <TrendingUp className="h-8 w-8 text-purple-500 opacity-20" />
-            </div>
-          </CardBody>
-        </Card>
+            </CardBody>
+          </Card>
+        </div>
       </div>
 
       {/* Search and Filter Bar */}

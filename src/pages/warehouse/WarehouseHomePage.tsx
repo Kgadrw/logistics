@@ -84,83 +84,85 @@ export function WarehouseHomePage() {
 
   return (
     <div className="px-3 pt-2 pb-2 sm:px-0 sm:pt-4">
-      <div className="mb-4 sm:mb-6">
-        <div className="flex items-center justify-between flex-wrap gap-2 sm:gap-4">
-          <div>
-        <div className="text-xs sm:text-sm font-semibold text-slate-900">Warehouse Dashboard</div>
-        <div className="mt-1 text-xs sm:text-sm text-slate-600">Operational overview — focus on speed and accuracy.</div>
+      <div className="mb-4 sm:mb-6 rounded-xl bg-blue-900 border border-blue-800 px-4 py-4 sm:px-5 sm:py-5">
+        <div className="mb-4 sm:mb-5">
+          <div className="flex items-center justify-between flex-wrap gap-2 sm:gap-4">
+            <div>
+          <div className="text-xs sm:text-sm font-semibold text-white">Warehouse Dashboard</div>
+          <div className="mt-1 text-xs sm:text-sm text-blue-100">Operational overview — focus on speed and accuracy.</div>
+            </div>
+            {stats.pending > 0 && (
+              <Button
+                onClick={() => navigate('/warehouse/incoming')}
+                className="bg-orange-500 hover:bg-orange-600 text-white"
+              >
+                <Zap className="h-4 w-4 mr-2" />
+                {stats.pending} Pending Receipt
+              </Button>
+            )}
           </div>
-          {stats.pending > 0 && (
-            <Button
-              onClick={() => navigate('/warehouse/incoming')}
-              className="bg-orange-500 hover:bg-orange-600 text-white"
-            >
-              <Zap className="h-4 w-4 mr-2" />
-              {stats.pending} Pending Receipt
-            </Button>
-          )}
         </div>
-      </div>
 
-      {/* Statistics Cards */}
-      <div className="mb-4 sm:mb-6 grid gap-2 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className={cn(
-          "border-l-4 border-l-orange-500 hover:shadow-md transition-shadow cursor-pointer",
-          stats.pending > 0 && "ring-2 ring-orange-100"
-        )} onClick={() => navigate('/warehouse/incoming')}>
-          <CardBody>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs font-semibold text-slate-600">Pending Receipt</div>
-                <div className="mt-1 text-2xl font-semibold text-slate-900">{stats.pending}</div>
-                {stats.pending > 0 && (
-                  <div className="mt-1 text-xs text-orange-600 font-medium">Action required</div>
-                )}
+        {/* Statistics Cards */}
+        <div className="grid gap-2 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Card className={cn(
+            "border-l-4 border-l-orange-400 hover:shadow-md transition-shadow cursor-pointer bg-blue-800/40 ring-blue-700/60",
+            stats.pending > 0 && "ring-2 ring-orange-300/40"
+          )} onClick={() => navigate('/warehouse/incoming')}>
+            <CardBody>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-semibold text-blue-100">Pending Receipt</div>
+                  <div className="mt-1 text-2xl font-semibold text-white">{stats.pending}</div>
+                  {stats.pending > 0 && (
+                    <div className="mt-1 text-xs text-orange-200 font-medium">Action required</div>
+                  )}
+                </div>
+                <PackageCheck className="h-8 w-8 text-orange-300 opacity-50" />
               </div>
-              <PackageCheck className="h-8 w-8 text-orange-500 opacity-20" />
-            </div>
-          </CardBody>
-        </Card>
-        <Card className="border-l-4 border-l-blue-500 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/warehouse/incoming')}>
-          <CardBody>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs font-semibold text-slate-600">Received Today</div>
-                <div className="mt-1 text-2xl font-semibold text-slate-900">{stats.received}</div>
-                {stats.received > 0 && (
-                  <div className="mt-1 text-xs text-blue-600 font-medium">Ready to dispatch</div>
-                )}
+            </CardBody>
+          </Card>
+          <Card className="border-l-4 border-l-blue-400 hover:shadow-md transition-shadow cursor-pointer bg-blue-800/40 ring-blue-700/60" onClick={() => navigate('/warehouse/incoming')}>
+            <CardBody>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-semibold text-blue-100">Received Today</div>
+                  <div className="mt-1 text-2xl font-semibold text-white">{stats.received}</div>
+                  {stats.received > 0 && (
+                    <div className="mt-1 text-xs text-blue-200 font-medium">Ready to dispatch</div>
+                  )}
+                </div>
+                <CheckCircle2 className="h-8 w-8 text-blue-300 opacity-50" />
               </div>
-              <CheckCircle2 className="h-8 w-8 text-blue-500 opacity-20" />
-            </div>
-          </CardBody>
-        </Card>
-        <Card className="border-l-4 border-l-purple-500 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/warehouse/outgoing')}>
-          <CardBody>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs font-semibold text-slate-600">In Transit</div>
-                <div className="mt-1 text-2xl font-semibold text-slate-900">{stats.inTransit}</div>
-                {stats.inTransit > 0 && (
-                  <div className="mt-1 text-xs text-purple-600 font-medium">Tracking active</div>
-                )}
+            </CardBody>
+          </Card>
+          <Card className="border-l-4 border-l-purple-400 hover:shadow-md transition-shadow cursor-pointer bg-blue-800/40 ring-blue-700/60" onClick={() => navigate('/warehouse/outgoing')}>
+            <CardBody>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-semibold text-blue-100">In Transit</div>
+                  <div className="mt-1 text-2xl font-semibold text-white">{stats.inTransit}</div>
+                  {stats.inTransit > 0 && (
+                    <div className="mt-1 text-xs text-purple-200 font-medium">Tracking active</div>
+                  )}
+                </div>
+                <Truck className="h-8 w-8 text-purple-300 opacity-50" />
               </div>
-              <Truck className="h-8 w-8 text-purple-500 opacity-20" />
-            </div>
-          </CardBody>
-        </Card>
-        <Card className="border-l-4 border-l-green-500 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/warehouse/history')}>
-          <CardBody>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs font-semibold text-green-700">Processed</div>
-                <div className="mt-1 text-2xl font-semibold text-green-900">{stats.processed}</div>
-                <div className="mt-1 text-xs text-green-600 font-medium">Completed</div>
+            </CardBody>
+          </Card>
+          <Card className="border-l-4 border-l-green-400 hover:shadow-md transition-shadow cursor-pointer bg-blue-800/40 ring-blue-700/60" onClick={() => navigate('/warehouse/history')}>
+            <CardBody>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-semibold text-blue-100">Processed</div>
+                  <div className="mt-1 text-2xl font-semibold text-white">{stats.processed}</div>
+                  <div className="mt-1 text-xs text-green-200 font-medium">Completed</div>
+                </div>
+                <History className="h-8 w-8 text-green-300 opacity-50" />
               </div>
-              <History className="h-8 w-8 text-green-500 opacity-20" />
-            </div>
-          </CardBody>
-        </Card>
+            </CardBody>
+          </Card>
+        </div>
       </div>
 
       {/* Quick View Sections */}
