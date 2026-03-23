@@ -24,6 +24,9 @@ export function AdminOverviewPage() {
   const [dbTick, setDbTick] = React.useState(0)
   const [dbLiveSeconds, setDbLiveSeconds] = React.useState(0)
   const [dbNonLiveSeconds, setDbNonLiveSeconds] = React.useState(0)
+  const [apiTick, setApiTick] = React.useState(0)
+  const [apiLiveSeconds, setApiLiveSeconds] = React.useState(0)
+  const [apiNonLiveSeconds, setApiNonLiveSeconds] = React.useState(0)
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -130,6 +133,41 @@ export function AdminOverviewPage() {
       return Math.max(4, Math.round(v))
     })
   }, [dbTick, systemStatus.database])
+
+  React.useEffect(() => {
+    const t = setInterval(() => setApiTick(v => v + 1), 600)
+    return () => clearInterval(t)
+  }, [])
+
+  React.useEffect(() => {
+    if (loading) {
+      setApiLiveSeconds(0)
+      setApiNonLiveSeconds(0)
+      return
+    }
+
+    setApiLiveSeconds(0)
+    setApiNonLiveSeconds(0)
+
+    const t = setInterval(() => {
+      if (systemStatus.api === 'operational') setApiLiveSeconds(s => s + 1)
+      else setApiNonLiveSeconds(s => s + 1)
+    }, 1000)
+
+    return () => clearInterval(t)
+  }, [systemStatus.api, loading])
+
+  const apiWaveHeights = React.useMemo(() => {
+    const live = systemStatus.api === 'operational'
+    const base = live ? 6 : 3
+    const amp = live ? 18 : 10
+
+    return Array.from({ length: 18 }, (_, i) => {
+      const phase = apiTick / 2 + i * 0.55
+      const v = base + Math.abs(Math.sin(phase)) * amp
+      return Math.max(4, Math.round(v))
+    })
+  }, [apiTick, systemStatus.api])
 
   if (loading) {
     return (
@@ -325,13 +363,52 @@ export function AdminOverviewPage() {
                   <XCircle className="h-4 w-4 text-orange-600" />
                 )}
               </div>
-              <div className={cn(
-                "text-sm font-semibold",
-                systemStatus.api === 'operational' ? 'text-green-700' : 'text-orange-700'
-              )}>
-                {systemStatus.api === 'operational' ? 'Running' : 'Issues'}
+              <div className="mt-2">
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-semibold text-slate-900">Access pattern</div>
+                  <div
+                    className={cn(
+                      'text-[11px] font-semibold',
+                      systemStatus.api === 'operational' ? 'text-green-700' : 'text-orange-700'
+                    )}
+                  >
+                    {systemStatus.api === 'operational' ? 'Live' : 'Non-live'}
+                  </div>
+                </div>
+
+                <div className="mt-2 flex items-end gap-[3px] h-10">
+                  {apiWaveHeights.map((h, idx) => (
+                    <div
+                      key={idx}
+                      className={cn(
+                        'w-[3px] rounded-sm transition-colors',
+                        systemStatus.api === 'operational' ? 'bg-green-500/70' : 'bg-orange-500/70'
+                      )}
+                      style={{ height: `${h}px` }}
+                    />
+                  ))}
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-2">
+                    <div className="text-[11px] font-semibold text-slate-600">Live time</div>
+                    <div className={cn('text-xs font-bold', systemStatus.api === 'operational' ? 'text-green-700' : 'text-slate-900')}>
+                      {formatHMS(apiLiveSeconds)}
+                    </div>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-2">
+                    <div className="text-[11px] font-semibold text-slate-600">Non-live time</div>
+                    <div className={cn(
+                      'text-xs font-bold',
+                      systemStatus.api !== 'operational' ? 'text-orange-700' : 'text-slate-900'
+                    )}>
+                      {formatHMS(apiNonLiveSeconds)}
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="mt-1 text-xs text-slate-600">Express.js</div>
+
+              <div className="mt-2 text-xs text-slate-600">Express.js</div>
             </div>
 
             {/* Notifications Status */}
@@ -357,31 +434,6 @@ export function AdminOverviewPage() {
                 {systemStatus.notifications === 'operational' ? 'Active' : 'Issues'}
               </div>
               <div className="mt-1 text-xs text-slate-600">Real-time</div>
-            </div>
-
-            {/* File Storage Status */}
-            <div className="rounded-xl border border-slate-200 bg-white p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Package className={cn(
-                    "h-5 w-5",
-                    systemStatus.fileStorage === 'operational' ? 'text-green-600' : 'text-orange-600'
-                  )} />
-                  <div className="text-xs font-semibold text-slate-900">File Storage</div>
-                </div>
-                {systemStatus.fileStorage === 'operational' ? (
-                  <CheckCircle2 className="h-4 w-4 text-green-600" />
-                ) : (
-                  <XCircle className="h-4 w-4 text-orange-600" />
-                )}
-              </div>
-              <div className={cn(
-                "text-sm font-semibold",
-                systemStatus.fileStorage === 'operational' ? 'text-green-700' : 'text-orange-700'
-              )}>
-                {systemStatus.fileStorage === 'operational' ? 'Available' : 'Issues'}
-              </div>
-              <div className="mt-1 text-xs text-slate-600">Uploads</div>
             </div>
           </div>
 
