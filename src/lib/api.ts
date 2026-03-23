@@ -233,6 +233,15 @@ export const adminAPI = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+  updateExternalDocument: (id: string, data: any) =>
+    fetchAPI<any>(`/admin/external-documents/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  deleteExternalDocument: (id: string) =>
+    fetchAPI<any>(`/admin/external-documents/${id}`, {
+      method: 'DELETE',
+    }),
   getUsers: (role?: string) =>
     fetchAPI<any[]>(`/admin/users${role ? `?role=${role}` : ''}`),
   getUser: (id: string) => fetchAPI<any>(`/admin/users/${id}`),
