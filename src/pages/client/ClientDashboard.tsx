@@ -77,6 +77,7 @@ export function ClientDashboard() {
             <Routes>
               <Route path="/" element={<ClientShipmentsPage />} />
               <Route path="/shipment/:id" element={<ClientShipmentDetailPage />} />
+              <Route path="/shipping-page/:id" element={<ClientShipmentDetailPage />} />
               <Route path="/history" element={<ClientHistoryPage />} />
               <Route
                 path="/notifications"

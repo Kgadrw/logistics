@@ -86,6 +86,7 @@ export function AdminDashboard() {
               <Route path="/" element={<AdminOverviewPage />} />
               <Route path="/shipments" element={<AdminShipmentsPage />} />
               <Route path="/shipment/:id" element={<AdminShipmentDetailPage />} />
+              <Route path="/shipping-page/:id" element={<AdminShipmentDetailPage />} />
               <Route path="/pricing" element={<AdminPricingPage />} />
               <Route path="/warehouses" element={<AdminUsersPage focus="warehouse" />} />
               <Route path="/clients" element={<AdminUsersPage focus="client" />} />

@@ -84,6 +84,7 @@ export function WarehouseDashboard() {
               <Route path="/outgoing" element={<WarehouseOutgoingPage />} />
               <Route path="/history" element={<WarehouseHistoryPage />} />
               <Route path="/shipment/:id" element={<WarehouseShipmentDetailPage />} />
+              <Route path="/shipping-page/:id" element={<WarehouseShipmentDetailPage />} />
               <Route
                 path="/notifications"
                 element={
