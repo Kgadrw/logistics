@@ -363,6 +363,38 @@ export function WarehouseShipmentDetailPage() {
     return statusMap[currentStatus] || null
   }
 
+  const isOutgoingReport =
+    shipment?.status === 'Left Warehouse' || shipment?.status === 'In Transit' || shipment?.status === 'Delivered'
+
+  const resetEditFields = React.useCallback(() => {
+    const data = shipment
+    if (!data) return
+    setReceivedImages(data.receivedProductImages || [])
+    setDeliveryNote(data.deliveryNote || '')
+    setDeliveryNoteFile(data.deliveryNote && data.deliveryNote.startsWith('http') ? data.deliveryNote : null)
+    setConsumerNumber(data.consumerNumber || '')
+
+    setPackagingList(data.dispatch?.packagingList || '')
+    setPackageNumber(data.dispatch?.packageNumber || '')
+    setConsigneeNumber(data.dispatch?.consigneeNumber || '')
+    setShippingMark(data.dispatch?.shippingMark || 'UZA Solutions')
+
+    setBlDocument(data.dispatch?.blDocument || '')
+    setBlDocumentFile(data.dispatch?.blDocument && data.dispatch?.blDocument.startsWith('http') ? data.dispatch.blDocument : null)
+    setRemarks(data.warehouseRemarks || '')
+
+    const dimensions: Record<string, { lengthCm?: number; widthCm?: number; heightCm?: number; cbm?: number }> = {}
+    data.products?.forEach((p: any) => {
+      dimensions[p.id] = {
+        lengthCm: p.lengthCm,
+        widthCm: p.widthCm,
+        heightCm: p.heightCm,
+        cbm: p.cbm,
+      }
+    })
+    setProductDimensions(dimensions)
+  }, [shipment])
+
   if (loading) {
     return (
       <div className="pt-4">
@@ -499,13 +531,17 @@ export function WarehouseShipmentDetailPage() {
                 </>
               )}
               {shipment.status === 'Left Warehouse' && (
-                <ShipmentTimeline 
-                  status={shipment.status}
-                  onAction={handleMarkInTransit}
-                  actionLabel="Mark as In Transit"
-                  actionDisabled={markingInTransit}
-                  actionLoading={markingInTransit}
-                />
+                isOutgoingReport ? (
+                  <ShipmentTimeline status={shipment.status} />
+                ) : (
+                  <ShipmentTimeline 
+                    status={shipment.status}
+                    onAction={handleMarkInTransit}
+                    actionLabel="Mark as In Transit"
+                    actionDisabled={markingInTransit}
+                    actionLoading={markingInTransit}
+                  />
+                )
               )}
               {(shipment.status === 'In Transit' || shipment.status === 'Delivered' || shipment.status === 'Draft') && (
                 <ShipmentTimeline status={shipment.status} />
@@ -514,7 +550,7 @@ export function WarehouseShipmentDetailPage() {
           </Card>
 
           {/* Status Navigation */}
-          {(getPreviousStatus(shipment.status) || getNextStatus(shipment.status)) && (
+          {!isOutgoingReport && (getPreviousStatus(shipment.status) || getNextStatus(shipment.status)) && (
             <Card>
               <CardHeader>
                 <CardTitle>Status Navigation</CardTitle>
@@ -600,61 +636,42 @@ export function WarehouseShipmentDetailPage() {
                   Shipment Details
                 </span>
                 <div className="flex items-center gap-2 justify-end">
-                {!isEditing ? (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setIsEditing(true)}
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
-                ) : (
-                    <>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={handleSaveDetails}
-                      disabled={savingDetails}
-                    >
-                      <Save className="h-4 w-4 mr-2" />
-                      {savingDetails ? 'Saving...' : 'Save'}
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => {
-                        setIsEditing(false)
-                        // Reset to original values
-                        const data = shipment
-                        setReceivedImages(data.receivedProductImages || [])
-                          setDeliveryNote(data.deliveryNote || '')
-                          setDeliveryNoteFile(data.deliveryNote && data.deliveryNote.startsWith('http') ? data.deliveryNote : null)
-                        setConsumerNumber(data.consumerNumber || '')
-                        setPackagingList(data.dispatch?.packagingList || '')
-                        setPackageNumber(data.dispatch?.packageNumber || '')
-                        setConsigneeNumber(data.dispatch?.consigneeNumber || '')
-                        setShippingMark(data.dispatch?.shippingMark || 'UZA Solutions')
-                        setBlDocument(data.dispatch?.blDocument || '')
-                        setBlDocumentFile(data.dispatch?.blDocument && data.dispatch?.blDocument.startsWith('http') ? data.dispatch.blDocument : null)
-                        setRemarks(data.warehouseRemarks || '')
-                        // Reset product dimensions
-                        const dimensions: Record<string, { lengthCm?: number; widthCm?: number; heightCm?: number; cbm?: number }> = {}
-                        data.products?.forEach((p: any) => {
-                          dimensions[p.id] = {
-                            lengthCm: p.lengthCm,
-                            widthCm: p.widthCm,
-                            heightCm: p.heightCm,
-                            cbm: p.cbm,
-                          }
-                        })
-                        setProductDimensions(dimensions)
-                      }}
-                      disabled={savingDetails}
-                    >
-                      Cancel
-                    </Button>
-                    </>
+                {!isOutgoingReport && (
+                  <>
+                    {!isEditing ? (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setIsEditing(true)}
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit
+                      </Button>
+                    ) : (
+                      <>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={handleSaveDetails}
+                          disabled={savingDetails}
+                        >
+                          <Save className="h-4 w-4 mr-2" />
+                          {savingDetails ? 'Saving...' : 'Save'}
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => {
+                            setIsEditing(false)
+                            resetEditFields()
+                          }}
+                          disabled={savingDetails}
+                        >
+                          Cancel
+                        </Button>
+                      </>
+                    )}
+                  </>
                 )}
                 </div>
               </CardTitle>
@@ -1177,6 +1194,115 @@ export function WarehouseShipmentDetailPage() {
 
         {/* Sidebar */}
         <div className="space-y-6 order-1 lg:order-2">
+          {/* Outgoing report actions on the right */}
+          {isOutgoingReport && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Report Actions</CardTitle>
+                <div className="text-xs text-slate-500">Edit & status updates</div>
+              </CardHeader>
+              <CardBody>
+                <div className="space-y-3">
+                  {!isEditing ? (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setIsEditing(true)}
+                      className="w-full"
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit modifications
+                    </Button>
+                  ) : (
+                    <div className="grid gap-2 sm:grid-cols-1">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={handleSaveDetails}
+                        disabled={savingDetails}
+                        className="w-full"
+                      >
+                        <Save className="h-4 w-4 mr-2" />
+                        {savingDetails ? 'Saving...' : 'Save changes'}
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          setIsEditing(false)
+                          resetEditFields()
+                        }}
+                        disabled={savingDetails}
+                        className="w-full"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
+
+                  {shipment.status === 'Left Warehouse' && (
+                    <Button
+                      size="sm"
+                      onClick={() => handleMarkInTransit()}
+                      disabled={markingInTransit}
+                      className="w-full"
+                    >
+                      {markingInTransit ? 'Marking...' : 'Mark In Transit'}
+                    </Button>
+                  )}
+
+                  {/* Optional status reversal */}
+                  {(getPreviousStatus(shipment.status) || getNextStatus(shipment.status)) && (
+                    <div className="mt-2">
+                      {getPreviousStatus(shipment.status) && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleReverseStatus(getPreviousStatus(shipment.status)!)}
+                          disabled={reversingStatus}
+                          className="w-full mb-2"
+                        >
+                          <ChevronDown className="h-4 w-4 mr-2" />
+                          Previous: {getPreviousStatus(shipment.status)}
+                        </Button>
+                      )}
+
+                      {getNextStatus(shipment.status) && (
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => {
+                            const nextStatus = getNextStatus(shipment.status)
+                            if (!nextStatus) return
+                            if (nextStatus === 'Received') handleMarkReceived()
+                            else if (nextStatus === 'Left Warehouse') handleMarkLeftWarehouse()
+                            else if (nextStatus === 'In Transit') handleMarkInTransit()
+                          }}
+                          disabled={markingReceived || markingLeftWarehouse || markingInTransit || reversingStatus}
+                          className="w-full"
+                        >
+                          <ChevronUp className="h-4 w-4 mr-2" />
+                          Next: {getNextStatus(shipment.status)}
+                        </Button>
+                      )}
+                    </div>
+                  )}
+
+                  {getPreviousStatus(shipment.status) && (
+                    <div className="p-3 rounded-lg bg-orange-50 border border-orange-200">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="h-4 w-4 text-orange-600 mt-0.5 shrink-0" />
+                        <div className="text-xs text-orange-800">
+                          Reversing status will clear dispatch information if moving from &quot;Left Warehouse&quot; or &quot;In Transit&quot;.
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardBody>
+            </Card>
+          )}
+
           {/* Shipment Info */}
           <Card>
             <CardHeader>
@@ -1224,7 +1350,7 @@ export function WarehouseShipmentDetailPage() {
           {shipment.dispatch && (
             <Card>
               <CardHeader>
-                <CardTitle>Dispatch Information</CardTitle>
+                <CardTitle>{isOutgoingReport ? 'Dispatch Report' : 'Dispatch Information'}</CardTitle>
               </CardHeader>
               <CardBody>
                 <div className="space-y-4">
@@ -1293,7 +1419,7 @@ export function WarehouseShipmentDetailPage() {
           {/* Summary */}
           <Card>
             <CardHeader>
-              <CardTitle>Summary</CardTitle>
+              <CardTitle>{isOutgoingReport ? 'Cargo Summary (Report)' : 'Summary'}</CardTitle>
             </CardHeader>
             <CardBody>
               <div className="space-y-3">
