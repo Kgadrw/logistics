@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Package, Users, Building2, Activity, TrendingUp, ArrowRight, AlertCircle, CheckCircle2, XCircle, Clock, Server, Database, Globe, Shield } from 'lucide-react'
+import { Package, Users, Building2, Activity, TrendingUp, ArrowRight, AlertCircle, CheckCircle2, XCircle, Clock, Server, Database, Globe, Shield, Mail } from 'lucide-react'
 import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
 import { adminAPI } from '../../lib/api'
 import { Badge, statusTone } from '../../components/ui/Badge'
@@ -135,13 +135,14 @@ export function AdminOverviewPage() {
         activeShipments: dashboardData.activeShipments || 0,
         totalClients: dashboardData.totalClients || 0,
         totalWarehouses: dashboardData.totalWarehouses || 0,
+        totalEmailsSent: dashboardData.totalEmailsSent || 0,
         recentAudit: auditLogs.slice(0, 5).length,
       }
     }
     // Fallback
     const totalShipments = shipments.length
     const activeShipments = shipments.filter(s => s.status !== 'Delivered' && s.status !== 'Draft').length
-    return { totalShipments, activeShipments, totalClients: 0, totalWarehouses: 0, recentAudit: auditLogs.slice(0, 5).length }
+    return { totalShipments, activeShipments, totalClients: 0, totalWarehouses: 0, totalEmailsSent: 0, recentAudit: auditLogs.slice(0, 5).length }
   }, [dashboardData, shipments, auditLogs])
 
   const recent = shipments.slice(0, 5)
@@ -246,7 +247,7 @@ export function AdminOverviewPage() {
           <div className="mt-1 text-sm text-blue-100">Data-driven snapshot across the system.</div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
           <Card className="border-l-4 border-l-blue-400 hover:shadow-md transition-shadow cursor-pointer bg-blue-800/40 ring-blue-700/60" onClick={() => navigate('/admin/shipments')}>
             <CardBody>
               <div className="flex items-center justify-between">
@@ -302,6 +303,17 @@ export function AdminOverviewPage() {
                   <div className="mt-1 text-2xl font-semibold text-white">{stats.recentAudit}</div>
                 </div>
                 <Activity className="h-8 w-8 text-blue-200 opacity-50" />
+              </div>
+            </CardBody>
+          </Card>
+          <Card className="border-l-4 border-l-indigo-400 hover:shadow-md transition-shadow cursor-default bg-blue-800/40 ring-blue-700/60" onClick={() => navigate('/admin/settings')}>
+            <CardBody>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-semibold text-blue-100">Total Emails Sent</div>
+                  <div className="mt-1 text-2xl font-semibold text-white">{stats.totalEmailsSent}</div>
+                </div>
+                <Mail className="h-8 w-8 text-indigo-300 opacity-50" />
               </div>
             </CardBody>
           </Card>
