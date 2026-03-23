@@ -21,6 +21,9 @@ export function AdminOverviewPage() {
     fileStorage: 'operational',
     overall: 'operational',
   })
+  const [dbTick, setDbTick] = React.useState(0)
+  const [dbLiveSeconds, setDbLiveSeconds] = React.useState(0)
+  const [dbNonLiveSeconds, setDbNonLiveSeconds] = React.useState(0)
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -82,6 +85,51 @@ export function AdminOverviewPage() {
 
   const recent = shipments.slice(0, 5)
   const recentAudit = auditLogs.slice(0, 6)
+
+  const formatHMS = (totalSeconds: number) => {
+    const h = Math.floor(totalSeconds / 3600)
+    const m = Math.floor((totalSeconds % 3600) / 60)
+    const s = totalSeconds % 60
+    const pad2 = (n: number) => String(n).padStart(2, '0')
+    return h > 0 ? `${h}:${pad2(m)}:${pad2(s)}` : `${m}:${pad2(s)}`
+  }
+
+  // Simulated live/idle time + wave visualization for MongoDB access.
+  // This is driven by the current `systemStatus.database` state.
+  React.useEffect(() => {
+    const t = setInterval(() => setDbTick(v => v + 1), 600)
+    return () => clearInterval(t)
+  }, [])
+
+  React.useEffect(() => {
+    if (loading) {
+      setDbLiveSeconds(0)
+      setDbNonLiveSeconds(0)
+      return
+    }
+
+    setDbLiveSeconds(0)
+    setDbNonLiveSeconds(0)
+
+    const t = setInterval(() => {
+      if (systemStatus.database === 'operational') setDbLiveSeconds(s => s + 1)
+      else setDbNonLiveSeconds(s => s + 1)
+    }, 1000)
+
+    return () => clearInterval(t)
+  }, [systemStatus.database, loading])
+
+  const dbWaveHeights = React.useMemo(() => {
+    const live = systemStatus.database === 'operational'
+    const base = live ? 6 : 3
+    const amp = live ? 18 : 10
+
+    return Array.from({ length: 18 }, (_, i) => {
+      const phase = dbTick / 2 + i * 0.55
+      const v = base + Math.abs(Math.sin(phase)) * amp
+      return Math.max(4, Math.round(v))
+    })
+  }, [dbTick, systemStatus.database])
 
   if (loading) {
     return (
@@ -216,13 +264,49 @@ export function AdminOverviewPage() {
                   <XCircle className="h-4 w-4 text-orange-600" />
                 )}
               </div>
-              <div className={cn(
-                "text-sm font-semibold",
-                systemStatus.database === 'operational' ? 'text-green-700' : 'text-orange-700'
-              )}>
-                {systemStatus.database === 'operational' ? 'Connected' : 'Issues'}
+              <div className="mt-2">
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-semibold text-slate-900">Access pattern</div>
+                  <div
+                    className={cn(
+                      'text-[11px] font-semibold',
+                      systemStatus.database === 'operational' ? 'text-green-700' : 'text-orange-700'
+                    )}
+                  >
+                    {systemStatus.database === 'operational' ? 'Live' : 'Non-live'}
+                  </div>
+                </div>
+
+                <div className="mt-2 flex items-end gap-[3px] h-10">
+                  {dbWaveHeights.map((h, idx) => (
+                    <div
+                      key={idx}
+                      className={cn(
+                        'w-[3px] rounded-sm transition-colors',
+                        systemStatus.database === 'operational' ? 'bg-green-500/70' : 'bg-orange-500/70'
+                      )}
+                      style={{ height: `${h}px` }}
+                    />
+                  ))}
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-2">
+                    <div className="text-[11px] font-semibold text-slate-600">Live time</div>
+                    <div className={cn('text-xs font-bold', systemStatus.database === 'operational' ? 'text-green-700' : 'text-slate-900')}>
+                      {formatHMS(dbLiveSeconds)}
+                    </div>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-2">
+                    <div className="text-[11px] font-semibold text-slate-600">Non-live time</div>
+                    <div className={cn('text-xs font-bold', systemStatus.database !== 'operational' ? 'text-orange-700' : 'text-slate-900')}>
+                      {formatHMS(dbNonLiveSeconds)}
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="mt-1 text-xs text-slate-600">MongoDB</div>
+
+              <div className="mt-2 text-xs text-slate-600">MongoDB</div>
             </div>
 
             {/* API Status */}
