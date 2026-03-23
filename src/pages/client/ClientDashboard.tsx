@@ -14,15 +14,7 @@ import { ClientHistoryPage } from './ClientHistoryPage'
 export function ClientDashboard() {
   const navigate = useNavigate()
   const { logout } = useAuth()
-  const [showNotifications, setShowNotifications] = React.useState(false)
   const [showLogoutModal, setShowLogoutModal] = React.useState(false)
-
-  React.useEffect(() => {
-    if (showNotifications) {
-      navigate('/client/notifications')
-      setShowNotifications(false)
-    }
-  }, [showNotifications, navigate])
 
   const handleLogout = () => {
     logout()
