@@ -3,6 +3,7 @@ import { Building2, Check, Mail, MapPin, Pencil, Phone, User, X } from 'lucide-r
 import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
+import { Skeleton } from '../../components/ui/Skeleton'
 import { warehouseAPI } from '../../lib/api'
 import { useAuth } from '../../lib/authContext'
 import { useToast } from '../../components/ui/Toast'
@@ -291,11 +292,27 @@ export function WarehouseProfilePage() {
     return (
       <div className="px-3 pt-2 pb-2 sm:px-0 sm:pt-4">
         <div className="mb-3 sm:mb-4">
-          <div className="text-xs sm:text-sm font-semibold text-slate-900">Warehouse Profile</div>
+          <Skeleton className="h-4 w-36" />
         </div>
         <Card>
           <CardBody>
-            <div className="text-xs sm:text-sm text-slate-600 text-center py-8">Loading profile...</div>
+            <div className="space-y-4 py-4">
+              <div className="flex items-center gap-4">
+                <Skeleton className="h-16 w-16 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-44" />
+                  <Skeleton className="h-3 w-32" />
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {Array.from({ length: 8 }).map((_, idx) => (
+                  <div key={idx} className="space-y-2">
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ))}
+              </div>
+            </div>
           </CardBody>
         </Card>
       </div>

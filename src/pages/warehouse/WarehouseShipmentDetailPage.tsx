@@ -5,6 +5,7 @@ import { Badge, statusTone } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
 import { Input, Textarea } from '../../components/ui/Input'
+import { Skeleton } from '../../components/ui/Skeleton'
 import { ShipmentTimeline } from '../../components/Timeline'
 import { ImageViewer } from '../../components/ImageViewer'
 import { PDFViewer } from '../../components/PDFViewer'
@@ -404,11 +405,23 @@ export function WarehouseShipmentDetailPage() {
             Back
           </Button>
         </div>
-        <Card>
-          <CardBody>
-            <div className="text-center py-8 text-slate-600">Loading shipment...</div>
-          </CardBody>
-        </Card>
+        <div className="space-y-4">
+          <Card>
+            <CardBody>
+              <div className="space-y-3">
+                <Skeleton className="h-6 w-44" />
+                <Skeleton className="h-3 w-72" />
+              </div>
+            </CardBody>
+          </Card>
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2 space-y-6">
+              <Card><CardBody><Skeleton className="h-44 w-full" /></CardBody></Card>
+              <Card><CardBody><Skeleton className="h-64 w-full" /></CardBody></Card>
+            </div>
+            <Card><CardBody><Skeleton className="h-80 w-full" /></CardBody></Card>
+          </div>
+        </div>
       </div>
     )
   }

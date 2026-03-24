@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Badge, statusTone } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
+import { Skeleton } from '../../components/ui/Skeleton'
 import { Input, Textarea } from '../../components/ui/Input'
 import { Table, TBody, TD, TH, THead, TR } from '../../components/ui/Table'
 import { ImageViewer } from '../../components/ImageViewer'
@@ -164,6 +165,17 @@ export function WarehouseIncomingPage() {
                   </TR>
                 </THead>
                 <TBody>
+                  {loadingShipments
+                    ? Array.from({ length: 5 }).map((_, idx) => (
+                        <TR key={`skeleton-${idx}`}>
+                          <TD className="whitespace-nowrap"><Skeleton className="h-4 w-24" /></TD>
+                          <TD className="whitespace-nowrap"><Skeleton className="h-4 w-24" /></TD>
+                          <TD className="min-w-64"><Skeleton className="h-4 w-48" /></TD>
+                          <TD><Skeleton className="h-6 w-24 rounded-full" /></TD>
+                          <TD className="text-right"><Skeleton className="ml-auto h-8 w-28" /></TD>
+                        </TR>
+                      ))
+                    : null}
                   {incoming.map(s => (
                     <TR
                       key={s.id}
@@ -230,7 +242,7 @@ export function WarehouseIncomingPage() {
                       </TD>
                     </TR>
                   ))}
-                  {incoming.length === 0 ? (
+                  {incoming.length === 0 && !loadingShipments ? (
                     <TR>
                       <TD colSpan={5} className="px-4 py-8 text-center text-sm text-slate-600">
                         No incoming shipments right now.

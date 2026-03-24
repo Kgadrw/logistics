@@ -1,12 +1,14 @@
 import * as React from 'react'
-import { Eye, FileText, Trash2, Upload, X } from 'lucide-react'
+import { Eye, FileText, FolderOpen, Trash2, Upload, X } from 'lucide-react'
 import { adminAPI, uploadAPI } from '../../lib/api'
 import { useToast } from '../../components/ui/Toast'
 import { Button } from '../../components/ui/Button'
 import { Input, Textarea } from '../../components/ui/Input'
 import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
+import { Skeleton } from '../../components/ui/Skeleton'
 import { Select } from '../../components/ui/Select'
 import { Table, TBody, TD, TH, THead, TR } from '../../components/ui/Table'
+import { Modal } from '../../components/ui/Modal'
 import { cn } from '../../lib/cn'
 
 type ExternalDoc = {
@@ -45,6 +47,7 @@ export function AdminExternalDocumentsPage() {
   const [selectedId, setSelectedId] = React.useState<string | null>(null)
   const selected = React.useMemo(() => records.find(r => r.id === selectedId) || null, [records, selectedId])
   const [replaceDocuments, setReplaceDocuments] = React.useState(true)
+  const [modalOpen, setModalOpen] = React.useState(false)
 
   const [companyName, setCompanyName] = React.useState('')
   const [reference, setReference] = React.useState('')
@@ -202,6 +205,12 @@ export function AdminExternalDocumentsPage() {
     setReplaceDocuments(true)
   }
 
+  const openRecordModal = (r: ExternalDoc, nextMode: Exclude<Mode, 'create'>) => {
+    syncEditorFromRecord(r)
+    setMode(nextMode)
+    setModalOpen(true)
+  }
+
   const handleDelete = async (id: string) => {
     const ok = window.confirm('Delete this external record? This cannot be undone.')
     if (!ok) return
@@ -291,8 +300,117 @@ export function AdminExternalDocumentsPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-5">
-        <Card className="lg:col-span-3 overflow-hidden">
+      <Card className="mb-4">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Upload className="h-5 w-5 text-blue-600" />
+            Create new record
+          </CardTitle>
+          <div className="text-xs text-slate-500">
+            This storage path is where uploaded external documents are kept.
+          </div>
+        </CardHeader>
+        <CardBody>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-xl border border-slate-200 bg-white p-3">
+              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Company</div>
+              <Input value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="Company name" disabled={uploading} />
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-3">
+              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Reference</div>
+              <Input value={reference} onChange={e => setReference(e.target.value)} placeholder="Reference (optional)" disabled={uploading} />
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-3">
+              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Type</div>
+              <Select value={documentType} onChange={e => setDocumentType(e.target.value)} disabled={uploading}>
+                <option value="Shipment">Shipment</option>
+                <option value="Invoice">Invoice</option>
+                <option value="BL">BL</option>
+                <option value="Packing List">Packing List</option>
+                <option value="Other">Other</option>
+              </Select>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-3 md:col-span-2 xl:col-span-1">
+              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Notes</div>
+              <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes" rows={2} disabled={uploading} />
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-3">
+            <div className="flex items-start gap-2">
+              <FolderOpen className="h-4 w-4 text-blue-700 mt-0.5" />
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-blue-800">Document storage folder</div>
+                <div className="mt-1 text-xs text-blue-700 break-all">{folderPath}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <div className="text-xs font-semibold text-slate-600 mb-2">Upload files *</div>
+            <label className="flex flex-col gap-2">
+              <input
+                type="file"
+                multiple
+                accept=".pdf,application/pdf,.jpg,.jpeg,.png,.gif,.webp,image/jpeg,image/png,image/gif,image/webp"
+                className="hidden"
+                onChange={e => handleAddFiles(e.target.files)}
+                disabled={uploading}
+              />
+              <div className={cn(
+                'flex flex-col items-center justify-center h-28 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors',
+                uploading && 'opacity-60 cursor-not-allowed'
+              )}>
+                <Upload className="h-6 w-6 text-slate-400 mb-1" />
+                <div className="text-sm font-medium text-slate-600">{uploading ? 'Uploading...' : 'Click to upload'}</div>
+                <div className="text-xs text-slate-500 mt-1">{folderPath}</div>
+              </div>
+            </label>
+
+            {files.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {files.map((f, idx) => (
+                  <div
+                    key={`${f.name}-${idx}`}
+                    className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2"
+                  >
+                    <div className="min-w-0">
+                      <div className="text-xs font-semibold text-slate-900 truncate">{f.name}</div>
+                      <div className="text-[11px] text-slate-500">{Math.round(f.size / 1024)} KB</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeFileAt(idx)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                resetEditor()
+                setFiles([])
+              }}
+              disabled={uploading}
+            >
+              Clear
+            </Button>
+            <Button onClick={handleCreate} disabled={uploading}>
+              {uploading ? 'Saving...' : 'Save record'}
+            </Button>
+          </div>
+        </CardBody>
+      </Card>
+
+      <div className="grid gap-4">
+        <Card className="overflow-hidden">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-blue-600" />
@@ -319,11 +437,16 @@ export function AdminExternalDocumentsPage() {
                 </THead>
                 <TBody>
                   {loading ? (
-                    <TR>
-                      <TD colSpan={6} className="px-4 py-8 text-center text-sm text-slate-600">
-                        Loading...
-                      </TD>
-                    </TR>
+                    Array.from({ length: 5 }).map((_, idx) => (
+                      <TR key={`skeleton-${idx}`}>
+                        <TD><Skeleton className="h-4 w-28" /></TD>
+                        <TD><Skeleton className="h-4 w-24" /></TD>
+                        <TD><Skeleton className="h-4 w-20" /></TD>
+                        <TD className="text-right"><Skeleton className="ml-auto h-4 w-6" /></TD>
+                        <TD><Skeleton className="h-4 w-24" /></TD>
+                        <TD className="text-right"><Skeleton className="ml-auto h-8 w-24" /></TD>
+                      </TR>
+                    ))
                   ) : records.length === 0 ? (
                     <TR>
                       <TD colSpan={6} className="px-4 py-8 text-center text-sm text-slate-600">
@@ -343,20 +466,14 @@ export function AdminExternalDocumentsPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => {
-                                syncEditorFromRecord(r)
-                                setMode('view')
-                              }}
+                              onClick={() => openRecordModal(r, 'view')}
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="secondary"
                               size="sm"
-                              onClick={() => {
-                                syncEditorFromRecord(r)
-                                setMode('edit')
-                              }}
+                              onClick={() => openRecordModal(r, 'edit')}
                             >
                               Edit
                             </Button>
@@ -377,97 +494,66 @@ export function AdminExternalDocumentsPage() {
             </div>
           </CardBody>
         </Card>
+      </div>
 
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Upload className="h-5 w-5 text-blue-600" />
-              {mode === 'create' ? 'Create new record (Sheet)' : mode === 'view' ? 'View record (Sheet)' : 'Edit record (Sheet)'}
-            </CardTitle>
-          </CardHeader>
-          <CardBody>
-            <div className="space-y-4">
-              {/* Excel-like editable row */}
-              <div className="overflow-x-auto rounded-2xl border border-slate-200">
-                <Table>
-                  <THead>
-                    <TR>
-                      <TH>Company</TH>
-                      <TH>Reference</TH>
-                      <TH>Type</TH>
-                      <TH className="text-left">Notes</TH>
-                    </TR>
-                  </THead>
-                  <TBody>
-                    <TR>
-                      <TD>
-                        <Input
-                          value={companyName}
-                          onChange={e => setCompanyName(e.target.value)}
-                          placeholder="Company name"
-                          disabled={mode === 'view' || uploading}
-                        />
-                      </TD>
-                      <TD>
-                        <Input
-                          value={reference}
-                          onChange={e => setReference(e.target.value)}
-                          placeholder="Ref (optional)"
-                          disabled={mode === 'view' || uploading}
-                        />
-                      </TD>
-                      <TD>
-                        <Select
-                          value={documentType}
-                          onChange={e => setDocumentType(e.target.value)}
-                          disabled={mode === 'view' || uploading}
-                        >
-                          <option value="Shipment">Shipment</option>
-                          <option value="Invoice">Invoice</option>
-                          <option value="BL">BL</option>
-                          <option value="Packing List">Packing List</option>
-                          <option value="Other">Other</option>
-                        </Select>
-                      </TD>
-                      <TD className="min-w-72">
-                        <Textarea
-                          value={notes}
-                          onChange={e => setNotes(e.target.value)}
-                          placeholder="Notes"
-                          rows={2}
-                          disabled={mode === 'view' || uploading}
-                        />
-                      </TD>
-                    </TR>
-                  </TBody>
-                </Table>
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={mode === 'edit' ? 'Edit external record' : 'View external record'}
+        description={selected ? `${selected.companyName} • ${selected.id}` : undefined}
+      >
+        {selected ? (
+          <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="rounded-xl border border-slate-200 bg-white p-3">
+                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Company</div>
+                <Input value={companyName} onChange={e => setCompanyName(e.target.value)} disabled={mode === 'view' || uploading} />
               </div>
+              <div className="rounded-xl border border-slate-200 bg-white p-3">
+                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Reference</div>
+                <Input value={reference} onChange={e => setReference(e.target.value)} disabled={mode === 'view' || uploading} />
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-white p-3">
+                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Type</div>
+                <Select value={documentType} onChange={e => setDocumentType(e.target.value)} disabled={mode === 'view' || uploading}>
+                  <option value="Shipment">Shipment</option>
+                  <option value="Invoice">Invoice</option>
+                  <option value="BL">BL</option>
+                  <option value="Packing List">Packing List</option>
+                  <option value="Other">Other</option>
+                </Select>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-white p-3">
+                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Notes</div>
+                <Textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} disabled={mode === 'view' || uploading} />
+              </div>
+            </div>
 
-              <div className="grid gap-2 sm:grid-cols-2">
-                <div>
-                  <div className="text-xs font-semibold text-slate-600 mb-2">Folder path (auto)</div>
-                  <Input value={folderPath} disabled className="bg-slate-50" />
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
+              <div className="flex items-start gap-2">
+                <FolderOpen className="h-4 w-4 text-blue-700 mt-0.5" />
+                <div className="min-w-0">
+                  <div className="text-xs font-semibold text-blue-800">Document storage folder</div>
+                  <div className="mt-1 text-xs text-blue-700 break-all">{folderPath}</div>
                 </div>
-                {mode === 'edit' && (
-                  <div className="pt-5">
-                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-600">
-                      <input
-                        type="checkbox"
-                        checked={replaceDocuments}
-                        onChange={e => setReplaceDocuments(e.target.checked)}
-                        disabled={uploading}
-                      />
-                      Replace documents
-                    </label>
-                  </div>
-                )}
               </div>
+            </div>
 
-              {mode !== 'view' && (
+            {mode === 'edit' && (
+              <>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                    <input
+                      type="checkbox"
+                      checked={replaceDocuments}
+                      onChange={e => setReplaceDocuments(e.target.checked)}
+                      disabled={uploading}
+                    />
+                    Replace documents
+                  </label>
+                </div>
                 <div>
-                  <div className="text-xs font-semibold text-slate-600 mb-2">
-                    Upload files {mode === 'create' ? '*' : '(optional)'}
-                  </div>
+                  <div className="text-xs font-semibold text-slate-600 mb-2">Upload files (optional)</div>
                   <label className="flex flex-col gap-2">
                     <input
                       type="file"
@@ -475,7 +561,7 @@ export function AdminExternalDocumentsPage() {
                       accept=".pdf,application/pdf,.jpg,.jpeg,.png,.gif,.webp,image/jpeg,image/png,image/gif,image/webp"
                       className="hidden"
                       onChange={e => handleAddFiles(e.target.files)}
-                      disabled={uploading || mode === 'view'}
+                      disabled={uploading}
                     />
                     <div className={cn(
                       'flex flex-col items-center justify-center h-28 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors',
@@ -486,122 +572,68 @@ export function AdminExternalDocumentsPage() {
                       <div className="text-xs text-slate-500 mt-1">{folderPath}</div>
                     </div>
                   </label>
-
-                  {files.length > 0 && (
-                    <div className="mt-3 space-y-2">
-                      {files.map((f, idx) => (
-                        <div
-                          key={`${f.name}-${idx}`}
-                          className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2"
-                        >
-                          <div className="min-w-0">
-                            <div className="text-xs font-semibold text-slate-900 truncate">{f.name}</div>
-                            <div className="text-[11px] text-slate-500">{Math.round(f.size / 1024)} KB</div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => removeFileAt(idx)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
-              )}
+              </>
+            )}
 
-              {selected && (
-                <div>
-                  <div className="text-xs font-semibold text-slate-600 mb-2">Saved documents</div>
-                  <div className="overflow-x-auto rounded-2xl border border-slate-200">
-                    <Table>
-                      <THead>
-                        <TR>
-                          <TH>File</TH>
-                          <TH>Uploaded</TH>
-                          <TH className="text-right">Link</TH>
+            <div>
+              <div className="text-xs font-semibold text-slate-600 mb-2">Saved documents</div>
+              <div className="overflow-x-auto rounded-2xl border border-slate-200">
+                <Table>
+                  <THead>
+                    <TR>
+                      <TH>File</TH>
+                      <TH>Uploaded</TH>
+                      <TH className="text-right">Link</TH>
+                    </TR>
+                  </THead>
+                  <TBody>
+                    {(selected.documents || []).length === 0 ? (
+                      <TR>
+                        <TD colSpan={3} className="px-4 py-6 text-center text-sm text-slate-600">
+                          No documents
+                        </TD>
+                      </TR>
+                    ) : (
+                      (selected.documents || []).map((d, idx) => (
+                        <TR key={`${d.documentUrl}-${idx}`}>
+                          <TD className="whitespace-nowrap">{d.fileName || 'Document'}</TD>
+                          <TD className="whitespace-nowrap text-slate-600">{d.uploadedAtIso ? d.uploadedAtIso.slice(0, 10) : '-'}</TD>
+                          <TD className="text-right whitespace-nowrap">
+                            <a
+                              href={d.documentUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-blue-600 hover:text-blue-700 underline text-sm"
+                            >
+                              Open
+                            </a>
+                          </TD>
                         </TR>
-                      </THead>
-                      <TBody>
-                        {(selected.documents || []).length === 0 ? (
-                          <TR>
-                            <TD colSpan={3} className="px-4 py-6 text-center text-sm text-slate-600">
-                              No documents
-                            </TD>
-                          </TR>
-                        ) : (
-                          (selected.documents || []).map((d, idx) => (
-                            <TR key={`${d.documentUrl}-${idx}`}>
-                              <TD className="whitespace-nowrap">{d.fileName || 'Document'}</TD>
-                              <TD className="whitespace-nowrap text-slate-600">{d.uploadedAtIso ? d.uploadedAtIso.slice(0, 10) : '-'}</TD>
-                              <TD className="text-right whitespace-nowrap">
-                                <a
-                                  href={d.documentUrl}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="text-blue-600 hover:text-blue-700 underline text-sm"
-                                >
-                                  Open
-                                </a>
-                              </TD>
-                            </TR>
-                          ))
-                        )}
-                      </TBody>
-                    </Table>
-                  </div>
-                </div>
-              )}
-
-              <div className="grid gap-2 sm:grid-cols-2">
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    resetEditor()
-                    setFiles([])
-                  }}
-                  disabled={uploading}
-                >
-                  Clear
-                </Button>
-
-                {mode === 'create' && (
-                  <Button onClick={handleCreate} disabled={uploading}>
-                    {uploading ? 'Saving...' : 'Save record'}
-                  </Button>
-                )}
-
-                {mode === 'edit' && (
-                  <Button onClick={handleSaveEdit} disabled={uploading}>
-                    {uploading ? 'Saving...' : 'Save changes'}
-                  </Button>
-                )}
-
-                {mode === 'view' && selected && (
-                  <Button
-                    onClick={() => {
-                      setMode('edit')
-                      setReplaceDocuments(true)
-                    }}
-                    disabled={uploading}
-                  >
-                    Edit
-                  </Button>
-                )}
-              </div>
-
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                <div className="text-xs font-semibold text-slate-600">Tip</div>
-                <div className="mt-1 text-xs text-slate-600">
-                  Fill the sheet row, upload files (if needed), then save. Each record can be viewed, edited, or deleted.
-                </div>
+                      ))
+                    )}
+                  </TBody>
+                </Table>
               </div>
             </div>
-          </CardBody>
-        </Card>
-      </div>
+
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Button variant="secondary" onClick={() => setModalOpen(false)} disabled={uploading}>
+                Close
+              </Button>
+              {mode === 'view' ? (
+                <Button onClick={() => setMode('edit')} disabled={uploading}>
+                  Edit
+                </Button>
+              ) : (
+                <Button onClick={handleSaveEdit} disabled={uploading}>
+                  {uploading ? 'Saving...' : 'Save changes'}
+                </Button>
+              )}
+            </div>
+          </div>
+        ) : null}
+      </Modal>
     </div>
   )
 }

@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Button } from '../../components/ui/Button'
 import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
 import { Input } from '../../components/ui/Input'
+import { Skeleton } from '../../components/ui/Skeleton'
 import { Table, TBody, TD, TH, THead, TR } from '../../components/ui/Table'
 import { Modal } from '../../components/ui/Modal'
 import { adminAPI } from '../../lib/api'
@@ -511,6 +512,17 @@ export function AdminUsersPage({ focus }: { focus: Extract<Role, 'client' | 'war
                   </TR>
                 </THead>
                 <TBody>
+                  {isLoadingUsers
+                    ? Array.from({ length: 6 }).map((_, idx) => (
+                        <TR key={`skeleton-${idx}`}>
+                          <TD><Skeleton className="h-4 w-28" /></TD>
+                          <TD><Skeleton className="h-4 w-44" /></TD>
+                          <TD><Skeleton className="h-4 w-20" /></TD>
+                          <TD><Skeleton className="h-6 w-20 rounded-full" /></TD>
+                          <TD className="text-right"><Skeleton className="ml-auto h-8 w-40" /></TD>
+                        </TR>
+                      ))
+                    : null}
                   {allUsers.map(u => (
                     <TR key={u.id}>
                       <TD className="whitespace-nowrap font-semibold text-slate-900">{u.name}</TD>

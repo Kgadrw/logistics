@@ -3,6 +3,7 @@ import { Building2, Check, Mail, MapPin, Pencil, Phone, User, X } from 'lucide-r
 import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
+import { Skeleton } from '../../components/ui/Skeleton'
 import { clientAPI } from '../../lib/api'
 import { useAuth } from '../../lib/authContext'
 
@@ -146,11 +147,27 @@ export function ClientProfilePage() {
     return (
       <div className="pt-4">
         <div className="mb-4">
-          <div className="text-sm font-semibold text-slate-900">Profile</div>
+          <Skeleton className="h-4 w-24" />
         </div>
         <Card>
           <CardBody>
-            <div className="text-sm text-slate-600 text-center py-8">Loading profile...</div>
+            <div className="space-y-4 py-4">
+              <div className="flex items-center gap-4">
+                <Skeleton className="h-16 w-16 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {Array.from({ length: 6 }).map((_, idx) => (
+                  <div key={idx} className="space-y-2">
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ))}
+              </div>
+            </div>
           </CardBody>
         </Card>
       </div>

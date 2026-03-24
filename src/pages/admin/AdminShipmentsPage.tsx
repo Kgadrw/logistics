@@ -4,6 +4,7 @@ import { Badge, statusTone } from '../../components/ui/Badge'
 import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
 import { Input } from '../../components/ui/Input'
 import { Select } from '../../components/ui/Select'
+import { Skeleton } from '../../components/ui/Skeleton'
 import { Table, TBody, TD, TH, THead, TR } from '../../components/ui/Table'
 import { formatDateTime, formatMoneyUsd } from '../../lib/format'
 import { useAdminAPI } from '../../lib/useAPI'
@@ -103,6 +104,18 @@ export function AdminShipmentsPage() {
                 </TR>
               </THead>
               <TBody>
+                {loading
+                  ? Array.from({ length: 6 }).map((_, idx) => (
+                      <TR key={`skeleton-${idx}`}>
+                        <TD className="whitespace-nowrap"><Skeleton className="h-4 w-24" /></TD>
+                        <TD className="whitespace-nowrap"><Skeleton className="h-4 w-28" /></TD>
+                        <TD className="whitespace-nowrap"><Skeleton className="h-4 w-28" /></TD>
+                        <TD><Skeleton className="h-6 w-24 rounded-full" /></TD>
+                        <TD className="whitespace-nowrap text-right"><Skeleton className="ml-auto h-4 w-16" /></TD>
+                        <TD className="whitespace-nowrap"><Skeleton className="h-4 w-28" /></TD>
+                      </TR>
+                    ))
+                  : null}
                 {filtered.map(s => (
                   <TR
                     key={s.id}

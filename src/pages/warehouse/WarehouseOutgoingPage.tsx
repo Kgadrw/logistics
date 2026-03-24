@@ -6,6 +6,7 @@ import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
 import { Input } from '../../components/ui/Input'
 import { Modal } from '../../components/ui/Modal'
 import { Select } from '../../components/ui/Select'
+import { Skeleton } from '../../components/ui/Skeleton'
 import { Table, TBody, TD, TH, THead, TR } from '../../components/ui/Table'
 import { PDFViewer } from '../../components/PDFViewer'
 import { useWarehouseAPI } from '../../lib/useAPI'
@@ -137,6 +138,17 @@ export function WarehouseOutgoingPage() {
                 </TR>
               </THead>
               <TBody>
+                {loadingShipments
+                  ? Array.from({ length: 5 }).map((_, idx) => (
+                      <TR key={`skeleton-${idx}`}>
+                        <TD className="whitespace-nowrap"><Skeleton className="h-4 w-24" /></TD>
+                        <TD className="whitespace-nowrap"><Skeleton className="h-4 w-24" /></TD>
+                        <TD className="min-w-64"><Skeleton className="h-4 w-48" /></TD>
+                        <TD><Skeleton className="h-6 w-24 rounded-full" /></TD>
+                        <TD className="text-right"><Skeleton className="ml-auto h-8 w-28" /></TD>
+                      </TR>
+                    ))
+                  : null}
                 {outgoing.map(s => (
                   <TR
                     key={s.id}
@@ -193,13 +205,7 @@ export function WarehouseOutgoingPage() {
                     </TD>
                   </TR>
                 ) : null}
-                {loadingShipments && (
-                  <TR>
-                    <TD colSpan={5} className="px-4 py-8 text-center text-sm text-slate-600">
-                      Loading shipments...
-                    </TD>
-                  </TR>
-                )}
+                {loadingShipments ? null : null}
               </TBody>
             </Table>
           </div>

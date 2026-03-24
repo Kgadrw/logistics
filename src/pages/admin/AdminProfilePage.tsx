@@ -3,6 +3,7 @@ import { Check, Mail, Phone, Pencil, Shield, User, X } from 'lucide-react'
 import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
+import { Skeleton } from '../../components/ui/Skeleton'
 import { adminAPI } from '../../lib/api'
 import { useAuth } from '../../lib/authContext'
 
@@ -112,11 +113,27 @@ export function AdminProfilePage() {
     return (
       <div className="pt-4">
         <div className="mb-4">
-          <div className="text-sm font-semibold text-slate-900">Admin Profile</div>
+          <Skeleton className="h-4 w-28" />
         </div>
         <Card>
           <CardBody>
-            <div className="text-sm text-slate-600 text-center py-8">Loading profile...</div>
+            <div className="space-y-4 py-4">
+              <div className="flex items-center gap-4">
+                <Skeleton className="h-16 w-16 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-3 w-36" />
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {Array.from({ length: 4 }).map((_, idx) => (
+                  <div key={idx} className="space-y-2">
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ))}
+              </div>
+            </div>
           </CardBody>
         </Card>
       </div>

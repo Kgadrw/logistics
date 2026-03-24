@@ -2,6 +2,7 @@ import * as React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Badge, statusTone } from '../../components/ui/Badge'
 import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
+import { Skeleton } from '../../components/ui/Skeleton'
 import { Table, TBody, TD, TH, THead, TR } from '../../components/ui/Table'
 import { useWarehouseAPI } from '../../lib/useAPI'
 import { useAuth } from '../../lib/authContext'
@@ -38,6 +39,17 @@ export function WarehouseHistoryPage() {
                 </TR>
               </THead>
               <TBody>
+                {loading
+                  ? Array.from({ length: 5 }).map((_, idx) => (
+                      <TR key={`skeleton-${idx}`}>
+                        <TD className="whitespace-nowrap"><Skeleton className="h-4 w-24" /></TD>
+                        <TD className="whitespace-nowrap"><Skeleton className="h-4 w-28" /></TD>
+                        <TD><Skeleton className="h-6 w-24 rounded-full" /></TD>
+                        <TD className="whitespace-nowrap"><Skeleton className="h-4 w-28" /></TD>
+                        <TD className="whitespace-nowrap"><Skeleton className="h-4 w-28" /></TD>
+                      </TR>
+                    ))
+                  : null}
                 {history.map(s => (
                   <TR
                     key={s.id}
