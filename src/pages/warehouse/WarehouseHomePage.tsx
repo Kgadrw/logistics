@@ -2,6 +2,7 @@ import * as React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PackageCheck, Truck, History, ArrowRight, Clock, CheckCircle2, Bell, Zap, AlertCircle, TrendingUp } from 'lucide-react'
 import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
+import { Skeleton } from '../../components/ui/Skeleton'
 import { Badge, statusTone } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { useWarehouseAPI, useNotificationsAPI } from '../../lib/useAPI'
@@ -74,9 +75,35 @@ export function WarehouseHomePage() {
   if (loading && !dashboardStats) {
     return (
       <div className="px-3 pt-2 pb-2 sm:px-0 sm:pt-4">
-        <div className="mb-6">
-          <div className="text-xs sm:text-sm font-semibold text-slate-900">Warehouse Dashboard</div>
-          <div className="mt-1 text-xs sm:text-sm text-slate-600">Loading...</div>
+        <div className="mb-4 sm:mb-6 rounded-xl bg-blue-900 border border-blue-800 px-4 py-4 sm:px-5 sm:py-5">
+          <Skeleton className="h-4 w-40 bg-blue-700/70" />
+          <Skeleton className="mt-2 h-3 w-72 bg-blue-700/60" />
+          <div className="mt-5 grid gap-2 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, idx) => (
+              <Card key={idx} className="bg-blue-800/40 ring-blue-700/60 border-blue-700/60">
+                <CardBody>
+                  <Skeleton className="h-3 w-24 bg-blue-700/70" />
+                  <Skeleton className="mt-2 h-7 w-14 bg-blue-700/60" />
+                </CardBody>
+              </Card>
+            ))}
+          </div>
+        </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+          {Array.from({ length: 2 }).map((_, idx) => (
+            <Card key={idx}>
+              <CardHeader>
+                <Skeleton className="h-4 w-44" />
+              </CardHeader>
+              <CardBody>
+                <div className="space-y-3">
+                  {Array.from({ length: 4 }).map((__, row) => (
+                    <Skeleton key={row} className="h-12 w-full" />
+                  ))}
+                </div>
+              </CardBody>
+            </Card>
+          ))}
         </div>
       </div>
     )

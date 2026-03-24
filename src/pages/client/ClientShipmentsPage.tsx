@@ -3,6 +3,7 @@ import { Edit, PackagePlus, Send, Truck, Search, Filter, Package, TrendingUp, Ch
 import { Badge, statusTone } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
+import { Skeleton } from '../../components/ui/Skeleton'
 import { Input } from '../../components/ui/Input'
 import { ShipmentTimeline } from '../../components/Timeline'
 import { NotificationPanel } from '../../components/NotificationPanel'
@@ -69,6 +70,56 @@ export function ClientShipmentsPage() {
     const statuses = new Set(clientShipments.map((s: any) => s.status))
     return Array.from(statuses).sort()
   }, [clientShipments])
+
+  if (loading && clientShipments.length === 0) {
+    return (
+      <div className="w-full max-w-full px-0 pt-0 pb-0 sm:px-4 sm:pt-6 sm:pb-6 mx-auto">
+        <div className="mb-6 rounded-xl bg-blue-900 border border-blue-800 px-4 py-4 sm:px-5 sm:py-5">
+          <Skeleton className="h-4 w-24 bg-blue-700/70" />
+          <Skeleton className="mt-2 h-3 w-72 bg-blue-700/60" />
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, idx) => (
+              <Card key={idx} className="bg-blue-800/40 ring-blue-700/60 border-blue-700/60">
+                <CardBody>
+                  <Skeleton className="h-3 w-24 bg-blue-700/70" />
+                  <Skeleton className="mt-2 h-7 w-14 bg-blue-700/60" />
+                </CardBody>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        <div className="mb-4 flex flex-col sm:flex-row gap-3">
+          <Skeleton className="h-10 flex-1" />
+          <Skeleton className="h-10 w-full sm:w-64" />
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-12">
+          <div className="lg:col-span-7 order-2 lg:order-1">
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, idx) => (
+                <Skeleton key={idx} className="h-24 w-full rounded-2xl" />
+              ))}
+            </div>
+          </div>
+          <div className="lg:col-span-5 order-1 lg:order-2">
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-5 w-40" />
+              </CardHeader>
+              <CardBody>
+                <div className="space-y-3">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                </div>
+              </CardBody>
+            </Card>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="w-full max-w-full px-0 pt-0 pb-0 sm:px-4 sm:pt-6 sm:pb-6 mx-auto">

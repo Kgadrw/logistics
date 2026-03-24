@@ -2,6 +2,7 @@ import * as React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Package, Users, Building2, Activity, TrendingUp, ArrowRight, AlertCircle, CheckCircle2, XCircle, Clock, Server, Database, Globe, Shield, Mail } from 'lucide-react'
 import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
+import { Skeleton } from '../../components/ui/Skeleton'
 import { adminAPI } from '../../lib/api'
 import { Badge, statusTone } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
@@ -231,10 +232,37 @@ export function AdminOverviewPage() {
   if (loading) {
     return (
       <div className="pt-4">
-        <div className="mb-4">
-          <div className="text-sm font-semibold text-slate-900">Admin Overview</div>
-          <div className="mt-1 text-sm text-slate-600">Loading...</div>
+        <div className="mb-6 rounded-xl bg-blue-900 border border-blue-800 px-4 py-4 sm:px-5 sm:py-5">
+          <Skeleton className="h-4 w-32 bg-blue-700/70" />
+          <Skeleton className="mt-2 h-3 w-64 bg-blue-700/60" />
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+            {Array.from({ length: 6 }).map((_, idx) => (
+              <Card key={idx} className="bg-blue-800/40 ring-blue-700/60 border-blue-700/60">
+                <CardBody>
+                  <Skeleton className="h-3 w-24 bg-blue-700/70" />
+                  <Skeleton className="mt-2 h-7 w-16 bg-blue-700/60" />
+                </CardBody>
+              </Card>
+            ))}
+          </div>
         </div>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-5 w-44" />
+            <Skeleton className="mt-2 h-3 w-64" />
+          </CardHeader>
+          <CardBody>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, idx) => (
+                <div key={idx} className="rounded-xl border border-slate-200 p-4">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="mt-3 h-8 w-full" />
+                  <Skeleton className="mt-3 h-3 w-20" />
+                </div>
+              ))}
+            </div>
+          </CardBody>
+        </Card>
       </div>
     )
   }
