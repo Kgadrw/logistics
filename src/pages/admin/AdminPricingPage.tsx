@@ -2,10 +2,27 @@ import * as React from 'react'
 import { Button } from '../../components/ui/Button'
 import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
 import { Input } from '../../components/ui/Input'
-import { Select } from '../../components/ui/Select'
 import { useAdminAPI } from '../../lib/useAPI'
 import { adminAPI } from '../../lib/api'
-import type { PricingRules } from '../../lib/types'
+import type { PricingRules, TransportMethod } from '../../lib/types'
+
+const transportMethods: TransportMethod[] = ['Truck', 'Air', 'Bike', 'Ship']
+
+function normalizePricingRules(pricing: Partial<PricingRules>): PricingRules {
+  return {
+    pricePerKgUsd: Number(pricing.pricePerKgUsd) || 0,
+    warehouseHandlingFeeUsd: Number(pricing.warehouseHandlingFeeUsd) || 0,
+    transportPriceUsd: {
+      Truck: Number(pricing.transportPriceUsd?.Truck) || 0,
+      Air: Number(pricing.transportPriceUsd?.Air) || 0,
+      Bike: Number(pricing.transportPriceUsd?.Bike) || 0,
+      Ship: Number(pricing.transportPriceUsd?.Ship) || 0,
+    },
+    logisticsMethods: Array.isArray(pricing.logisticsMethods) && pricing.logisticsMethods.length > 0
+      ? pricing.logisticsMethods
+      : ['Truck', 'Air', 'Bike', 'Ship'],
+  }
+}
 
 export function AdminPricingPage() {
   const { pricing, refreshPricing } = useAdminAPI()
@@ -15,7 +32,7 @@ export function AdminPricingPage() {
 
   React.useEffect(() => {
     if (pricing) {
-      setDraft(structuredClone(pricing))
+      setDraft(normalizePricingRules(structuredClone(pricing)))
     }
   }, [pricing])
 
@@ -24,7 +41,7 @@ export function AdminPricingPage() {
     try {
       setLoading(true)
       setError(null)
-      await adminAPI.updatePricing(draft)
+      await adminAPI.updatePricing(normalizePricingRules(draft))
       await refreshPricing()
     } catch (err: any) {
       setError(err.message || 'Failed to update pricing')
@@ -49,7 +66,7 @@ export function AdminPricingPage() {
     <div className="pt-4">
       <div className="mb-4">
         <div className="text-sm font-semibold text-slate-900">Pricing Management</div>
-        <div className="mt-1 text-sm text-slate-600">Set global pricing rules. Changes are recorded in the audit log.</div>
+        <div className="mt-1 text-sm text-slate-600">Set all global pricing options and rules used to regulate shipment pricing.</div>
       </div>
 
       {error && (
@@ -88,9 +105,63 @@ export function AdminPricingPage() {
               </div>
             </div>
 
+            <div className="mt-5">
+              <div className="text-xs font-semibold text-slate-600">Transport price by method (USD)</div>
+              <div className="mt-2 grid gap-4 sm:grid-cols-2">
+                {transportMethods.map(method => (
+                  <div key={method}>
+                    <div className="text-xs text-slate-500">{method}</div>
+                    <Input
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={draft.transportPriceUsd?.[method] || ''}
+                      onChange={e =>
+                        setDraft(d =>
+                          d
+                            ? {
+                                ...d,
+                                transportPriceUsd: {
+                                  ...d.transportPriceUsd,
+                                  [method]: Number(e.target.value) || 0,
+                                },
+                              }
+                            : null
+                        )
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <div className="text-xs font-semibold text-slate-600">Enabled logistics methods</div>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                {transportMethods.map(method => (
+                  <label key={method} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                    <input
+                      type="checkbox"
+                      checked={draft.logisticsMethods.includes(method)}
+                      onChange={e =>
+                        setDraft(d => {
+                          if (!d) return d
+                          const next = e.target.checked
+                            ? Array.from(new Set([...d.logisticsMethods, method]))
+                            : d.logisticsMethods.filter(m => m !== method)
+                          return { ...d, logisticsMethods: next }
+                        })
+                      }
+                    />
+                    <span className="text-sm text-slate-700">{method}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
 
             <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-              <Button variant="secondary" onClick={() => pricing && setDraft(structuredClone(pricing))}>
+              <Button variant="secondary" onClick={() => pricing && setDraft(normalizePricingRules(structuredClone(pricing)))}>
                 Reset
               </Button>
               <Button
@@ -117,8 +188,12 @@ export function AdminPricingPage() {
                 </div>
               </div>
               <div className="rounded-xl border border-slate-200 bg-white p-4">
-                <div className="text-xs font-semibold text-slate-600">Warehouse-specific pricing</div>
-                <div className="mt-1">Each warehouse sets their own transport pricing (Air, Ship) and logistics methods in their profile settings.</div>
+                <div className="text-xs font-semibold text-slate-600">Pricing hierarchy</div>
+                <div className="mt-1">Global admin pricing is the baseline. Warehouse-specific pricing overrides admin values when defined for that warehouse.</div>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-white p-4">
+                <div className="text-xs font-semibold text-slate-600">Regulation scope</div>
+                <div className="mt-1">Changes apply to all pricing options (per kg, handling, method prices, and enabled methods) and recalculate shipment estimates.</div>
               </div>
               <div className="rounded-xl border border-slate-200 bg-white p-4">
                 <div className="text-xs font-semibold text-slate-600">Audit trail</div>

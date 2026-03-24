@@ -10,9 +10,7 @@ import type { Role, User } from '../../lib/types'
 import { Building, Mail, Lock, MapPin, Package, User as UserIcon, Phone, Trash2, Power } from 'lucide-react'
 
 export function AdminUsersPage({ focus }: { focus: Extract<Role, 'client' | 'warehouse'> }) {
-
-  // Form state
-  const [formData, setFormData] = React.useState({
+  const getInitialFormData = React.useCallback(() => ({
     name: '',
     email: '',
     password: '',
@@ -31,13 +29,16 @@ export function AdminUsersPage({ focus }: { focus: Extract<Role, 'client' | 'war
       address: '',
       company: '',
     }),
-  })
+  }), [focus])
+
+  // Form state
+  const [formData, setFormData] = React.useState(getInitialFormData)
   const [error, setError] = React.useState('')
   const [isLoading, setIsLoading] = React.useState(false)
   const [backendUsers, setBackendUsers] = React.useState<User[]>([])
   const [isLoadingUsers, setIsLoadingUsers] = React.useState(false)
   const [actionLoading, setActionLoading] = React.useState<string | null>(null)
-  const [showForm, setShowForm] = React.useState(false)
+  const [showCreateModal, setShowCreateModal] = React.useState(false)
   const [confirmModal, setConfirmModal] = React.useState<{
     open: boolean
     type: 'deactivate' | 'activate' | 'delete' | null
@@ -61,6 +62,12 @@ export function AdminUsersPage({ focus }: { focus: Extract<Role, 'client' | 'war
   React.useEffect(() => {
     fetchUsers()
   }, [fetchUsers])
+
+  React.useEffect(() => {
+    setFormData(getInitialFormData())
+    setError('')
+    setShowCreateModal(false)
+  }, [getInitialFormData])
 
   // Use only backend users (no local store users)
   const allUsers = React.useMemo(() => {
@@ -141,29 +148,10 @@ export function AdminUsersPage({ focus }: { focus: Extract<Role, 'client' | 'war
       })
 
       // Reset form
-      setFormData({
-        name: '',
-        email: '',
-        password: '',
-        ...(focus === 'warehouse' ? {
-          location: '',
-          capacity: '',
-          manager: '',
-          contact: '',
-          consigneeName: '',
-          consigneeTin: '',
-          consigneeAddress: '',
-          consigneePhone: '',
-          consigneeEmail: '',
-        } : {
-          phone: '',
-          address: '',
-          company: '',
-        }),
-      })
+      setFormData(getInitialFormData())
 
       // Hide form after successful creation
-      setShowForm(false)
+      setShowCreateModal(false)
 
       // Refresh users list
       await fetchUsers()
@@ -224,25 +212,130 @@ export function AdminUsersPage({ focus }: { focus: Extract<Role, 'client' | 'war
       </div>
 
       <div className="grid gap-4 lg:grid-cols-12">
-        <Card className="lg:col-span-5 order-1 lg:order-1">
+        <Card className="lg:col-span-12 overflow-hidden">
           <CardHeader>
-            <CardTitle>Create {focus} account</CardTitle>
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle>User management</CardTitle>
+              <Button onClick={() => setShowCreateModal(true)}>
+                Create {focus} account
+              </Button>
+            </div>
+            <div className="text-xs text-slate-500">
+              {isLoadingUsers ? 'Loading...' : `${allUsers.length} ${allUsers.length === 1 ? 'user' : 'users'}`}
+            </div>
           </CardHeader>
-          <CardBody>
-            {!showForm ? (
-              <div className="space-y-4">
-                <div className="text-sm text-slate-600">
-                  Create a new {focus === 'warehouse' ? 'warehouse' : 'client'} account to manage shipments and logistics.
-                </div>
-                <Button
-                  onClick={() => setShowForm(true)}
-                  className="w-full"
-                >
-                  Create Account
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-3">
+          <CardBody className="p-0">
+            <div className="overflow-x-auto">
+              <Table>
+                <THead>
+                  <TR>
+                    <TH>Name</TH>
+                    <TH>Email</TH>
+                    <TH>Role</TH>
+                    <TH>Status</TH>
+                    <TH className="text-right">Actions</TH>
+                  </TR>
+                </THead>
+                <TBody>
+                  {isLoadingUsers
+                    ? Array.from({ length: 6 }).map((_, idx) => (
+                        <TR key={`skeleton-${idx}`}>
+                          <TD><Skeleton className="h-4 w-28" /></TD>
+                          <TD><Skeleton className="h-4 w-44" /></TD>
+                          <TD><Skeleton className="h-4 w-20" /></TD>
+                          <TD><Skeleton className="h-6 w-20 rounded-full" /></TD>
+                          <TD className="text-right"><Skeleton className="ml-auto h-8 w-40" /></TD>
+                        </TR>
+                      ))
+                    : null}
+                  {allUsers.map(u => (
+                    <TR key={u.id}>
+                      <TD className="whitespace-nowrap font-semibold text-slate-900">{u.name}</TD>
+                      <TD className="whitespace-nowrap text-slate-600 text-sm">{(u as any).email || '-'}</TD>
+                      <TD className="whitespace-nowrap capitalize text-slate-700">{u.role}</TD>
+                      <TD className="whitespace-nowrap">
+                        <span
+                          className={[
+                            'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1',
+                            u.active ? 'bg-white text-green-800 ring-green-200' : 'bg-red-50 text-red-800 ring-red-200',
+                          ].join(' ')}
+                        >
+                          {u.active ? 'Active' : 'Inactive'}
+                        </span>
+                      </TD>
+                      <TD className="text-right ">
+                      <div className="flex items-center justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => handleToggleUser(u)}
+                            disabled={actionLoading === u.id}
+                            className="bg-white text-slate-900 ring-1 ring-slate-200 hover:bg-slate-50"
+                          >
+                            <Power className="h-3.5 w-3.5 mr-1" />
+                            {u.active ? 'Deactivate' : 'Activate'}
+                          </Button>
+
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDeleteUser(u)}
+                            disabled={actionLoading === u.id}
+                            className="bg-white text-red-600 ring-1 ring-slate-200 hover:bg-red-50 hover:text-red-700"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+
+                      </TD>
+                    </TR>
+                  ))}
+                  {allUsers.length === 0 && !isLoadingUsers ? (
+                    <TR>
+                      <TD colSpan={5} className="px-4 py-8 text-center text-sm text-slate-600">
+                        No users yet. Create one to get started.
+                      </TD>
+                    </TR>
+                  ) : null}
+                </TBody>
+              </Table>
+            </div>
+          </CardBody>
+        </Card>
+      </div>
+
+      <Modal
+        open={showCreateModal}
+        title={`Create ${focus} account`}
+        description={`Create a new ${focus === 'warehouse' ? 'warehouse' : 'client'} account to manage shipments and logistics.`}
+        onClose={() => {
+          setShowCreateModal(false)
+          setError('')
+          setFormData(getInitialFormData())
+        }}
+        footer={
+          <div className="flex gap-2 sm:justify-end">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setShowCreateModal(false)
+                setError('')
+                setFormData(getInitialFormData())
+              }}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={isLoading}
+            >
+              {isLoading ? 'Creating...' : `Create ${focus} account`}
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-3">
                 {error && (
                   <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-800">
                     {error}
@@ -467,117 +560,8 @@ export function AdminUsersPage({ focus }: { focus: Extract<Role, 'client' | 'war
                     </div>
                   </>
                 )}
-
-                <div className="flex gap-2">
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setShowForm(false)
-                      setError('')
-                    }}
-                    className="flex-1"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleSubmit}
-                    disabled={isLoading}
-                    className="flex-1"
-                  >
-                    {isLoading ? 'Creating...' : `Create ${focus} account`}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardBody>
-        </Card>
-
-        <Card className="lg:col-span-7 overflow-hidden order-2 lg:order-1">
-          <CardHeader>
-            <CardTitle>User management</CardTitle>
-            <div className="text-xs text-slate-500">
-              {isLoadingUsers ? 'Loading...' : `${allUsers.length} ${allUsers.length === 1 ? 'user' : 'users'}`}
-            </div>
-          </CardHeader>
-          <CardBody className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <THead>
-                  <TR>
-                    <TH>Name</TH>
-                    <TH>Email</TH>
-                    <TH>Role</TH>
-                    <TH>Status</TH>
-                    <TH className="text-right">Actions</TH>
-                  </TR>
-                </THead>
-                <TBody>
-                  {isLoadingUsers
-                    ? Array.from({ length: 6 }).map((_, idx) => (
-                        <TR key={`skeleton-${idx}`}>
-                          <TD><Skeleton className="h-4 w-28" /></TD>
-                          <TD><Skeleton className="h-4 w-44" /></TD>
-                          <TD><Skeleton className="h-4 w-20" /></TD>
-                          <TD><Skeleton className="h-6 w-20 rounded-full" /></TD>
-                          <TD className="text-right"><Skeleton className="ml-auto h-8 w-40" /></TD>
-                        </TR>
-                      ))
-                    : null}
-                  {allUsers.map(u => (
-                    <TR key={u.id}>
-                      <TD className="whitespace-nowrap font-semibold text-slate-900">{u.name}</TD>
-                      <TD className="whitespace-nowrap text-slate-600 text-sm">{(u as any).email || '-'}</TD>
-                      <TD className="whitespace-nowrap capitalize text-slate-700">{u.role}</TD>
-                      <TD className="whitespace-nowrap">
-                        <span
-                          className={[
-                            'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1',
-                            u.active ? 'bg-white text-green-800 ring-green-200' : 'bg-red-50 text-red-800 ring-red-200',
-                          ].join(' ')}
-                        >
-                          {u.active ? 'Active' : 'Inactive'}
-                        </span>
-                      </TD>
-                      <TD className="text-right ">
-                      <div className="flex items-center justify-end gap-2">
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => handleToggleUser(u)}
-                            disabled={actionLoading === u.id}
-                            className="bg-white text-slate-900 ring-1 ring-slate-200 hover:bg-slate-50"
-                          >
-                            <Power className="h-3.5 w-3.5 mr-1" />
-                            {u.active ? 'Deactivate' : 'Activate'}
-                          </Button>
-
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleDeleteUser(u)}
-                            disabled={actionLoading === u.id}
-                            className="bg-white text-red-600 ring-1 ring-slate-200 hover:bg-red-50 hover:text-red-700"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-
-                      </TD>
-                    </TR>
-                  ))}
-                  {allUsers.length === 0 && !isLoadingUsers ? (
-                    <TR>
-                      <TD colSpan={5} className="px-4 py-8 text-center text-sm text-slate-600">
-                        No users yet. Create one to get started.
-                      </TD>
-                    </TR>
-                  ) : null}
-                </TBody>
-              </Table>
-            </div>
-          </CardBody>
-        </Card>
-      </div>
+        </div>
+      </Modal>
 
       {/* Confirmation Modal */}
       <Modal

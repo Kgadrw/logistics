@@ -75,6 +75,13 @@ export type Notification = {
 export type PricingRules = {
   pricePerKgUsd: number
   warehouseHandlingFeeUsd: number
+  transportPriceUsd: {
+    Truck: number
+    Air: number
+    Bike: number
+    Ship: number
+  }
+  logisticsMethods: TransportMethod[]
 }
 
 export type User = {
