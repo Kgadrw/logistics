@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { clientAPI, warehouseAPI, adminAPI, notificationsAPI } from './api'
 import type { Shipment, Notification, User, PricingRules } from './types'
+import { useAuth } from './authContext'
 
 // Hook for client API
 export function useClientAPI(clientId?: string) {
@@ -195,20 +196,26 @@ export function useAdminAPI() {
 
 // Hook for notifications
 export function useNotificationsAPI(role: 'client' | 'warehouse' | 'admin') {
+  const { user } = useAuth()
   const [notifications, setNotifications] = React.useState<Notification[]>([])
   const [loading, setLoading] = React.useState(true)
 
   const fetchNotifications = React.useCallback(async () => {
+    if (!user?.id) {
+      setNotifications([])
+      setLoading(false)
+      return
+    }
     try {
       setLoading(true)
-      const data = await notificationsAPI.getNotifications(role)
+      const data = await notificationsAPI.getNotifications(role, user.id)
       setNotifications(data)
     } catch (err) {
       console.error('Failed to fetch notifications:', err)
     } finally {
       setLoading(false)
     }
-  }, [role])
+  }, [role, user?.id])
 
   React.useEffect(() => {
     fetchNotifications()
@@ -217,8 +224,9 @@ export function useNotificationsAPI(role: 'client' | 'warehouse' | 'admin') {
   }, [fetchNotifications])
 
   const markRead = async (notificationIds?: string[]) => {
+    if (!user?.id) return
     try {
-      await notificationsAPI.markRead(role, notificationIds)
+      await notificationsAPI.markRead(role, user.id, notificationIds)
       await fetchNotifications()
     } catch (err) {
       console.error('Failed to mark notifications as read:', err)

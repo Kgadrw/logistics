@@ -276,10 +276,10 @@ export const adminAPI = {
 
 // Notifications API (shared)
 export const notificationsAPI = {
-  getNotifications: (role: string) => fetchAPI<any[]>(`/notifications?role=${role}`),
-  markRead: (role: string, notificationIds?: string[]) =>
+  getNotifications: (role: string, userId: string) => fetchAPI<any[]>(`/notifications?role=${role}&userId=${encodeURIComponent(userId)}`),
+  markRead: (role: string, userId: string, notificationIds?: string[]) =>
     fetchAPI<any>('/notifications/mark-read', {
       method: 'POST',
-      body: JSON.stringify({ role, notificationIds }),
+      body: JSON.stringify({ role, userId, notificationIds }),
     }),
 }
