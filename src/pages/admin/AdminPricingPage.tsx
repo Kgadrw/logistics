@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Button } from '../../components/ui/Button'
 import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card'
 import { Input } from '../../components/ui/Input'
+import { Skeleton } from '../../components/ui/Skeleton'
 import { useAdminAPI } from '../../lib/useAPI'
 import { adminAPI } from '../../lib/api'
 import type { PricingRules, TransportMethod } from '../../lib/types'
@@ -55,8 +56,68 @@ export function AdminPricingPage() {
     return (
       <div className="pt-4">
         <div className="mb-4">
-          <div className="text-sm font-semibold text-slate-900">Pricing Management</div>
-          <div className="mt-1 text-sm text-slate-600">Loading...</div>
+          <Skeleton className="h-4 w-40" />
+          <Skeleton className="mt-2 h-3 w-72" />
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-12">
+          <Card className="lg:col-span-7 order-2 lg:order-1">
+            <CardHeader>
+              <Skeleton className="h-5 w-24" />
+              <Skeleton className="h-3 w-64" />
+            </CardHeader>
+            <CardBody>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {Array.from({ length: 2 }).map((_, idx) => (
+                  <div key={`base-${idx}`} className="space-y-2">
+                    <Skeleton className="h-3 w-36" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-5">
+                <Skeleton className="h-3 w-48" />
+                <div className="mt-2 grid gap-4 sm:grid-cols-2">
+                  {Array.from({ length: 4 }).map((_, idx) => (
+                    <div key={`method-${idx}`} className="space-y-2">
+                      <Skeleton className="h-3 w-16" />
+                      <Skeleton className="h-10 w-full" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-5">
+                <Skeleton className="h-3 w-44" />
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                  {Array.from({ length: 4 }).map((_, idx) => (
+                    <Skeleton key={`check-${idx}`} className="h-10 w-full" />
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-end gap-2">
+                <Skeleton className="h-10 w-24" />
+                <Skeleton className="h-10 w-36" />
+              </div>
+            </CardBody>
+          </Card>
+
+          <Card className="lg:col-span-5 order-1 lg:order-2">
+            <CardHeader>
+              <Skeleton className="h-5 w-24" />
+              <Skeleton className="h-3 w-40" />
+            </CardHeader>
+            <CardBody>
+              <div className="space-y-3">
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+              </div>
+            </CardBody>
+          </Card>
         </div>
       </div>
     )
