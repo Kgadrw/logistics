@@ -5,7 +5,7 @@ import { Input } from '../../components/ui/Input'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { useAdminAPI } from '../../lib/useAPI'
 import { adminAPI } from '../../lib/api'
-import type { PricingRules, TransportMethod } from '../../lib/types'
+import type { PricingRule, PricingRules, TransportMethod } from '../../lib/types'
 
 const transportMethods: TransportMethod[] = ['Truck', 'Air', 'Bike', 'Ship']
 
@@ -22,6 +22,25 @@ function normalizePricingRules(pricing: Partial<PricingRules>): PricingRules {
     logisticsMethods: Array.isArray(pricing.logisticsMethods) && pricing.logisticsMethods.length > 0
       ? pricing.logisticsMethods
       : ['Truck', 'Air', 'Bike', 'Ship'],
+    cbmRateUsd: Number(pricing.cbmRateUsd) || 0,
+    cbmDivisorByMethod: {
+      Truck: Number(pricing.cbmDivisorByMethod?.Truck) || 333,
+      Air: Number(pricing.cbmDivisorByMethod?.Air) || 167,
+      Bike: Number(pricing.cbmDivisorByMethod?.Bike) || 250,
+      Ship: Number(pricing.cbmDivisorByMethod?.Ship) || 1000,
+    },
+    customRules: Array.isArray(pricing.customRules) ? pricing.customRules : [],
+  }
+}
+
+function createEmptyRule(): PricingRule {
+  return {
+    id: `rule-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    name: '',
+    type: 'fixed',
+    value: 0,
+    methods: [],
+    enabled: true,
   }
 }
 
@@ -167,6 +186,42 @@ export function AdminPricingPage() {
             </div>
 
             <div className="mt-5">
+              <div className="text-xs font-semibold text-slate-600">CBM pricing</div>
+              <div className="mt-2 grid gap-4 sm:grid-cols-2">
+                <div>
+                  <div className="text-xs text-slate-500">CBM rate (USD per CBM)</div>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={draft.cbmRateUsd || ''}
+                    onChange={e => setDraft(d => d ? { ...d, cbmRateUsd: Number(e.target.value) || 0 } : null)}
+                  />
+                </div>
+              </div>
+              <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                {transportMethods.map(method => (
+                  <div key={`div-${method}`}>
+                    <div className="text-xs text-slate-500">{method} CBM divisor</div>
+                    <Input
+                      type="number"
+                      min={1}
+                      step={1}
+                      value={draft.cbmDivisorByMethod?.[method] || ''}
+                      onChange={e => setDraft(d => d ? {
+                        ...d,
+                        cbmDivisorByMethod: {
+                          ...d.cbmDivisorByMethod,
+                          [method]: Number(e.target.value) || 1,
+                        },
+                      } : null)}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-5">
               <div className="text-xs font-semibold text-slate-600">Transport price by method (USD)</div>
               <div className="mt-2 grid gap-4 sm:grid-cols-2">
                 {transportMethods.map(method => (
@@ -217,6 +272,106 @@ export function AdminPricingPage() {
                     <span className="text-sm text-slate-700">{method}</span>
                   </label>
                 ))}
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <div className="mb-2 flex items-center justify-between">
+                <div className="text-xs font-semibold text-slate-600">Custom pricing rules</div>
+                <Button size="sm" variant="secondary" onClick={() => setDraft(d => d ? { ...d, customRules: [...d.customRules, createEmptyRule()] } : d)}>
+                  Add rule
+                </Button>
+              </div>
+              <div className="space-y-3">
+                {draft.customRules.map((rule, idx) => (
+                  <div key={rule.id} className="rounded-xl border border-slate-200 p-3">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <Input
+                        placeholder="Rule name (e.g. Remote area surcharge)"
+                        value={rule.name}
+                        onChange={e =>
+                          setDraft(d => d ? {
+                            ...d,
+                            customRules: d.customRules.map((r, i) => i === idx ? { ...r, name: e.target.value } : r),
+                          } : d)
+                        }
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Value"
+                        value={rule.value}
+                        onChange={e =>
+                          setDraft(d => d ? {
+                            ...d,
+                            customRules: d.customRules.map((r, i) => i === idx ? { ...r, value: Number(e.target.value) || 0 } : r),
+                          } : d)
+                        }
+                      />
+                    </div>
+                    <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                      <select
+                        className="h-10 rounded-xl border border-slate-300 px-3 text-sm"
+                        value={rule.type}
+                        onChange={e =>
+                          setDraft(d => d ? {
+                            ...d,
+                            customRules: d.customRules.map((r, i) => i === idx ? { ...r, type: e.target.value as PricingRule['type'] } : r),
+                          } : d)
+                        }
+                      >
+                        <option value="fixed">Fixed amount</option>
+                        <option value="percent">Percent of subtotal</option>
+                        <option value="perKg">Per kg</option>
+                        <option value="perCbm">Per CBM</option>
+                      </select>
+                      <div className="flex items-center justify-between rounded-xl border border-slate-200 px-3">
+                        <label className="text-sm text-slate-700">Enabled</label>
+                        <input
+                          type="checkbox"
+                          checked={rule.enabled}
+                          onChange={e =>
+                            setDraft(d => d ? {
+                              ...d,
+                              customRules: d.customRules.map((r, i) => i === idx ? { ...r, enabled: e.target.checked } : r),
+                            } : d)
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-3">
+                      {transportMethods.map(method => (
+                        <label key={`${rule.id}-${method}`} className="flex items-center gap-1 text-xs text-slate-700">
+                          <input
+                            type="checkbox"
+                            checked={rule.methods.includes(method)}
+                            onChange={e =>
+                              setDraft(d => d ? {
+                                ...d,
+                                customRules: d.customRules.map((r, i) => {
+                                  if (i !== idx) return r
+                                  const methods = e.target.checked
+                                    ? Array.from(new Set([...r.methods, method]))
+                                    : r.methods.filter(m => m !== method)
+                                  return { ...r, methods }
+                                }),
+                              } : d)
+                            }
+                          />
+                          {method}
+                        </label>
+                      ))}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setDraft(d => d ? { ...d, customRules: d.customRules.filter((_, i) => i !== idx) } : d)}
+                        className="ml-auto text-red-600"
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                {draft.customRules.length === 0 ? <div className="text-xs text-slate-500">No custom rules yet.</div> : null}
               </div>
             </div>
 

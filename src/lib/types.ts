@@ -9,6 +9,16 @@ export type ShipmentStatus =
   | 'Delivered'
 
 export type TransportMethod = 'Truck' | 'Air' | 'Bike' | 'Ship'
+export type PricingRuleType = 'fixed' | 'percent' | 'perKg' | 'perCbm'
+
+export type PricingRule = {
+  id: string
+  name: string
+  type: PricingRuleType
+  value: number
+  methods: TransportMethod[]
+  enabled: boolean
+}
 
 export type Product = {
   id: string
@@ -82,6 +92,14 @@ export type PricingRules = {
     Ship: number
   }
   logisticsMethods: TransportMethod[]
+  cbmRateUsd: number
+  cbmDivisorByMethod: {
+    Truck: number
+    Air: number
+    Bike: number
+    Ship: number
+  }
+  customRules: PricingRule[]
 }
 
 export type User = {

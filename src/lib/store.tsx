@@ -93,6 +93,10 @@ function seedState(): StoreState {
     pricePerKgUsd: 4,
     transportPriceUsd: { Truck: 120, Air: 380, Bike: 35, Ship: 220 },
     warehouseHandlingFeeUsd: 25,
+    logisticsMethods: ['Truck', 'Air', 'Bike', 'Ship'],
+    cbmRateUsd: 0,
+    cbmDivisorByMethod: { Truck: 333, Air: 167, Bike: 250, Ship: 1000 },
+    customRules: [],
   }
 
   const users: User[] = [
