@@ -96,11 +96,11 @@ export function AdminShipmentsPage() {
               <THead>
                 <TR>
                   <TH>Shipment</TH>
-                  <TH>Client</TH>
-                  <TH>Warehouse</TH>
+                  <TH className="hidden sm:table-cell">Client</TH>
+                  <TH className="hidden sm:table-cell">Warehouse</TH>
                   <TH>Status</TH>
                   <TH className="text-right">Est. cost</TH>
-                  <TH>Updated</TH>
+                  <TH className="hidden md:table-cell">Updated</TH>
                 </TR>
               </THead>
               <TBody>
@@ -108,11 +108,11 @@ export function AdminShipmentsPage() {
                   ? Array.from({ length: 6 }).map((_, idx) => (
                       <TR key={`skeleton-${idx}`}>
                         <TD className="whitespace-nowrap"><Skeleton className="h-4 w-24" /></TD>
-                        <TD className="whitespace-nowrap"><Skeleton className="h-4 w-28" /></TD>
-                        <TD className="whitespace-nowrap"><Skeleton className="h-4 w-28" /></TD>
+                        <TD className="hidden sm:table-cell whitespace-nowrap"><Skeleton className="h-4 w-28" /></TD>
+                        <TD className="hidden sm:table-cell whitespace-nowrap"><Skeleton className="h-4 w-28" /></TD>
                         <TD><Skeleton className="h-6 w-24 rounded-full" /></TD>
                         <TD className="whitespace-nowrap text-right"><Skeleton className="ml-auto h-4 w-16" /></TD>
-                        <TD className="whitespace-nowrap"><Skeleton className="h-4 w-28" /></TD>
+                        <TD className="hidden md:table-cell whitespace-nowrap"><Skeleton className="h-4 w-28" /></TD>
                       </TR>
                     ))
                   : null}
@@ -123,13 +123,13 @@ export function AdminShipmentsPage() {
                     onClick={() => navigate(`/admin/shipment/${s.id}`)}
                   >
                     <TD className="whitespace-nowrap font-semibold text-slate-900">{s.id}</TD>
-                    <TD className="whitespace-nowrap">{s.clientName || s.client?.name || 'Unknown'}</TD>
-                    <TD className="whitespace-nowrap">{s.warehouseName || s.warehouse?.name || 'Unknown'}</TD>
+                    <TD className="hidden sm:table-cell whitespace-nowrap">{s.clientName || s.client?.name || 'Unknown'}</TD>
+                    <TD className="hidden sm:table-cell whitespace-nowrap">{s.warehouseName || s.warehouse?.name || 'Unknown'}</TD>
                     <TD>
                       <Badge tone={statusTone(s.status)}>{s.status}</Badge>
                     </TD>
                     <TD className="whitespace-nowrap text-right font-semibold text-slate-900">{formatMoneyUsd(s.estimatedCostUsd || 0)}</TD>
-                    <TD className="whitespace-nowrap text-slate-600">{formatDateTime(s.updatedAtIso || s.createdAtIso)}</TD>
+                    <TD className="hidden md:table-cell whitespace-nowrap text-slate-600">{formatDateTime(s.updatedAtIso || s.createdAtIso)}</TD>
                   </TR>
                 ))}
                 {filtered.length === 0 ? (

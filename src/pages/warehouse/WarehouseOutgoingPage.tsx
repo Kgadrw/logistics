@@ -132,7 +132,7 @@ export function WarehouseOutgoingPage() {
                 <TR>
                   <TH>Client</TH>
                   <TH>Shipment ID</TH>
-                  <TH>Products</TH>
+                  <TH className="hidden sm:table-cell">Products</TH>
                   <TH>Status</TH>
                   <TH className="text-right">Action</TH>
                 </TR>
@@ -143,7 +143,7 @@ export function WarehouseOutgoingPage() {
                       <TR key={`skeleton-${idx}`}>
                         <TD className="whitespace-nowrap"><Skeleton className="h-4 w-24" /></TD>
                         <TD className="whitespace-nowrap"><Skeleton className="h-4 w-24" /></TD>
-                        <TD className="min-w-64"><Skeleton className="h-4 w-48" /></TD>
+                        <TD className="hidden sm:table-cell min-w-64"><Skeleton className="h-4 w-48" /></TD>
                         <TD><Skeleton className="h-6 w-24 rounded-full" /></TD>
                         <TD className="text-right"><Skeleton className="ml-auto h-8 w-28" /></TD>
                       </TR>
@@ -161,7 +161,7 @@ export function WarehouseOutgoingPage() {
                   >
                     <TD className="whitespace-nowrap font-semibold text-slate-900">{s.clientName || s.client?.name || 'Unknown'}</TD>
                     <TD className="whitespace-nowrap">{s.id}</TD>
-                    <TD className="min-w-64 text-slate-700">
+                    <TD className="hidden sm:table-cell min-w-64 text-slate-700">
                       {s.products?.slice(0, 2).map(p => p.name).join(', ') || 'No products'}
                       {s.products && s.products.length > 2 ? ` +${s.products.length - 2} more` : ''}
                     </TD>

@@ -40,11 +40,11 @@ export function ClientHistoryPage() {
               <THead>
                 <TR>
                   <TH>Shipment ID</TH>
-                  <TH>Warehouse</TH>
+                  <TH className="hidden sm:table-cell">Warehouse</TH>
                   <TH>Status</TH>
-                  <TH>Products</TH>
-                  <TH>Cost</TH>
-                  <TH>Updated</TH>
+                  <TH className="hidden sm:table-cell">Products</TH>
+                  <TH className="hidden sm:table-cell">Cost</TH>
+                  <TH className="hidden md:table-cell">Updated</TH>
                 </TR>
               </THead>
               <TBody>
@@ -52,11 +52,11 @@ export function ClientHistoryPage() {
                   ? Array.from({ length: 5 }).map((_, idx) => (
                       <TR key={`skeleton-${idx}`}>
                         <TD className="whitespace-nowrap"><Skeleton className="h-4 w-24" /></TD>
-                        <TD className="whitespace-nowrap"><Skeleton className="h-4 w-32" /></TD>
+                        <TD className="hidden sm:table-cell whitespace-nowrap"><Skeleton className="h-4 w-32" /></TD>
                         <TD><Skeleton className="h-6 w-24 rounded-full" /></TD>
-                        <TD><Skeleton className="h-4 w-16" /></TD>
-                        <TD className="whitespace-nowrap"><Skeleton className="h-4 w-20" /></TD>
-                        <TD className="whitespace-nowrap"><Skeleton className="h-4 w-28" /></TD>
+                        <TD className="hidden sm:table-cell"><Skeleton className="h-4 w-16" /></TD>
+                        <TD className="hidden sm:table-cell whitespace-nowrap"><Skeleton className="h-4 w-20" /></TD>
+                        <TD className="hidden md:table-cell whitespace-nowrap"><Skeleton className="h-4 w-28" /></TD>
                       </TR>
                     ))
                   : null}
@@ -67,17 +67,17 @@ export function ClientHistoryPage() {
                     onClick={() => navigate(`/client/shipment/${s.id}`)}
                   >
                     <TD className="whitespace-nowrap font-semibold text-slate-900">{s.id}</TD>
-                    <TD className="whitespace-nowrap">{s.warehouseName || s.warehouse?.name || 'Unknown'}</TD>
+                    <TD className="hidden sm:table-cell whitespace-nowrap">{s.warehouseName || s.warehouse?.name || 'Unknown'}</TD>
                     <TD>
                       <Badge tone={statusTone(s.status)}>{s.status}</Badge>
                     </TD>
-                    <TD className="text-slate-700">
+                    <TD className="hidden sm:table-cell text-slate-700">
                       {s.products?.length || 0} {s.products?.length === 1 ? 'item' : 'items'}
                     </TD>
-                    <TD className="whitespace-nowrap font-semibold text-slate-900">
+                    <TD className="hidden sm:table-cell whitespace-nowrap font-semibold text-slate-900">
                       {formatMoneyUsd(s.estimatedCostUsd || 0)}
                     </TD>
-                    <TD className="whitespace-nowrap text-slate-600">{formatDateTime(s.updatedAtIso || s.createdAtIso)}</TD>
+                    <TD className="hidden md:table-cell whitespace-nowrap text-slate-600">{formatDateTime(s.updatedAtIso || s.createdAtIso)}</TD>
                   </TR>
                 ))}
                 {allShipments.length === 0 && !loading ? (

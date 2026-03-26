@@ -416,7 +416,7 @@ export function AdminExternalDocumentsPage() {
               <FileText className="h-5 w-5 text-blue-600" />
               Records
             </CardTitle>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 sm:justify-end">
               <Button variant="secondary" size="sm" onClick={exportToCSV} disabled={records.length === 0}>
                 Export to Excel (.csv)
               </Button>
@@ -428,10 +428,10 @@ export function AdminExternalDocumentsPage() {
                 <THead>
                   <TR>
                     <TH>Company</TH>
-                    <TH>Reference</TH>
-                    <TH>Type</TH>
+                    <TH className="hidden sm:table-cell">Reference</TH>
+                    <TH className="hidden sm:table-cell">Type</TH>
                     <TH className="text-right">Docs</TH>
-                    <TH>Created</TH>
+                    <TH className="hidden md:table-cell">Created</TH>
                     <TH className="text-right">Actions</TH>
                   </TR>
                 </THead>
@@ -440,10 +440,10 @@ export function AdminExternalDocumentsPage() {
                     Array.from({ length: 5 }).map((_, idx) => (
                       <TR key={`skeleton-${idx}`}>
                         <TD><Skeleton className="h-4 w-28" /></TD>
-                        <TD><Skeleton className="h-4 w-24" /></TD>
-                        <TD><Skeleton className="h-4 w-20" /></TD>
+                        <TD className="hidden sm:table-cell"><Skeleton className="h-4 w-24" /></TD>
+                        <TD className="hidden sm:table-cell"><Skeleton className="h-4 w-20" /></TD>
                         <TD className="text-right"><Skeleton className="ml-auto h-4 w-6" /></TD>
-                        <TD><Skeleton className="h-4 w-24" /></TD>
+                        <TD className="hidden md:table-cell"><Skeleton className="h-4 w-24" /></TD>
                         <TD className="text-right"><Skeleton className="ml-auto h-8 w-24" /></TD>
                       </TR>
                     ))
@@ -457,10 +457,10 @@ export function AdminExternalDocumentsPage() {
                     records.map(r => (
                       <TR key={r.id}>
                         <TD className="font-semibold text-slate-900 whitespace-nowrap">{r.companyName}</TD>
-                        <TD className="whitespace-nowrap">{r.reference || '-'}</TD>
-                        <TD className="whitespace-nowrap">{r.documentType || '-'}</TD>
+                        <TD className="hidden sm:table-cell whitespace-nowrap">{r.reference || '-'}</TD>
+                        <TD className="hidden sm:table-cell whitespace-nowrap">{r.documentType || '-'}</TD>
                         <TD className="text-right font-semibold text-slate-900 whitespace-nowrap">{(r.documents || []).length}</TD>
-                        <TD className="whitespace-nowrap text-slate-600">{r.createdAtIso ? r.createdAtIso.slice(0, 10) : '-'}</TD>
+                        <TD className="hidden md:table-cell whitespace-nowrap text-slate-600">{r.createdAtIso ? r.createdAtIso.slice(0, 10) : '-'}</TD>
                         <TD className="text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-2">
                             <Button
@@ -583,7 +583,7 @@ export function AdminExternalDocumentsPage() {
                   <THead>
                     <TR>
                       <TH>File</TH>
-                      <TH>Uploaded</TH>
+                      <TH className="hidden sm:table-cell">Uploaded</TH>
                       <TH className="text-right">Link</TH>
                     </TR>
                   </THead>
@@ -598,7 +598,7 @@ export function AdminExternalDocumentsPage() {
                       (selected.documents || []).map((d, idx) => (
                         <TR key={`${d.documentUrl}-${idx}`}>
                           <TD className="whitespace-nowrap">{d.fileName || 'Document'}</TD>
-                          <TD className="whitespace-nowrap text-slate-600">{d.uploadedAtIso ? d.uploadedAtIso.slice(0, 10) : '-'}</TD>
+                          <TD className="hidden sm:table-cell whitespace-nowrap text-slate-600">{d.uploadedAtIso ? d.uploadedAtIso.slice(0, 10) : '-'}</TD>
                           <TD className="text-right whitespace-nowrap">
                             <a
                               href={d.documentUrl}

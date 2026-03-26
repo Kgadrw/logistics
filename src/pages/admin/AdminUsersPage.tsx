@@ -192,7 +192,7 @@ export function AdminUsersPage({ focus }: { focus: Extract<Role, 'client' | 'war
       <div className="grid gap-4 lg:grid-cols-12">
         <Card className="lg:col-span-12 overflow-hidden">
           <CardHeader>
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <CardTitle>User management</CardTitle>
               <Button onClick={() => setShowCreateModal(true)}>
                 Create {focus} account
@@ -208,7 +208,7 @@ export function AdminUsersPage({ focus }: { focus: Extract<Role, 'client' | 'war
                 <THead>
                   <TR>
                     <TH>Name</TH>
-                    <TH>Email</TH>
+                    <TH className="hidden sm:table-cell">Email</TH>
                     <TH>Role</TH>
                     <TH>Status</TH>
                     <TH className="text-right">Actions</TH>
@@ -219,7 +219,7 @@ export function AdminUsersPage({ focus }: { focus: Extract<Role, 'client' | 'war
                     ? Array.from({ length: 6 }).map((_, idx) => (
                         <TR key={`skeleton-${idx}`}>
                           <TD><Skeleton className="h-4 w-28" /></TD>
-                          <TD><Skeleton className="h-4 w-44" /></TD>
+                          <TD className="hidden sm:table-cell"><Skeleton className="h-4 w-44" /></TD>
                           <TD><Skeleton className="h-4 w-20" /></TD>
                           <TD><Skeleton className="h-6 w-20 rounded-full" /></TD>
                           <TD className="text-right"><Skeleton className="ml-auto h-8 w-40" /></TD>
@@ -229,7 +229,7 @@ export function AdminUsersPage({ focus }: { focus: Extract<Role, 'client' | 'war
                   {allUsers.map(u => (
                     <TR key={u.id}>
                       <TD className="whitespace-nowrap font-semibold text-slate-900">{u.name}</TD>
-                      <TD className="whitespace-nowrap text-slate-600 text-sm">{(u as any).email || '-'}</TD>
+                      <TD className="hidden sm:table-cell whitespace-nowrap text-slate-600 text-sm">{(u as any).email || '-'}</TD>
                       <TD className="whitespace-nowrap capitalize text-slate-700">{u.role}</TD>
                       <TD className="whitespace-nowrap">
                         <span
